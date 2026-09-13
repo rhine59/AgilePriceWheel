@@ -26,6 +26,9 @@ struct SwipeDashboardView: View {
             case .settings:
                 settingsScreen
                     .transition(.move(edge: .trailing))
+            case .guide:
+                guideScreen
+                    .transition(.move(edge: .trailing))
             }
         }
         .animation(.easeInOut(duration: 0.22), value: page)
@@ -165,8 +168,9 @@ struct SwipeDashboardView: View {
                 )
 
                 HStack(spacing: 8) {
-                    Image(systemName: "chevron.right")
-                    Text("Swipe right to return to Net Electricity Price")
+                    Text("Swipe right for Net Price")
+                    Image(systemName: "arrow.left.and.right")
+                    Text("left for User Guide")
                 }
                 .font(.caption2)
                 .foregroundStyle(.white.opacity(0.48))
@@ -177,6 +181,32 @@ struct SwipeDashboardView: View {
             }
         }
         .preferredColorScheme(.dark)
+    }
+
+    private var guideScreen: some View {
+        ZStack(alignment: .bottom) {
+            DocumentationView(
+                showsDoneButton: false,
+                navigationTitle: "User Guide"
+            )
+            .preferredColorScheme(.dark)
+
+            VStack(spacing: 6) {
+                HStack(spacing: 8) {
+                    Text("Swipe right for Settings")
+                    Image(systemName: "arrow.left.and.right")
+                    Text("left to return to Prices")
+                }
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.72))
+
+                pageDots
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(.ultraThinMaterial, in: Capsule())
+            .padding(.bottom, 8)
+        }
     }
 
     private func pageHeader(
@@ -241,10 +271,11 @@ struct SwipeDashboardView: View {
             pageDot(.generation)
             pageDot(.netPrice)
             pageDot(.settings)
+            pageDot(.guide)
         }
         .padding(.top, 2)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Page \(page.accessibilityPosition) of 5")
+        .accessibilityLabel("Page \(page.accessibilityPosition) of 6")
     }
 
     private func pageDot(_ target: DashboardPage) -> some View {
@@ -271,7 +302,9 @@ struct SwipeDashboardView: View {
                     case .netPrice:
                         page = .settings
                     case .settings:
-                        break
+                        page = .guide
+                    case .guide:
+                        page = .prices
                     }
                 } else if horizontal > 80 {
                     switch page {
@@ -285,6 +318,8 @@ struct SwipeDashboardView: View {
                         page = .generation
                     case .settings:
                         page = .netPrice
+                    case .guide:
+                        page = .settings
                     }
                 }
             }
@@ -303,6 +338,7 @@ private enum DashboardPage: Equatable {
     case generation
     case netPrice
     case settings
+    case guide
 
     var accessibilityPosition: Int {
         switch self {
@@ -311,6 +347,7 @@ private enum DashboardPage: Equatable {
         case .generation: return 3
         case .netPrice: return 4
         case .settings: return 5
+        case .guide: return 6
         }
     }
 }
