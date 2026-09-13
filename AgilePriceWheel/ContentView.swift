@@ -62,7 +62,7 @@ struct ContentView: View {
                 .preferredColorScheme(.dark)
         }
         .sheet(isPresented: $showingInfo) {
-            InfoView()
+            DocumentationView()
                 .preferredColorScheme(.dark)
         }
         .alert("Octopus API", isPresented: Binding(
@@ -105,6 +105,7 @@ struct ContentView: View {
                         .foregroundStyle(accent)
                         .frame(width: 42, height: 42)
                 }
+                .accessibilityLabel("Guide and documentation")
             }
 
             Text("Octopus Agile — \(dayLabel)")
@@ -273,7 +274,7 @@ struct ContentView: View {
             .foregroundStyle(accent)
             .background(card, in: RoundedRectangle(cornerRadius: 16))
             .overlay(RoundedRectangle(cornerRadius: 16).stroke(line, lineWidth: 1.2))
-      }
+        }
     }
 
     private func summaryTile(
@@ -300,7 +301,7 @@ struct ContentView: View {
                     Text(String(format: "%.1f p/kWh", value))
                         .font(.system(size: 18, weight: .semibold, design: .rounded))
                         .monospacedDigit()
-                        .foregroundStyle(.colour)
+                        .foregroundStyle(colour)
                         .lineLimit(1)
 
                     if let timeRange {
@@ -342,7 +343,7 @@ struct ContentView: View {
                         .monospacedDigit()
                         .foregroundStyle(.orange)
 
-                    Text("\(time(rate.validFrom))–$(time(rate.validTo))")
+                    Text("\(time(rate.validFrom))–\(time(rate.validTo))")
                         .font(.system(size: 10, weight: .medium, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(.white.opacity(0.66))
@@ -370,7 +371,7 @@ struct ContentView: View {
 
     private func tabButton(_ tab: AppTab, title: String) -> some View {
         Button {
-            withAnimation(.naseStretch(duration: 0.18)) {
+            withAnimation(.easeInOut(duration: 0.18)) {
                 selectedTab = tab
             }
         } label: {
@@ -442,7 +443,7 @@ struct ContentView: View {
     private func timeRange(for value: Double?) -> String? {
         guard let value,
               let rate = model.rates.first(where: { $0.valueIncVAT == value }) else { return nil }
-        return "\(time(rate.validFrom))–(\(time(rate.validTo))"
+        return "\(time(rate.validFrom))–\(time(rate.validTo))"
     }
 
     private func colour(for value: Double?) -> Color {
@@ -589,32 +590,6 @@ private struct TariffPickerView: View {
                     } label: {
                         Image(systemName: "arrow.clockwise")
                     }
-                }
-            }
-        }
-    }
-}
-
-private struct InfoView: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section("Price wheel") {
-                    Text("Each coloured sector is one Agile half-hour price. Green is relatively cheaper and red is relatively more expensive for the selected day. Negative prices are shown blue.")
-                    Text("Touch or drag around the wheel to inspect an individual half-hour period.")
-                }
-
-                Section("Prices") {
-                    Text("Displayed unit prices include VAT unless specifically marked as excluding VAT.")
-                    Text("The wheel supports daylight-saving days with 46 or 50 half-hour periods as well as normal 48-period days.")
-                }
-            }
-            .navigationTitle("About")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
                 }
             }
         }
