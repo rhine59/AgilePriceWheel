@@ -14,12 +14,14 @@ This includes changes to:
 
 - swipe-page order or navigation;
 - user-visible features or controls;
-- price-wheel, solar-wheel or generation-wheel behaviour;
+- price-wheel, solar-wheel, generation-wheel or net-price-wheel behaviour;
 - tariff discovery or Octopus API integration;
 - Open-Meteo forecast/geocoding integration;
 - solar-site settings;
 - PV-array settings;
+- optimiser-load settings;
 - PV-generation calculations or assumptions;
+- net/effective electricity-price calculations or assumptions;
 - network behaviour and error handling;
 - offline caching, persistence or refresh behaviour;
 - server/local data-source indicators;
@@ -32,7 +34,7 @@ This includes changes to:
 
 Before a release, verify that:
 
-- `README.md` describes the current implementation and architecture;
+- `README.md` describes the current implementation, architecture and calculations;
 - `USER_GUIDE.md` accurately describes how a user operates the current app;
 - `DocumentationView.swift` matches the user-visible behaviour and essential guidance available in `USER_GUIDE.md`.
 
@@ -49,7 +51,7 @@ If implementation and documentation disagree, treat that as a defect and update 
 The documented swipe order must match `SwipeDashboardView` exactly. The current order is:
 
 ```text
-Agile Prices → Solar Forecast → PV Generation → App Settings
+Agile Prices → Solar Forecast → PV Generation → Net Electricity Price → App Settings
 ```
 
-Settings is the final swipe page.
+App Settings is the final swipe page.
