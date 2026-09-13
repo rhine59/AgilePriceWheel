@@ -3,9 +3,8 @@ import Combine
 
 /// Persistent application settings that are not tied to one API response.
 ///
-/// Solar-array values are stored now so they can be used later by a PV-output
-/// model. The current solar forecast remains irradiance in W/m² and does not
-/// yet convert these settings into predicted electrical generation.
+/// Solar-array values are used by the PV generation estimate screen. The
+/// irradiance screen remains a separate W/m² weather forecast.
 @MainActor
 final class AppSettingsStore: ObservableObject {
     @Published var arrayName: String { didSet { defaults.set(arrayName, forKey: Keys.arrayName) } }
@@ -45,6 +44,26 @@ final class AppSettingsStore: ObservableObject {
         guard let panelCount, panelCount > 0,
               let panelPowerWatts, panelPowerWatts > 0 else { return nil }
         return Double(panelCount) * panelPowerWatts / 1000.0
+    }
+
+    /// Rated array capacity used by the generation estimate. An explicitly
+    /// entered kWp value takes priority; otherwise panel count × panel watts is
+    /// used when both are available.
+    var effectivePeakPowerKWp: Double? {
+        if let peakPowerKWp, peakPowerKWp > 0 { return peakPowerKWp }
+        return calculatedPanelPeakKWp
+    }
+
+    /// Multiplicative factor after user-configured system losses. A blank loss
+    /// field means no additional loss correction is applied.
+    var generationLossFactor: Double {
+        let percent = min(max(systemLossPercent ?? 0, 0), 100)
+        return 1.0 - percent / 100.0
+    }
+
+    var effectiveInverterMaxKW: Double? {
+        guard let inverterMaxKW, inverterMaxKW > 0 else { return nil }
+        return inverterMaxKW
     }
 
     var hasArrayDetails: Bool {
