@@ -6,7 +6,7 @@ struct AgilePriceWheelApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SwipeDashboardView()
                 .environmentObject(model)
         }
     }
