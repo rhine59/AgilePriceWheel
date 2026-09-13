@@ -2,21 +2,22 @@
 
 This guide explains how to operate every part of Agile Price Wheel.
 
-The same user-facing help is also available inside the app from the **ⓘ** information button.
+The same guide is built directly into the app as the final swipe page and can also be opened from the **ⓘ** information buttons.
 
 ---
 
 # 1. What the app does
 
-Agile Price Wheel brings together five views for the same selected UK day:
+Agile Price Wheel brings together six swipe pages:
 
 1. Octopus Energy Agile half-hour electricity prices.
 2. Solar irradiance forecast in W/m².
 3. Estimated half-hour PV generation in kWh.
 4. Net/effective electricity price after forecast PV offsets a chosen load.
 5. Settings for tariff, day, solar site, PV array and optimiser load.
+6. The complete User Guide.
 
-Settings is deliberately the final swipe page.
+The forward page sequence is circular, so continuing to swipe left from the User Guide returns to Agile Prices.
 
 ---
 
@@ -34,13 +35,27 @@ PV Generation
 Net Electricity Price
     ↓
 App Settings
+    ↓
+User Guide
+    ↓
+Agile Prices
 ```
 
-Swipe right to move back in reverse.
+The final left swipe from User Guide therefore starts the sequence again.
 
-Five page dots show the current position.
+Swipe right to move back one page:
+
+```text
+User Guide → App Settings → Net Electricity Price → PV Generation → Solar Forecast → Agile Prices
+```
+
+A right swipe from Agile Prices does not wrap; it remains on the first page.
+
+Six page dots show the current position.
 
 Gear buttons on Solar Forecast, PV Generation and Net Electricity Price jump directly to App Settings.
+
+The User Guide can also be opened from any **ⓘ** information button. In that case it appears as a sheet with a Done button.
 
 ---
 
@@ -287,7 +302,7 @@ These bands reproduce the established nightly email optimiser colouring.
 
 Swipe left from Net Electricity Price.
 
-This is the **last swipe page**.
+App Settings is page 5 of 6. Swipe left again to reach the User Guide.
 
 It contains all application configuration.
 
@@ -338,9 +353,31 @@ The default is 3.0 kW. The settings page also shows the equivalent energy for a 
 
 Change this value to model a different appliance or flexible load.
 
+### Navigation from Settings
+
+- swipe right to return to Net Electricity Price;
+- swipe left to open the User Guide.
+
 ---
 
-# 11. Refresh and automatic recalculation
+# 11. User Guide page
+
+The User Guide is page 6 of 6 and is the final page in the normal left-swipe sequence.
+
+It contains the same complete operating information as this file and is bundled with the app, so it is available without a network connection.
+
+Navigation from the User Guide:
+
+- swipe right to return to App Settings;
+- swipe left to wrap directly back to Agile Prices.
+
+This makes the forward page sequence continuous rather than stopping at the guide.
+
+The guide can still be opened as a sheet from **ⓘ** buttons elsewhere in the app. That sheet version includes a Done button; the swipe-page version does not.
+
+---
+
+# 12. Refresh and automatic recalculation
 
 Online refresh buttons exist only for source data:
 
@@ -360,7 +397,7 @@ Net Electricity Price recalculates automatically when any of these change:
 
 ---
 
-# 12. Offline use
+# 13. Offline use
 
 The app stores previously downloaded Agile and solar data.
 
@@ -380,11 +417,15 @@ Generation is calculated locally, so it can be recalculated from cached solar da
 
 Net price is also calculated locally. If both Agile prices and solar data for the selected day are cached, the net-price wheel can be recalculated offline.
 
-Offline mode cannot obtain new data that was never downloaded.
+### User Guide offline
+
+The User Guide is part of the app itself and is always available offline.
+
+Offline mode cannot obtain new source data that was never downloaded.
 
 ---
 
-# 13. UK daylight-saving days
+# 14. UK daylight-saving days
 
 The app uses `Europe/London` time.
 
@@ -400,7 +441,7 @@ The app works from actual timestamps and durations.
 
 ---
 
-# 14. Privacy
+# 15. Privacy
 
 The app does not require:
 
@@ -424,7 +465,7 @@ Coordinates are sent to Open-Meteo when required for geocoding/forecast requests
 
 ---
 
-# 15. Troubleshooting
+# 16. Troubleshooting
 
 ## No Agile prices
 
@@ -459,9 +500,15 @@ Check:
 
 Remember that the model currently assumes all forecast PV is available to the evaluated load and ignores background household consumption/export income.
 
+## Swipe navigation does not move pages
+
+Use a clearly horizontal swipe. The app deliberately requires the horizontal movement to dominate the vertical movement so ordinary scrolling does not accidentally change pages.
+
+On the User Guide, vertical scrolling reads the guide; a deliberate left swipe wraps to Agile Prices.
+
 ---
 
-# 16. How the app works internally
+# 17. How the app works internally
 
 ```text
 AgilePriceWheelApp
@@ -475,27 +522,31 @@ SwipeDashboardView
         │    └─ SolarForecastModel + AppSettingsStore
         ├─ Net Electricity Price
         │    └─ AgileViewModel + SolarForecastModel + AppSettingsStore
-        └─ App Settings
-             └─ AppSettingsStore
+        ├─ App Settings
+        │    └─ AppSettingsStore
+        └─ User Guide
+             └─ DocumentationView
 ```
 
-Agile and solar are source-data pipelines. Generation and net price are local derived calculations.
+Agile and solar are source-data pipelines. Generation and net price are local derived calculations. The guide is local static app content.
+
+`SwipeDashboardView` owns the six-page navigation state. The left-swipe transition from User Guide sets the page back to Agile Prices; the right-swipe transition from User Guide returns to App Settings.
 
 ---
 
-# 17. Documentation
+# 18. Documentation
 
 The project keeps these synchronized:
 
 - `README.md` — technical/developer reference;
 - `USER_GUIDE.md` — complete operating guide;
-- `AgilePriceWheel/DocumentationView.swift` — in-app offline guide.
+- `AgilePriceWheel/DocumentationView.swift` — in-app offline guide and sixth swipe page.
 
 Future functional changes must update the relevant documentation in the same change.
 
 ---
 
-# 18. Disclaimer
+# 19. Disclaimer
 
 Agile Price Wheel is independent and is not an official Octopus Energy or Open-Meteo app.
 
