@@ -125,10 +125,11 @@ struct GenerationEstimateView: View {
             }
 
             HStack(spacing: 8) {
-                Image(systemName: "chevron.right")
-                Text("Swipe right to return to App Settings")
+                Text("Swipe right for Solar Forecast")
+                Image(systemName: "arrow.left.and.right")
+                Text("left for App Settings")
             }
-            .font(.caption)
+            .font(.caption2)
             .foregroundStyle(.white.opacity(0.5))
         }
         .onAppear { chooseInitialSelection() }
