@@ -4,7 +4,7 @@ import Combine
 /// Persistent application settings that are not tied to one API response.
 ///
 /// Solar-array values are used by the PV generation estimate screen. The
-/// irradiance screen remains a separate W/m² weather forecast.
+/// optimiser load is used by the net/effective electricity-price screen.
 @MainActor
 final class AppSettingsStore: ObservableObject {
     @Published var arrayName: String { didSet { defaults.set(arrayName, forKey: Keys.arrayName) } }
@@ -15,6 +15,7 @@ final class AppSettingsStore: ObservableObject {
     @Published var azimuthDegreesText: String { didSet { defaults.set(azimuthDegreesText, forKey: Keys.azimuthDegrees) } }
     @Published var inverterMaxKWText: String { didSet { defaults.set(inverterMaxKWText, forKey: Keys.inverterMaxKW) } }
     @Published var systemLossPercentText: String { didSet { defaults.set(systemLossPercentText, forKey: Keys.systemLossPercent) } }
+    @Published var optimiserLoadKWText: String { didSet { defaults.set(optimiserLoadKWText, forKey: Keys.optimiserLoadKW) } }
     @Published var notes: String { didSet { defaults.set(notes, forKey: Keys.notes) } }
 
     private let defaults: UserDefaults
@@ -29,6 +30,7 @@ final class AppSettingsStore: ObservableObject {
         azimuthDegreesText = defaults.string(forKey: Keys.azimuthDegrees) ?? ""
         inverterMaxKWText = defaults.string(forKey: Keys.inverterMaxKW) ?? ""
         systemLossPercentText = defaults.string(forKey: Keys.systemLossPercent) ?? ""
+        optimiserLoadKWText = defaults.string(forKey: Keys.optimiserLoadKW) ?? "3.0"
         notes = defaults.string(forKey: Keys.notes) ?? ""
     }
 
@@ -39,6 +41,7 @@ final class AppSettingsStore: ObservableObject {
     var azimuthDegrees: Double? { decimal(from: azimuthDegreesText) }
     var inverterMaxKW: Double? { decimal(from: inverterMaxKWText) }
     var systemLossPercent: Double? { decimal(from: systemLossPercentText) }
+    var optimiserLoadKW: Double? { decimal(from: optimiserLoadKWText) }
 
     var calculatedPanelPeakKWp: Double? {
         guard let panelCount, panelCount > 0,
@@ -64,6 +67,14 @@ final class AppSettingsStore: ObservableObject {
     var effectiveInverterMaxKW: Double? {
         guard let inverterMaxKW, inverterMaxKW > 0 else { return nil }
         return inverterMaxKW
+    }
+
+    /// Controllable load used by the net/effective price optimiser. The
+    /// historic nightly email model used 3.0 kW, so new installs default to
+    /// that value while still allowing the user to change it.
+    var effectiveOptimiserLoadKW: Double? {
+        guard let optimiserLoadKW, optimiserLoadKW > 0 else { return nil }
+        return optimiserLoadKW
     }
 
     var hasArrayDetails: Bool {
@@ -100,6 +111,7 @@ final class AppSettingsStore: ObservableObject {
         static let azimuthDegrees = "solarArray.azimuthDegrees"
         static let inverterMaxKW = "solarArray.inverterMaxKW"
         static let systemLossPercent = "solarArray.systemLossPercent"
+        static let optimiserLoadKW = "optimiser.loadKW"
         static let notes = "solarArray.notes"
     }
 }
