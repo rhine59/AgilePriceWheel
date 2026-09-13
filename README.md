@@ -1,10 +1,16 @@
 # Agile Price Wheel
 
-Agile Price Wheel is a native SwiftUI iPhone/iPad application for viewing Octopus Energy Agile half-hour electricity prices and a same-day solar irradiance forecast.
+Agile Price Wheel is a native SwiftUI iPhone/iPad application for viewing Octopus Energy Agile half-hour electricity prices, same-day solar irradiance forecasts and site/PV configuration.
 
-The main electricity screen presents Agile prices as an interactive circular wheel. Swiping left opens a solar forecast screen for the same selected calendar day, with one half-hour sector per forecast period and values shown as global horizontal irradiance in watts per square metre (W/m²). Swiping right returns to electricity prices.
+The main interface now has three horizontally swiped pages:
 
-The application is deliberately lightweight: it uses Swift, SwiftUI, Foundation and Combine only, with no third-party package dependencies.
+1. **Agile Prices** — interactive electricity-price wheel.
+2. **Solar Forecast** — same-day half-hour solar irradiance in W/m².
+3. **App Settings** — all core application settings, including tariff, day, solar site and stored PV-array details.
+
+Swipe left to move from Prices → Solar → Settings. Swipe right to move back.
+
+The application uses Swift, SwiftUI, Foundation and Combine only, with no third-party package dependencies.
 
 ---
 
@@ -17,9 +23,8 @@ The application is deliberately lightweight: it uses Swift, SwiftUI, Foundation 
 - Downloads half-hour unit rates including and excluding VAT.
 - Displays prices as an interactive circular wheel.
 - Touch or drag around the wheel to select a half-hour.
-- Shows the selected half-hour price and time.
-- Shows lowest, highest and average prices for the selected day.
-- Shows the time of the lowest and highest price periods.
+- Shows selected, lowest, highest and average prices.
+- Shows the time of the selected, lowest and highest price periods.
 - Uses a day-relative colour scale:
   - blue for negative prices,
   - green for lower positive prices,
@@ -27,34 +32,74 @@ The application is deliberately lightweight: it uses Swift, SwiftUI, Foundation 
 - Provides Prices, Chart and Details views.
 - Persists the chosen tariff.
 - Handles 46-, 48- and 50-period UK days correctly.
+- Uses server/local-cache status indicators and offline cache fallback.
 
 ### Solar irradiance forecast
 
-- Swipe left from the electricity-price screen to open the solar screen.
+- Swipe left from Agile Prices to open Solar Forecast.
 - Uses the same selected calendar day as the Agile price screen.
 - Displays one half-hour solar sector for each forecast period.
 - Shows global horizontal irradiance (GHI / shortwave solar radiation) in **W/m²**.
-- Shows:
-  - selected half-hour irradiance,
-  - peak irradiance and time,
-  - daylight average,
-  - forecast-site latitude and longitude.
+- Shows selected half-hour irradiance, peak irradiance/time, daylight average and forecast-site coordinates.
 - Touch or drag around the solar wheel to inspect an individual half-hour.
-- Swipe right to return to electricity prices.
-- Supports offline cached solar forecasts.
+- Supports persistent offline cached solar forecasts.
+- Swipe right for prices or swipe left again for App Settings.
+
+### Comprehensive App Settings page
+
+The third swipe page centralises the application configuration rather than exposing solar location as a separate settings destination.
+
+It currently contains:
+
+- selected Agile tariff,
+- selected calendar day,
+- Agile-price refresh,
+- solar forecast site,
+- solar forecast refresh,
+- stored PV-array information,
+- Agile and solar source/status information.
+
+The gear button on the Solar Forecast screen opens this same App Settings page.
 
 ### Solar site setup
 
-Solar forecasts require a site latitude and longitude. On the Solar Forecast screen, open the gear button to access **Solar Site** settings.
+Within App Settings, choose **Set solar site** or **Change solar site**.
 
-The site can be set in two ways:
+The site can be configured by:
 
-1. Search by **place name or postcode** using the Open-Meteo geocoding API, then select the best match.
-2. Enter **latitude and longitude manually**.
+1. searching by place name or postcode using Open-Meteo geocoding, or
+2. entering latitude and longitude manually.
 
-The selected site name and coordinates are stored locally on the device.
+The selected site name and coordinates are stored locally. The current implementation does not request iPhone GPS permission.
 
-The current implementation does **not** request the iPhone's GPS location permission. Site discovery is performed through place/postcode search or manual coordinate entry.
+### Solar PV array settings
+
+The app now stores PV-array information for later use in generation forecasting/optimisation.
+
+Available fields are:
+
+- array name,
+- rated peak power in kWp,
+- number of panels,
+- panel rating in watts each,
+- panel tilt from horizontal in degrees,
+- azimuth in degrees,
+- inverter maximum AC output in kW,
+- estimated system losses in percent,
+- free-text notes.
+
+Azimuth convention:
+
+```text
+0°   = North
+90°  = East
+180° = South
+270° = West
+```
+
+If panel count and panel rating are entered, the settings screen also displays the implied panel-array peak capacity in kWp.
+
+These fields are **stored only at present**. They do not yet modify the W/m² solar irradiance forecast. A later PV model can use them to estimate electrical generation.
 
 ---
 
@@ -66,30 +111,28 @@ AgilePriceWheelApp
         v
 SwipeDashboardView
         |
-        +-----------------------------+
-        |                             |
-        v                             v
-ContentView                    SolarForecastView
-        |                             |
-        v                             v
-AgileViewModel                 SolarForecastModel
-        |                             |
-        +--> OctopusAPI               +--> SolarForecastAPI
-        |       |                     |       |
-        |       v                     |       +--> Open-Meteo Forecast API
-        |  Octopus REST API           |       +--> Open-Meteo Geocoding API
-        |                             |
-        +--> AgileCacheStore          +--> SolarForecastCache
-                |                             |
-                v                             v
-       Application Support JSON      Application Support JSON
+        +------------------+------------------+
+        |                  |                  |
+        v                  v                  v
+ContentView        SolarForecastView     AppSettingsView
+        |                  |                  |
+        v                  v                  +--> AppSettingsStore
+AgileViewModel     SolarForecastModel          |
+        |                  |                   +--> UserDefaults
+        +--> OctopusAPI    +--> SolarForecastAPI
+        |       |          |       |
+        |       v          |       +--> Open-Meteo Forecast API
+        |  Octopus REST    |       +--> Open-Meteo Geocoding API
+        |                  |
+        +--> AgileCache    +--> SolarForecastCache
 ```
 
-The two data pipelines are intentionally separate:
+The main state areas are intentionally separated:
 
-- `AgileViewModel` owns electricity-price state.
-- `SolarForecastModel` owns solar-site and irradiance state.
-- `SwipeDashboardView` keeps the two screens tied to the same selected calendar day.
+- `AgileViewModel` owns electricity tariff/rate state.
+- `SolarForecastModel` owns solar-site/irradiance state.
+- `AppSettingsStore` owns persistent PV-array settings.
+- `SwipeDashboardView` keeps all three pages coordinated and keeps price/solar data on the same selected day.
 
 ---
 
@@ -101,77 +144,43 @@ Application entry point. Creates the shared `AgileViewModel` and starts `SwipeDa
 
 ### `SwipeDashboardView.swift`
 
-Top-level navigation between electricity prices and solar forecast.
+Top-level three-page navigation.
 
 It:
 
-- displays `ContentView` for electricity prices,
-- displays the solar screen after a left swipe,
-- returns to prices after a right swipe,
-- reloads solar data when the Agile selected date changes,
-- presents Solar Site settings,
-- presents the in-app documentation from the solar screen.
+- displays `ContentView` for Agile Prices,
+- displays `SolarForecastView` after the first left swipe,
+- displays `AppSettingsView` after the second left swipe,
+- supports reverse right swipes,
+- owns `SolarForecastModel` and `AppSettingsStore`,
+- reloads solar data when the selected Agile date changes,
+- presents the in-app documentation.
 
-Horizontal swipe detection intentionally requires a strong horizontal gesture so ordinary vertical scrolling is not treated as page navigation.
+Horizontal swipe detection requires a strongly horizontal gesture so normal vertical scrolling is not treated as page navigation.
 
 ### `ContentView.swift`
 
-Main electricity-price dashboard.
-
-Responsibilities include:
-
-- tariff/date settings,
-- price wheel,
-- price chart,
-- tariff/details display,
-- selected/lowest/highest/average summaries,
-- server/local-cache status,
-- Octopus refresh,
-- access to the in-app documentation.
+Main electricity-price dashboard, including price wheel, summaries, chart/details, source status and documentation access.
 
 ### `PriceWheelView.swift`
 
-Renders the interactive Agile price wheel using SwiftUI drawing primitives.
-
-The sector count is based on the actual number of returned settlement periods rather than a fixed 48.
+Interactive Agile price wheel. The sector count follows the actual number of settlement periods rather than assuming 48.
 
 ### `AgileViewModel.swift`
 
-Central state manager for Agile tariff and rate data.
-
-It publishes:
-
-- available tariffs,
-- selected tariff,
-- selected date,
-- rates,
-- selected rate,
-- loading state,
-- errors/sync messages,
-- data origin (server or local cache).
-
-Startup is offline-first: cached data is restored immediately when available, followed by an attempted server refresh.
+Owns tariff/date/rate state, source status, offline-first loading and Octopus refresh behaviour.
 
 ### `OctopusAPI.swift`
 
-Native `URLSession` client for the public Octopus Energy REST API.
-
-It dynamically discovers Agile products and tariffs and retrieves half-hour standard unit rates.
-
-No Octopus account credentials or API key are required for the public endpoints used by this application.
+Native `URLSession` client for public Octopus Energy product/tariff/rate endpoints.
 
 ### `AgileCacheStore.swift`
 
-Persists:
-
-- the latest tariff catalogue,
-- each previously downloaded tariff/date rate set.
-
-Files are JSON snapshots stored beneath the application's Application Support directory.
+Persists tariff catalogue and downloaded tariff/date rate sets as JSON in Application Support.
 
 ### `Models.swift`
 
-Octopus API models and app tariff/rate models, including UK region-name mapping.
+Octopus API and application tariff/rate data models plus UK region names.
 
 ### `PriceColour.swift`
 
@@ -179,41 +188,49 @@ Calculates the day-relative electricity-price colour scale and descriptive bands
 
 ### `SolarForecast.swift`
 
-Contains the solar data layer:
+Solar data layer containing:
 
-- `SiteLocation`
-- `SolarHalfHour`
-- `SiteSearchResult`
-- `SolarForecastModel`
-- `SolarForecastAPI`
-- `SolarForecastCache`
-- Open-Meteo response models and error handling.
+- `SiteLocation`,
+- `SolarHalfHour`,
+- `SiteSearchResult`,
+- `SolarForecastModel`,
+- `SolarForecastAPI`,
+- `SolarForecastCache`,
+- Open-Meteo response models/error handling.
 
 ### `SolarForecastView.swift`
 
-Contains the solar dashboard and interactive `SolarWheelView`.
-
-The solar wheel uses one sector per half-hour and allows touch/drag selection in the same style as the electricity wheel.
+Solar dashboard and interactive `SolarWheelView`.
 
 ### `SolarSiteSettingsView.swift`
 
-Solar-site configuration interface.
+Site search/manual coordinate editor launched from App Settings.
 
-Supports:
+### `AppSettingsStore.swift`
 
-- place/postcode search,
-- selecting an Open-Meteo geocoding result,
-- manual latitude/longitude entry,
-- clearing the site,
-- explicit solar refresh.
+Persistent general settings store for PV-array configuration.
+
+Values are stored in `UserDefaults`. Parsed numeric helper properties are also provided so a later PV-output model can use the configuration directly.
+
+### `AppSettingsView.swift`
+
+Third swipe page containing the central settings UI for:
+
+- Agile tariff,
+- selected day,
+- Agile refresh,
+- solar site,
+- solar refresh,
+- PV-array details,
+- stored-data/source status.
 
 ### `DocumentationView.swift`
 
-Comprehensive user-facing guide stored inside the app, so it remains available offline.
+User-facing guide stored in the app so it remains available offline.
 
 ### `DOCUMENTATION_POLICY.md`
 
-Defines the project rule that functional changes must update both the repository documentation and the in-app documentation.
+Defines the rule that functional changes must update both repository and in-app documentation.
 
 ---
 
@@ -225,54 +242,35 @@ Base URL:
 https://api.octopus.energy/v1/
 ```
 
-The app discovers products and tariffs dynamically instead of embedding a single historical Agile product code.
+Agile products/tariffs are discovered dynamically. Half-hour standard unit rates are requested for the selected UK calendar day using UTC ISO-8601 bounds.
 
-For a selected tariff, rates are retrieved from an endpoint of the form:
-
-```text
-/v1/products/{product-code}/electricity-tariffs/{tariff-code}/standard-unit-rates/
-```
-
-Requests use UTC ISO-8601 period bounds derived from the selected UK local calendar day.
-
-The API client follows pagination and sorts the returned periods chronologically.
+The public endpoints used here do not require an Octopus account number or API key.
 
 ---
 
 ## Solar forecast API
 
-Solar data is obtained from the Open-Meteo Forecast API:
+Solar data is obtained from Open-Meteo:
 
 ```text
 https://api.open-meteo.com/v1/forecast
 ```
 
-The app requests:
+The app requests 15-minute `shortwave_radiation` with `Europe/London` timezone handling and combines consecutive 15-minute values into half-hour values.
 
-```text
-minutely_15=shortwave_radiation
-timezone=Europe/London
-timeformat=unixtime
-start_date=YYYY-MM-DD
-end_date=YYYY-MM-DD
-```
+The displayed value is global horizontal irradiance in **W/m²**. It is not yet predicted PV electrical output.
 
-Open-Meteo defines shortwave solar radiation as global horizontal irradiance at the surface, expressed in **W/m²**.
+Current irradiance does not yet account for the configured array's:
 
-The API provides 15-minute radiation values. Agile Price Wheel combines consecutive 15-minute values into half-hour values so that the solar display aligns naturally with Agile half-hour settlement periods.
-
-The result is a weather-model irradiance forecast, not predicted PV electrical output. It does not account for a particular array's:
-
-- panel area,
-- panel efficiency,
-- roof pitch,
+- kWp,
+- panel count/rating,
+- tilt,
 - azimuth,
-- inverter limits,
-- shading,
-- clipping,
-- system losses.
+- inverter limit,
+- losses,
+- shading/clipping.
 
-Those factors could be added in a future PV-output model.
+Those settings are now captured specifically so a later PV-generation model can use them.
 
 ---
 
@@ -284,26 +282,20 @@ Location search uses:
 https://geocoding-api.open-meteo.com/v1/search
 ```
 
-A user can enter a town, village or postcode. Returned search results include latitude and longitude, and choosing one stores those coordinates as the solar site.
+A user can enter a place or postcode and select a result, or enter coordinates manually.
 
-Manual coordinate entry is also available and validates:
+Manual validation accepts:
 
 - latitude: `-90...90`
 - longitude: `-180...180`
 
-No device GPS permission is required by the current implementation.
+No live device GPS permission is required in the current implementation.
 
 ---
 
 ## UK daylight-saving handling
 
-The application uses a Gregorian calendar configured to:
-
-```text
-Europe/London
-```
-
-The end of a selected day is calculated as the next local calendar day, not by blindly adding 24 hours.
+The application uses `Europe/London` calendar logic.
 
 Therefore:
 
@@ -311,32 +303,23 @@ Therefore:
 - spring clock change: 46 half-hours,
 - autumn clock change: 50 half-hours.
 
-Both price and solar displays use the actual data count returned for the selected day.
+Both electricity and solar displays use the actual returned period count.
 
 ---
 
 ## Offline behaviour and caching
 
-The application is designed to remain useful without a network connection.
-
 ### Electricity cache
 
-`AgileCacheStore` stores:
-
-- the latest tariff catalogue,
-- every successfully downloaded tariff/date set of rates viewed by the user.
+`AgileCacheStore` stores the latest tariff catalogue and each successfully downloaded tariff/date rate set.
 
 ### Solar cache
 
-`SolarForecastCache` stores every successfully downloaded site/date solar forecast.
-
-Solar cache filenames are keyed using the site coordinates and date, so forecasts from different sites do not overwrite one another.
+`SolarForecastCache` stores each successfully downloaded site/date solar forecast. Cache keys include site coordinates and date.
 
 ### Source indicators
 
-Both data types explicitly indicate their source.
-
-Typical electricity labels:
+Both pipelines expose their source, for example:
 
 ```text
 SERVER DATA · updated 21:15
@@ -344,34 +327,33 @@ LOCAL CACHE · saved 12 Sep 16:42
 NO DATA
 ```
 
-Typical solar labels:
-
-```text
-SERVER DATA · updated 21:15
-LOCAL CACHE · saved 12 Sep 16:42
-NO SOLAR DATA
-```
-
-If a server refresh fails but a cached copy exists, the cached copy remains displayed.
-
-Offline mode cannot create data that has never previously been downloaded.
+Existing cached data remains displayed when a refresh fails.
 
 ---
 
 ## Persistence
 
-`UserDefaults` stores lightweight preferences such as:
+`UserDefaults` stores lightweight preferences/settings including:
 
-- selected Agile tariff code,
-- selected solar-site name and coordinates.
+- selected Agile tariff,
+- selected solar-site name and coordinates,
+- PV-array configuration.
 
-Application Support stores JSON cache files for:
+Application Support stores JSON cache files for tariff metadata, Agile rates and solar forecasts.
 
-- tariff metadata,
-- Agile rates,
-- solar forecasts.
+PV-array settings are intentionally persistent even though they are not yet used in the irradiance calculation.
 
-Cache write failures are non-fatal; live server data must remain usable even if persistence fails.
+---
+
+## Privacy
+
+The app does not require Octopus credentials, API key, account number, MPAN, meter serial number or payment details.
+
+Configured solar-site coordinates are sent to Open-Meteo for forecast requests.
+
+PV-array information is currently stored locally on the device and is not sent to Octopus or Open-Meteo.
+
+The current implementation does not request access to the phone's live GPS location.
 
 ---
 
@@ -381,42 +363,17 @@ Cache write failures are non-fatal; live server data must remain usable even if 
 
 **None.**
 
-The project currently has no Swift Package Manager, CocoaPods or Carthage dependencies.
-
 ### Apple frameworks
 
 - SwiftUI
 - Foundation
 - Combine
 
-Networking uses `URLSession`.
-
-JSON encoding/decoding uses `Codable`, `JSONEncoder` and `JSONDecoder`.
-
----
-
-## Privacy
-
-The application does not require:
-
-- Octopus login credentials,
-- Octopus API key,
-- Octopus account number,
-- MPAN,
-- meter serial number,
-- payment information.
-
-For solar forecasts, the configured latitude and longitude are sent to Open-Meteo when requesting forecast data.
-
-The current implementation does not request access to the phone's live GPS location.
+Networking uses `URLSession`; JSON uses `Codable`, `JSONEncoder` and `JSONDecoder`.
 
 ---
 
 ## Setup
-
-### Requirements
-
-The repository currently targets the modern Xcode/iOS toolchain used to create the project. Check the checked-in Xcode project settings for the exact deployment target before building for an older device.
 
 Current project metadata includes:
 
@@ -426,7 +383,7 @@ CURRENT_PROJECT_VERSION = 1
 PRODUCT_BUNDLE_IDENTIFIER = KRH.AgilePriceWheel
 ```
 
-### Clone
+Clone/open:
 
 ```bash
 git clone https://github.com/rhine59/AgilePriceWheel.git
@@ -434,64 +391,41 @@ cd AgilePriceWheel
 open AgilePriceWheel.xcodeproj
 ```
 
-### Signing
+In Xcode, configure **Signing & Capabilities** with automatic signing and the appropriate Apple Developer team.
 
-In Xcode:
+Run with `⌘R` on a simulator or connected iPhone.
 
-1. Select the AgilePriceWheel project.
-2. Select the AgilePriceWheel target.
-3. Open **Signing & Capabilities**.
-4. Leave **Automatically manage signing** enabled.
-5. Select the appropriate Apple Developer team.
-6. Change the bundle identifier if your developer account requires a unique identifier.
-
-No Octopus or Open-Meteo API secret is required by the current public endpoints.
-
-### Run
-
-Select an iPhone simulator or connected iPhone and press:
-
-```text
-⌘R
-```
-
-An internet connection is required for new tariff, price, site-search and solar-forecast data. Previously cached data can be displayed offline.
+An internet connection is needed for new tariff, rate, geocoding and solar-forecast data; cached data remains available offline.
 
 ---
 
 ## User workflow
 
-A typical first-time workflow is:
+Typical setup/use:
 
 1. Launch Agile Price Wheel.
-2. Select the required Agile tariff/region if the default is not correct.
-3. Select the required date.
-4. Review the electricity-price wheel.
-5. Swipe left to Solar Forecast.
-6. Tap the solar gear button.
-7. Search for the installation place/postcode or enter latitude/longitude manually.
-8. Select/save the site.
-9. Return to the solar screen.
-10. Inspect the W/m² value for each half-hour by touching or dragging around the solar wheel.
-11. Swipe right to return to electricity prices.
+2. Review the Agile Prices page.
+3. Swipe left to Solar Forecast.
+4. Swipe left again to App Settings.
+5. Select the required Agile tariff and date.
+6. Configure/change the solar forecast site.
+7. Enter PV-array details for later modelling if desired.
+8. Swipe right to Solar Forecast.
+9. Inspect half-hour W/m² values.
+10. Swipe right again to return to Agile Prices.
 
 ---
 
 ## Refresh behaviour
 
-Electricity data:
+The third App Settings page centralises refresh controls:
 
 ```text
-Settings → Refresh from Octopus
+Refresh Agile prices
+Refresh solar forecast
 ```
 
-Solar data:
-
-```text
-Solar Forecast → gear → Refresh solar forecast
-```
-
-Refresh always attempts the server. Existing cached data is retained if the new request fails.
+Each refresh attempts the online service and retains cached data if the request fails.
 
 ---
 
@@ -500,73 +434,53 @@ Refresh always attempts the server. Existing cached data is retained if the new 
 Before releasing a functional update, test at least:
 
 - project builds cleanly,
-- app launches with network available,
-- app launches without network after data has been cached,
-- tariff discovery,
-- tariff persistence,
-- price wheel selection,
+- app launches online and offline after caching,
+- swipe Prices → Solar → Settings,
+- swipe Settings → Solar → Prices,
+- vertical scrolling does not accidentally change pages,
+- tariff discovery/selection/persistence,
+- selected date synchronises prices and solar,
+- price-wheel interaction,
 - lowest/highest time display,
-- chart/details views,
-- left swipe from price screen,
-- right swipe from solar screen,
-- solar place/postcode search,
-- manual coordinate validation,
-- changing solar site,
-- solar wheel selection,
-- solar server/local-cache indicator,
-- electricity server/local-cache indicator,
-- solar and electricity remain on the same selected date,
-- normal 48-period day,
-- spring 46-period DST day,
-- autumn 50-period DST day,
-- in-app documentation opens from both screens.
-
----
-
-## Distribution
-
-To create a distribution archive:
-
-1. Select the appropriate generic iOS device destination.
-2. Choose **Product → Archive**.
-3. Open the resulting archive in Organizer.
-4. Choose **Distribute App**.
-
-Available distribution methods depend on the active Apple Developer membership and signing configuration.
+- solar site search/manual coordinates,
+- solar-wheel interaction,
+- server/local-cache indicators,
+- PV-array fields persist after app restart,
+- panel count × panel rating displays the expected implied kWp,
+- clearing PV details works,
+- 46/48/50-period DST days,
+- in-app documentation reflects the current controls.
 
 ---
 
 ## Documentation maintenance policy
 
-Documentation is part of the feature implementation, not a later optional task.
+Documentation is part of every functional change.
 
-Every functional change must review and, where applicable, update both:
+Every feature change must review/update both:
 
 ```text
 README.md
 AgilePriceWheel/DocumentationView.swift
 ```
 
-The detailed rule is also recorded in:
-
-```text
-DOCUMENTATION_POLICY.md
-```
-
-Changes affecting controls, calculations, APIs, caching, networking, site settings, privacy, setup, dependencies, build behaviour or distribution are incomplete until the relevant documentation has been updated.
+See also `DOCUMENTATION_POLICY.md`.
 
 ---
 
-## Possible future enhancements
+## Planned future use of PV settings
 
-- Convert irradiance into predicted PV electrical output using array size, efficiency, tilt and azimuth.
-- Add global tilted irradiance for a configured roof orientation.
-- Overlay Agile price and solar irradiance to identify attractive load/charging windows.
-- Add configurable alerts for low prices, negative prices or high solar periods.
-- Add cache management controls.
-- Add widgets and Apple Watch support.
-- Add export to CSV/JSON.
-- Expand automated unit/UI tests.
+The stored PV configuration is intended to support later features such as:
+
+- convert irradiance into estimated PV electrical power,
+- account for tilt and azimuth,
+- apply inverter clipping and system losses,
+- estimate half-hour PV energy in kWh,
+- combine PV generation with Agile prices,
+- identify optimal charging/heating/load windows,
+- compare forecast generation with measured generation.
+
+Until that model is implemented, the Solar Forecast page should continue to be interpreted strictly as **irradiance in W/m²**.
 
 ---
 
@@ -574,6 +488,6 @@ Changes affecting controls, calculations, APIs, caching, networking, site settin
 
 Agile Price Wheel is an independent application using publicly available Octopus Energy and Open-Meteo data. It is not an official application of either service.
 
-Electricity prices should be verified against the user's actual Octopus tariff/account before being relied upon for billing or financial decisions.
+Electricity prices should be verified against the user's actual Octopus tariff/account before billing or financial decisions.
 
 Solar values are weather-model forecasts and may differ materially from measured irradiance or actual PV generation.
