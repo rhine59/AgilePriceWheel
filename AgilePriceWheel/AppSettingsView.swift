@@ -107,20 +107,31 @@ struct AppSettingsView: View {
                     }
                 }
             } footer: {
-                Text("These PV-array details are stored now for later use in predicted-generation calculations. They do not yet alter the W/m² irradiance forecast. Azimuth uses 0° = North, 90° = East, 180° = South and 270° = West.")
+                Text("These details feed the PV Generation and Net Electricity Price pages. Azimuth uses 0° = North, 90° = East, 180° = South and 270° = West. Tilt and azimuth are stored but are not yet applied by the current GHI-based generation model.")
+            }
+
+            Section("Net price optimiser") {
+                TextField("Controllable load power (kW)", text: $settings.optimiserLoadKWText)
+                    .keyboardType(.decimalPad)
+
+                if let loadKW = settings.effectiveOptimiserLoadKW {
+                    LabeledContent("30-minute load energy", value: String(format: "%.3f kWh", loadKW * 0.5))
+                }
+            } footer: {
+                Text("This is the load used by the Net Electricity Price wheel. It defaults to 3.0 kW to match the established nightly email optimiser. Forecast PV is offset against this load before the remaining grid import is costed at the Agile rate.")
             }
 
             Section("Stored data") {
                 LabeledContent("Agile source", value: agileModel.dataSourceLabel)
                 LabeledContent("Solar source", value: solarModel.dataSourceLabel)
 
-                Text("Tariff selection, site coordinates and PV-array settings are stored locally on this device. Previously downloaded electricity and solar data are cached for offline use.")
+                Text("Tariff selection, site coordinates, PV-array settings and optimiser load are stored locally on this device. Previously downloaded electricity and solar data are cached for offline use.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Section("Navigation") {
-                Label("Swipe right to return to Solar Forecast", systemImage: "arrow.right")
+                Label("Swipe right to return to Net Electricity Price", systemImage: "arrow.right")
                     .foregroundStyle(.secondary)
             }
         }
