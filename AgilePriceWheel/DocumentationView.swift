@@ -8,6 +8,9 @@ import SwiftUI
 struct DocumentationView: View {
     @Environment(\.dismiss) private var dismiss
 
+    var showsDoneButton: Bool = true
+    var navigationTitle: String = "Guide & Documentation"
+
     var body: some View {
         NavigationStack {
             List {
@@ -16,10 +19,16 @@ struct DocumentationView: View {
                     Text("Agile and solar information come from public online APIs. PV Generation and Net Electricity Price are calculated locally on the device from those source datasets and your saved settings.")
                 }
 
-                Section("Five swipe pages") {
-                    Text("The page order is: 1. Agile Prices, 2. Solar Forecast, 3. PV Generation, 4. Net Electricity Price, 5. App Settings.")
-                    Text("Swipe left to move forward and right to move back. App Settings is always the final page. Five page dots show your position.")
+                Section("Six swipe pages") {
+                    Text("The page order is: 1. Agile Prices, 2. Solar Forecast, 3. PV Generation, 4. Net Electricity Price, 5. App Settings, 6. User Guide.")
+                    Text("Swipe left to move forward. The User Guide is the final page; swiping left once more from it wraps directly back to Agile Prices, creating a continuous loop.")
+                    Text("Swipe right to move back one page. From the User Guide, a right swipe returns to App Settings. Six page dots show your position.")
                     Text("Gear buttons on Solar Forecast, PV Generation and Net Electricity Price jump directly to App Settings.")
+                }
+
+                Section("User Guide page") {
+                    Text("The complete in-app guide is itself the sixth swipe page, so help is always available by continuing to swipe left through the app.")
+                    Text("The same guide can still be opened as a sheet from the information buttons elsewhere in the app. When opened as a sheet it has a Done button; on the swipe page it does not.")
                 }
 
                 Section("Agile Prices") {
@@ -73,8 +82,9 @@ struct DocumentationView: View {
                 }
 
                 Section("App Settings") {
-                    Text("The fifth and final swipe page centralises tariff, selected day, Agile refresh, solar site, solar refresh, PV-array details and optimiser load.")
+                    Text("The fifth swipe page centralises tariff, selected day, Agile refresh, solar site, solar refresh, PV-array details and optimiser load.")
                     Text("The Net price optimiser section contains Controllable load power (kW). New installs default to 3.0 kW and the screen shows the equivalent normal 30-minute load energy.")
+                    Text("Swipe left from App Settings to reach the User Guide. Swipe right to return to Net Electricity Price.")
                 }
 
                 Section("PV-array fields") {
@@ -90,7 +100,7 @@ struct DocumentationView: View {
                 Section("Server, cache and offline use") {
                     Text("Agile and solar pages show SERVER DATA, LOCAL CACHE or no-data status. Successfully downloaded tariff/rate and solar site/day data are stored locally.")
                     Text("PV Generation and Net Electricity Price are local calculations. If their required Agile and solar source data are cached, they can be recalculated offline.")
-                    Text("Offline mode cannot obtain source data that was never previously downloaded.")
+                    Text("The User Guide is bundled into the app and remains available offline. Offline mode cannot obtain source data that was never previously downloaded.")
                 }
 
                 Section("Refresh") {
@@ -105,7 +115,7 @@ struct DocumentationView: View {
 
                 Section("Technical architecture") {
                     Text("AgileViewModel coordinates OctopusAPI and AgileCacheStore. SolarForecastModel coordinates SolarForecastAPI and SolarForecastCache. AppSettingsStore persists PV and optimiser settings.")
-                    Text("GenerationEstimateView derives PV energy from solar + PV settings. NetEffectivePriceView combines Agile rates, forecast PV generation and the configured load to create NetPriceHalfHour values. SwipeDashboardView coordinates all five pages.")
+                    Text("GenerationEstimateView derives PV energy from solar + PV settings. NetEffectivePriceView combines Agile rates, forecast PV generation and the configured load to create NetPriceHalfHour values. SwipeDashboardView coordinates all six pages, including the wrap from User Guide back to Agile Prices.")
                     Text("The app is native Swift/SwiftUI with no third-party package dependencies.")
                 }
 
@@ -119,10 +129,12 @@ struct DocumentationView: View {
                     Text("README.md is the technical/developer reference, USER_GUIDE.md is the complete operating guide, and this view is the in-app offline guide. Future functional changes must keep all three synchronized with the implementation.")
                 }
             }
-            .navigationTitle("Guide & Documentation")
+            .navigationTitle(navigationTitle)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                if showsDoneButton {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { dismiss() }
+                    }
                 }
             }
         }
