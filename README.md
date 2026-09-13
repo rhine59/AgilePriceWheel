@@ -45,6 +45,10 @@ AgileViewModel
         |        |
         |        +----> Octopus Energy REST API
         |
+        +----> AgileCacheStore
+        |        |
+        |        +----> Application Support JSON cache
+        |
         +----> HalfHourRate / TariffOption models
         |
         v
@@ -110,9 +114,17 @@ When the main view appears, it calls:
 await model.start()
 ```
 
-`start()` loads the available Agile tariffs if they have not already been loaded.
+`start()` now follows an **offline-first** sequence:
 
-After tariff discovery, the view model chooses a default tariff in this order:
+1. restore the last cached tariff list, if available;
+2. restore cached half-hour prices for the selected tariff/date, if available;
+3. immediately make that local data available to the UI;
+4. attempt to refresh tariff metadata from Octopus;
+5. attempt to refresh the selected day's prices from Octopus;
+6. replace the local data with fresh server data when the requests succeed;
+7. keep the cached data on screen if the network or Octopus API is unavailable.
+
+After tariff discovery/restoration, the view model chooses a default tariff in this order:
 
 1. The previously selected tariff stored in `UserDefaults`.
 2. A Yorkshire (`_M`) tariff if available.
@@ -234,23 +246,92 @@ The app follows the API `next` link until all pages of results have been collect
 
 ## Daylight-saving time handling
 
-UK electricity settlement periods must not be assumed to contain exactly 48 half-hours every day.
+UK electricity settlement periods can be 46, 48 or 50 half-hour slots because of BST/GMT transitions. The app computes the local day's start and end using `Calendar.uk` with `Europe/London` time zone, so
+ the price wheel contains the actual number of rates for the day.
 
-`Calendar.uk` uses the `Europe/London` time zone. The end of a day is calculated by adding one calendar day to the local start of day rather than by blindly adding 24 hours.
+---
 
-Consequently:
+## Offline cache
 
-- a normal day contains **48** half-hour periods,
-- the spring clock-change day can contain **46** periods,
-- the autumn clock-change day can contain **50** periods.
+### `AgileCacheStore.swift`
 
-`PriceWheelView` divides the circle by the actual number of rates returned:
+`AgileCacheStore` provides persistent on-device storage for the information required to use the app when no network connection is available.
 
-```swift
-let step = 360.0 / Double(rates.count)
+The cache is stored beneath the app's **Application Support** directory in a dedicated `AgilePriceWheel` folder. It uses JSON files encoded with `JSONEncoder` and decoded with `JSONDecoder`.
+
+The cache contains two kinds of snapshots:
+
+### Tariff snapshot
+
+The latest successfully downloaded tariff list is stored together with the date/time it was saved.
+
+```text
+TariffSnapshot
+├─ savedAt
+└─ tariffs[]
 ```
 
-so the wheel continues to work on DST transition days.
+This keeps the tariff picker and previously selected tariff available offline.
+
+### Rate snapshot
+
+Each successfully downloaded tariff/date combination is stored independently:
+
+```text
+RateSnapshot
+├─ savedAt
+├─ tariffCode
+├─ dayKey
+└▀ rates[]
+```
+
+The filename combines the tariff code and UK local calendar date. This allows prices for multiple days and tariffs that have already been viewed to remain available offline.
+
+Cache writes use atomic file replacement. A cache-write failure is deliberately non-fatal: live server data must still be shown even if local persistence fails.
+
+### Offline-first behaviour
+
+For a selected tariff/date, the app first restores any cached rate snapshot and then tries to obtain a fresh copy from Octopus.
+
+If the server request succeeds :
+
+- the screen displays the new server data;
+- the cache is replaced with the fresh response;
+- the source indicator identifies the information as server data.
+
+If the request fails:
+
+- cached data remains displayed when it exists;
+- the source indicator identifies the information as local cache data;
+- the app shows a non-destructive sync message explaining that refresh failed.
+
+If neither server nor cache data exists for the requested tariff/date, the app shows the normal no-data/error state.
+
+### Data-source indicator
+
+The view model publishes a `DataOrigin` value:
+
+```swift
+.none
+.server(Date)
+.localCache(Date)
+```
+
+The interface converts this into a concise status such as:
+
+```text
+SERVER DATA · updated 21:15
+LOCAL CACHE ·’ saved 12 Sep 16:42
+NO DATA
+```
+
+This makes it explicit whether the currently displayed prices came from Octopus or from persistent local storage.
+
+### Manual refresh
+
+The interface provides an explicit **Refresh from Octopus** action. Refresh attempts to update both the available Agile tariff metadata and the half-hour prices for the currently selected tariff/date.
+
+If the refresh fails, the existing cached information is not discarded.
 
 ---
 
@@ -305,6 +386,7 @@ payment_method
 
 `validFrom` is also used as the unique identifier for a half-hour rate.
 
+
 ---
 
 ## UK electricity regions
@@ -313,7 +395,7 @@ payment_method
 
 The current mapping is:
 
-| Code | Region |
+]| Code | Region |
 |---|---|
 | `_A` | Eastern England |
 | `_B` | East Midlands |
@@ -414,11 +496,13 @@ It is responsible for:
 - displaying selected-rate details,
 - displaying lowest, average and highest prices,
 - presenting the colour legend,
-- presenting API errors.
+- presenting API errors,
+- showing whether displayed information is **SERVER DATA** or **LOCAL CACHE**,
+- providing an explicit **Refresh from Octopus** action.
 
-Changing the date automatically triggers a new rate request.
+Changing the date first attempts to restore a matching cached day and then requests a fresh server copy.
 
-If no prices have yet been published for the selected tariff/date, the view model returns a user-friendly message rather than treating an empty result as a crash condition.
+If no prices have yet been published for the selected tariff/date, the view model returns a user-friendly message rather than treating an empty result as a crash condition. If the server is unreachable but a cached copy exists, that cached copy remains usable.
 
 ---
 
@@ -430,7 +514,7 @@ The repository currently contains an Xcode project created with:
 
 - **Xcode 26.6**
 - **iOS SDK / deployment target 26.5**
-- SwiftUI
+- SwiftUQ
 - Swift
 - automatic code signing
 - iPhone and iPad target device families
@@ -553,9 +637,11 @@ The current version does not request or store:
 - payment information,
 - user location.
 
-The only app preference currently stored locally is the previously selected tariff code.
+The app stores the previously selected tariff code in `UserDefaults`.
 
-All tariff and rate information displayed by the app comes from public Octopus Energy product/rate endpoints.
+It also stores public tariff metadata and previously downloaded half-hour price data in its Application Support directory so that the app can continue to work offline. The cache contains no Octopus credentials or personal account/meter information.
+
+All cached tariff and rate information ultimately originates from the public Octopus Energy product/rate endpoints.
 
 ---
 
@@ -665,8 +751,8 @@ This ensures the data model remains correct over UK daylight-saving transitions.
 **Relative daily colour scale**  
 The wheel is intended to show the best and worst periods of the displayed day at a glance. It is therefore scaled to that day's actual prices rather than fixed arbitrary thresholds.
 
-**No local price database**  
-Agile prices are relatively small datasets and the API is the source of truth, so the current design simply reloads the selected date rather than maintaining a local historical database.
+**Persistent offline cache rather than a database**  
+Agile prices are relatively small datasets, so the app uses simple Codable JSON snapshots in Application Support rather than introducing Core Data or another database. The Octopus API remains the source of truth, while cached tariff/date snapshots provide fast startup and offline operation.
 
 **No third-party libraries**  
 Using standard Apple frameworks keeps the project small and makes it easier to build on a clean Mac with Xcode.
@@ -677,7 +763,7 @@ Using standard Apple frameworks keeps the project small and makes it easier to b
 
 Potential additions include:
 
-- caching previously downloaded daily prices,
+- cache management controls (age/size display and selective clearing),
 - chart and tabular views,
 - notifications for particularly cheap or negative periods,
 - configurable fixed colour thresholds,

@@ -84,7 +84,9 @@ struct RatePage: Decodable {
     let results: [HalfHourRate]
 }
 
-struct HalfHourRate: Decodable, Identifiable, Hashable {
+/// Codable rather than Decodable-only so downloaded rates can also be stored
+/// in the app's persistent offline cache.
+struct HalfHourRate: Codable, Identifiable, Hashable {
     let valueExcVAT: Double
     let valueIncVAT: Double
     let validFrom: Date
