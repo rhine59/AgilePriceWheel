@@ -3,9 +3,9 @@ import SwiftUI
 struct SwipeDashboardView: View {
     @EnvironmentObject private var model: AgileViewModel
     @StateObject private var solarModel = SolarForecastModel()
+    @StateObject private var appSettings = AppSettingsStore()
 
     @State private var page: DashboardPage = .prices
-    @State private var showingSolarSettings = false
     @State private var showingDocumentation = false
 
     var body: some View {
@@ -17,6 +17,9 @@ struct SwipeDashboardView: View {
             case .solar:
                 solarScreen
                     .transition(.move(edge: .trailing))
+            case .settings:
+                settingsScreen
+                    .transition(.move(edge: .trailing))
             }
         }
         .animation(.easeInOut(duration: 0.22), value: page)
@@ -27,13 +30,6 @@ struct SwipeDashboardView: View {
         .onChange(of: model.selectedDate) { _, newDate in
             Task { await solarModel.loadForecast(for: newDate) }
         }
-        .sheet(isPresented: $showingSolarSettings) {
-            SolarSiteSettingsView(
-                solarModel: solarModel,
-                selectedDate: model.selectedDate
-            )
-            .preferredColorScheme(.dark)
-        }
         .sheet(isPresented: $showingDocumentation) {
             DocumentationView()
                 .preferredColorScheme(.dark)
@@ -42,29 +38,20 @@ struct SwipeDashboardView: View {
 
     private var solarScreen: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.01, green: 0.09, blue: 0.16),
-                    Color(red: 0.015, green: 0.13, blue: 0.21),
-                    Color(red: 0.01, green: 0.08, blue: 0.14)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            dashboardBackground
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
                     HStack {
                         Button {
-                            showingSolarSettings = true
+                            withAnimation { page = .settings }
                         } label: {
                             Image(systemName: "gearshape")
                                 .font(.system(size: 26, weight: .medium))
                                 .foregroundStyle(.orange)
                                 .frame(width: 42, height: 42)
                         }
-                        .accessibilityLabel("Solar site settings")
+                        .accessibilityLabel("App settings")
 
                         Spacer()
 
@@ -95,24 +82,98 @@ struct SwipeDashboardView: View {
                     SolarForecastView(
                         model: solarModel,
                         selectedDate: model.selectedDate,
-                        openSettings: { showingSolarSettings = true }
+                        openSettings: { withAnimation { page = .settings } }
                     )
 
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(Color.white.opacity(0.28))
-                            .frame(width: 7, height: 7)
-                        Circle()
-                            .fill(Color.orange)
-                            .frame(width: 7, height: 7)
-                    }
-                    .padding(.top, 2)
+                    pageDots
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 20)
             }
         }
         .preferredColorScheme(.dark)
+    }
+
+    private var settingsScreen: some View {
+        ZStack {
+            dashboardBackground
+
+            VStack(spacing: 8) {
+                HStack {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 24, weight: .medium))
+                        .foregroundStyle(.orange)
+                        .frame(width: 42, height: 42)
+
+                    Spacer()
+
+                    VStack(spacing: 1) {
+                        Text("App Settings")
+                            .font(.system(size: 28, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.orange)
+                            .minimumScaleFactor(0.75)
+                            .lineLimit(1)
+                        Text("Tariff · site · solar PV array")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(.orange.opacity(0.82))
+                    }
+
+                    Spacer()
+
+                    Button {
+                        showingDocumentation = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 27, weight: .medium))
+                            .foregroundStyle(.orange)
+                            .frame(width: 42, height: 42)
+                    }
+                    .accessibilityLabel("Guide and documentation")
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+
+                AppSettingsView(
+                    agileModel: model,
+                    solarModel: solarModel,
+                    settings: appSettings
+                )
+
+                pageDots
+                    .padding(.bottom, 8)
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private var dashboardBackground: some View {
+        LinearGradient(
+            colors: [
+                Color(red: 0.01, green: 0.09, blue: 0.16),
+                Color(red: 0.015, green: 0.13, blue: 0.21),
+                Color(red: 0.01, green: 0.08, blue: 0.14)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+    }
+
+    private var pageDots: some View {
+        HStack(spacing: 7) {
+            pageDot(.prices)
+            pageDot(.solar)
+            pageDot(.settings)
+        }
+        .padding(.top, 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Page \(page.accessibilityPosition) of 3")
+    }
+
+    private func pageDot(_ target: DashboardPage) -> some View {
+        Circle()
+            .fill(page == target ? Color.orange : Color.white.opacity(0.28))
+            .frame(width: 7, height: 7)
     }
 
     private var horizontalSwipe: some Gesture {
@@ -122,10 +183,24 @@ struct SwipeDashboardView: View {
                 let vertical = value.translation.height
                 guard abs(horizontal) > abs(vertical) * 1.35 else { return }
 
-                if page == .prices && horizontal < -80 {
-                    page = .solar
-                } else if page == .solar && horizontal > 80 {
-                    page = .prices
+                if horizontal < -80 {
+                    switch page {
+                    case .prices:
+                        page = .solar
+                    case .solar:
+                        page = .settings
+                    case .settings:
+                        break
+                    }
+                } else if horizontal > 80 {
+                    switch page {
+                    case .prices:
+                        break
+                    case .solar:
+                        page = .prices
+                    case .settings:
+                        page = .solar
+                    }
                 }
             }
     }
@@ -140,4 +215,13 @@ struct SwipeDashboardView: View {
 private enum DashboardPage: Equatable {
     case prices
     case solar
+    case settings
+
+    var accessibilityPosition: Int {
+        switch self {
+        case .prices: return 1
+        case .solar: return 2
+        case .settings: return 3
+        }
+    }
 }
