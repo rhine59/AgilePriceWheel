@@ -15,6 +15,10 @@ struct DocumentationView: View {
                     Text("The app discovers currently available Agile import tariffs from the public Octopus Energy API rather than relying on a single hard-coded Agile product.")
                 }
 
+                Section("Accessing this guide") {
+                    Text("Tap the information button at the top-right of the main screen at any time to open this Guide & Documentation view. The guide is stored inside the app, so it remains available even when the phone has no network connection.")
+                }
+
                 Section("Using the price wheel") {
                     Text("Touch or drag around the wheel to select a half-hour. The selected price and its start/end time are shown in the centre and in the Chosen slot tile.")
                     Text("The Lowest price and Highest price tiles show both the price and the half-hour in which it applies. Average price is calculated from all published periods for the selected day.")
