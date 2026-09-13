@@ -20,6 +20,9 @@ struct SwipeDashboardView: View {
             case .settings:
                 settingsScreen
                     .transition(.move(edge: .trailing))
+            case .generation:
+                generationScreen
+                    .transition(.move(edge: .trailing))
             }
         }
         .animation(.easeInOut(duration: 0.22), value: page)
@@ -139,8 +142,76 @@ struct SwipeDashboardView: View {
                     settings: appSettings
                 )
 
+                HStack(spacing: 8) {
+                    Text("Swipe right for Solar Forecast")
+                    Image(systemName: "arrow.left.and.right")
+                    Text("left for Generation")
+                }
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.48))
+                .padding(.horizontal, 12)
+
                 pageDots
                     .padding(.bottom, 8)
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private var generationScreen: some View {
+        ZStack {
+            dashboardBackground
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+                    HStack {
+                        Button {
+                            withAnimation { page = .settings }
+                        } label: {
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 26, weight: .medium))
+                                .foregroundStyle(.orange)
+                                .frame(width: 42, height: 42)
+                        }
+                        .accessibilityLabel("App settings")
+
+                        Spacer()
+
+                        VStack(spacing: 1) {
+                            Text("PV Generation")
+                                .font(.system(size: 28, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.orange)
+                                .minimumScaleFactor(0.75)
+                                .lineLimit(1)
+                            Text(dayLabel)
+                                .font(.system(size: 15, weight: .medium, design: .rounded))
+                                .foregroundStyle(.orange.opacity(0.85))
+                        }
+
+                        Spacer()
+
+                        Button {
+                            showingDocumentation = true
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 27, weight: .medium))
+                                .foregroundStyle(.orange)
+                                .frame(width: 42, height: 42)
+                        }
+                        .accessibilityLabel("Guide and documentation")
+                    }
+
+                    GenerationEstimateView(
+                        solarModel: solarModel,
+                        settings: appSettings,
+                        selectedDate: model.selectedDate,
+                        openSettings: { withAnimation { page = .settings } }
+                    )
+
+                    pageDots
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 20)
             }
         }
         .preferredColorScheme(.dark)
@@ -164,10 +235,11 @@ struct SwipeDashboardView: View {
             pageDot(.prices)
             pageDot(.solar)
             pageDot(.settings)
+            pageDot(.generation)
         }
         .padding(.top, 2)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Page \(page.accessibilityPosition) of 3")
+        .accessibilityLabel("Page \(page.accessibilityPosition) of 4")
     }
 
     private func pageDot(_ target: DashboardPage) -> some View {
@@ -190,6 +262,8 @@ struct SwipeDashboardView: View {
                     case .solar:
                         page = .settings
                     case .settings:
+                        page = .generation
+                    case .generation:
                         break
                     }
                 } else if horizontal > 80 {
@@ -200,6 +274,8 @@ struct SwipeDashboardView: View {
                         page = .prices
                     case .settings:
                         page = .solar
+                    case .generation:
+                        page = .settings
                     }
                 }
             }
@@ -216,12 +292,14 @@ private enum DashboardPage: Equatable {
     case prices
     case solar
     case settings
+    case generation
 
     var accessibilityPosition: Int {
         switch self {
         case .prices: return 1
         case .solar: return 2
         case .settings: return 3
+        case .generation: return 4
         }
     }
 }
