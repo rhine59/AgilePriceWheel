@@ -127,7 +127,7 @@ struct GenerationEstimateView: View {
             HStack(spacing: 8) {
                 Text("Swipe right for Solar Forecast")
                 Image(systemName: "arrow.left.and.right")
-                Text("left for App Settings")
+                Text("left for Net Electricity Price")
             }
             .font(.caption2)
             .foregroundStyle(.white.opacity(0.5))
