@@ -1,9 +1,10 @@
 # Documentation maintenance policy
 
-Agile Price Wheel maintains two documentation surfaces:
+Agile Price Wheel maintains three primary documentation surfaces:
 
-1. `README.md` — the comprehensive developer, architecture, setup, dependency, data-flow, caching, build and distribution reference in GitHub.
-2. `AgilePriceWheel/DocumentationView.swift` — the user-facing guide shipped inside the iOS application.
+1. `README.md` — comprehensive developer, architecture, setup, dependency, data-flow, caching, calculation, build and distribution reference in GitHub.
+2. `USER_GUIDE.md` — complete operating guide for end users, including navigation, settings, offline behaviour, troubleshooting and interpretation of displayed values.
+3. `AgilePriceWheel/DocumentationView.swift` — the user-facing guide compiled into the iOS application and available offline.
 
 ## Required rule for future changes
 
@@ -11,9 +12,14 @@ Any change that alters application behaviour must update the relevant documentat
 
 This includes changes to:
 
+- swipe-page order or navigation;
 - user-visible features or controls;
-- price-wheel behaviour or calculations;
+- price-wheel, solar-wheel or generation-wheel behaviour;
 - tariff discovery or Octopus API integration;
+- Open-Meteo forecast/geocoding integration;
+- solar-site settings;
+- PV-array settings;
+- PV-generation calculations or assumptions;
 - network behaviour and error handling;
 - offline caching, persistence or refresh behaviour;
 - server/local data-source indicators;
@@ -22,12 +28,28 @@ This includes changes to:
 - dependencies or frameworks;
 - project setup, signing, building or deployment;
 - file/module architecture;
-- testing or diagnostics procedures.
+- testing, troubleshooting or diagnostics procedures.
 
-Before a release, verify that the README describes the current implementation and that the in-app Guide describes the current user-visible behaviour. Documentation-only wording changes do not require a corresponding code change.
+Before a release, verify that:
+
+- `README.md` describes the current implementation and architecture;
+- `USER_GUIDE.md` accurately describes how a user operates the current app;
+- `DocumentationView.swift` matches the user-visible behaviour and essential guidance available in `USER_GUIDE.md`.
+
+Documentation-only wording changes do not require a corresponding code change.
 
 ## Source of truth
 
-The implementation is authoritative for actual behaviour. `README.md` should explain that implementation comprehensively. `DocumentationView.swift` should explain the parts a user needs while operating the app, including offline behaviour and how to identify whether displayed information is live server data or local cached data.
+The implementation is authoritative for actual behaviour. Documentation must describe the implementation as it exists; documentation must not promise unfinished features.
 
 If implementation and documentation disagree, treat that as a defect and update the documentation and/or implementation together.
+
+## Page-order requirement
+
+The documented swipe order must match `SwipeDashboardView` exactly. The current order is:
+
+```text
+Agile Prices → Solar Forecast → PV Generation → App Settings
+```
+
+Settings is the final swipe page.
