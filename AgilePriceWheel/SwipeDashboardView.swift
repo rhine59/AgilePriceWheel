@@ -20,6 +20,9 @@ struct SwipeDashboardView: View {
             case .generation:
                 generationScreen
                     .transition(.move(edge: .trailing))
+            case .netPrice:
+                netPriceScreen
+                    .transition(.move(edge: .trailing))
             case .settings:
                 settingsScreen
                     .transition(.move(edge: .trailing))
@@ -45,41 +48,8 @@ struct SwipeDashboardView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
-                    HStack {
-                        Button {
-                            withAnimation { page = .settings }
-                        } label: {
-                            Image(systemName: "gearshape")
-                                .font(.system(size: 26, weight: .medium))
-                                .foregroundStyle(.orange)
-                                .frame(width: 42, height: 42)
-                        }
-                        .accessibilityLabel("App settings")
-
-                        Spacer()
-
-                        VStack(spacing: 1) {
-                            Text("Solar Forecast")
-                                .font(.system(size: 28, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.orange)
-                                .minimumScaleFactor(0.75)
-                                .lineLimit(1)
-                            Text(dayLabel)
-                                .font(.system(size: 15, weight: .medium, design: .rounded))
-                                .foregroundStyle(.orange.opacity(0.85))
-                        }
-
-                        Spacer()
-
-                        Button {
-                            showingDocumentation = true
-                        } label: {
-                            Image(systemName: "info.circle")
-                                .font(.system(size: 27, weight: .medium))
-                                .foregroundStyle(.orange)
-                                .frame(width: 42, height: 42)
-                        }
-                        .accessibilityLabel("Guide and documentation")
+                    pageHeader(title: "Solar Forecast", subtitle: dayLabel, icon: "gearshape") {
+                        withAnimation { page = .settings }
                     }
 
                     SolarForecastView(
@@ -103,47 +73,40 @@ struct SwipeDashboardView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
-                    HStack {
-                        Button {
-                            withAnimation { page = .settings }
-                        } label: {
-                            Image(systemName: "gearshape")
-                                .font(.system(size: 26, weight: .medium))
-                                .foregroundStyle(.orange)
-                                .frame(width: 42, height: 42)
-                        }
-                        .accessibilityLabel("App settings")
-
-                        Spacer()
-
-                        VStack(spacing: 1) {
-                            Text("PV Generation")
-                                .font(.system(size: 28, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.orange)
-                                .minimumScaleFactor(0.75)
-                                .lineLimit(1)
-                            Text(dayLabel)
-                                .font(.system(size: 15, weight: .medium, design: .rounded))
-                                .foregroundStyle(.orange.opacity(0.85))
-                        }
-
-                        Spacer()
-
-                        Button {
-                            showingDocumentation = true
-                        } label: {
-                            Image(systemName: "info.circle")
-                                .font(.system(size: 27, weight: .medium))
-                                .foregroundStyle(.orange)
-                                .frame(width: 42, height: 42)
-                        }
-                        .accessibilityLabel("Guide and documentation")
+                    pageHeader(title: "PV Generation", subtitle: dayLabel, icon: "gearshape") {
+                        withAnimation { page = .settings }
                     }
 
                     GenerationEstimateView(
                         solarModel: solarModel,
                         settings: appSettings,
                         selectedDate: model.selectedDate,
+                        openSettings: { withAnimation { page = .settings } }
+                    )
+
+                    pageDots
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 20)
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private var netPriceScreen: some View {
+        ZStack {
+            dashboardBackground
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+                    pageHeader(title: "Net Electricity Price", subtitle: dayLabel, icon: "gearshape") {
+                        withAnimation { page = .settings }
+                    }
+
+                    NetEffectivePriceView(
+                        agileModel: model,
+                        solarModel: solarModel,
+                        settings: appSettings,
                         openSettings: { withAnimation { page = .settings } }
                     )
 
@@ -175,7 +138,7 @@ struct SwipeDashboardView: View {
                             .foregroundStyle(.orange)
                             .minimumScaleFactor(0.75)
                             .lineLimit(1)
-                        Text("Tariff · site · solar PV array")
+                        Text("Tariff · site · PV array · optimiser load")
                             .font(.system(size: 14, weight: .medium, design: .rounded))
                             .foregroundStyle(.orange.opacity(0.82))
                     }
@@ -203,7 +166,7 @@ struct SwipeDashboardView: View {
 
                 HStack(spacing: 8) {
                     Image(systemName: "chevron.right")
-                    Text("Swipe right to return to PV Generation")
+                    Text("Swipe right to return to Net Electricity Price")
                 }
                 .font(.caption2)
                 .foregroundStyle(.white.opacity(0.48))
@@ -214,6 +177,48 @@ struct SwipeDashboardView: View {
             }
         }
         .preferredColorScheme(.dark)
+    }
+
+    private func pageHeader(
+        title: String,
+        subtitle: String,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        HStack {
+            Button(action: action) {
+                Image(systemName: icon)
+                    .font(.system(size: 26, weight: .medium))
+                    .foregroundStyle(.orange)
+                    .frame(width: 42, height: 42)
+            }
+            .accessibilityLabel("App settings")
+
+            Spacer()
+
+            VStack(spacing: 1) {
+                Text(title)
+                    .font(.system(size: 28, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.orange)
+                    .minimumScaleFactor(0.72)
+                    .lineLimit(1)
+                Text(subtitle)
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .foregroundStyle(.orange.opacity(0.85))
+            }
+
+            Spacer()
+
+            Button {
+                showingDocumentation = true
+            } label: {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 27, weight: .medium))
+                    .foregroundStyle(.orange)
+                    .frame(width: 42, height: 42)
+            }
+            .accessibilityLabel("Guide and documentation")
+        }
     }
 
     private var dashboardBackground: some View {
@@ -234,11 +239,12 @@ struct SwipeDashboardView: View {
             pageDot(.prices)
             pageDot(.solar)
             pageDot(.generation)
+            pageDot(.netPrice)
             pageDot(.settings)
         }
         .padding(.top, 2)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Page \(page.accessibilityPosition) of 4")
+        .accessibilityLabel("Page \(page.accessibilityPosition) of 5")
     }
 
     private func pageDot(_ target: DashboardPage) -> some View {
@@ -261,6 +267,8 @@ struct SwipeDashboardView: View {
                     case .solar:
                         page = .generation
                     case .generation:
+                        page = .netPrice
+                    case .netPrice:
                         page = .settings
                     case .settings:
                         break
@@ -273,8 +281,10 @@ struct SwipeDashboardView: View {
                         page = .prices
                     case .generation:
                         page = .solar
-                    case .settings:
+                    case .netPrice:
                         page = .generation
+                    case .settings:
+                        page = .netPrice
                     }
                 }
             }
@@ -291,6 +301,7 @@ private enum DashboardPage: Equatable {
     case prices
     case solar
     case generation
+    case netPrice
     case settings
 
     var accessibilityPosition: Int {
@@ -298,7 +309,8 @@ private enum DashboardPage: Equatable {
         case .prices: return 1
         case .solar: return 2
         case .generation: return 3
-        case .settings: return 4
+        case .netPrice: return 4
+        case .settings: return 5
         }
     }
 }
