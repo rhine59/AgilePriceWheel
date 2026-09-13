@@ -2,38 +2,38 @@
 
 Agile Price Wheel is a native SwiftUI iPhone/iPad application for viewing Octopus Energy Agile electricity prices as an interactive 24-hour price wheel.
 
-The app discovers currently available Octopus Agile import tariffs directly from the public Octopus Energy REST API, allows the user to select the appropriate regional tariff, downloads the half-hour unit rates for a selected UK calendar day, and presents those prices visually so that low- and high-cost periods can be identified quickly.
+The app discovers currently available Octopus Agile import tariffs from the public Octopus Energy REST API, downloads the published half-hour prices for a selected UK calendar day, displays them visually, and caches previously downloaded tariff/rate data for offline use.
 
-The project is intentionally lightweight. It is written entirely in Swift/SwiftUI and currently has no third-party package dependencies.
-
----
-
-## Features
-
-- Discovers currently available **Octopus Energy Agile import tariffs** dynamically rather than relying on one hard-coded product or tariff.
-- Supports all UK Octopus electricity regions represented by the Agile tariff data.
-- Downloads the published **half-hourly unit rates including and excluding VAT**.
-- Displays the day's prices as an interactive circular price wheel.
-- Uses a relative colour scale:
-  - **Blue** for negative prices.
-  - **Green** for the cheaper positive prices of the selected day.
-  - Green progresses through yellow/orange to **red** for the most expensive prices.
-- Touch or drag around the wheel to select a half-hour period.
-- Displays the selected period's price and time.
-- Calculates the daily:
-  - lowest price,
-  - average price,
-  - highest price.
-- Remembers the last selected tariff using `UserDefaults`.
-- Uses the **Europe/London** calendar and correctly handles UK daylight-saving transitions, including days containing **46, 48 or 50 half-hour periods**.
-- Includes loading and error handling for tariff and price retrieval.
-- Includes SwiftUI accessibility information for the price wheel.
+The project is deliberately lightweight: it uses only Apple frameworks and has no third-party package dependencies.
 
 ---
 
-## How the application works
+## Main features
 
-The application follows a simple SwiftUI model/view structure:
+- Dynamic discovery of currently available **Octopus Energy Agile import tariffs**.
+- Support for all UK Octopus electricity regions represented by the API.
+- Half-hour prices including and excluding VAT.
+- Interactive circular price wheel.
+- Tap/drag selection of individual half-hour periods.
+- Selected price plus start/end time.
+- Lowest price plus its half-hour time.
+- Highest price plus its half-hour time.
+- Daily average price.
+- Relative day colour scale:
+  - blue for negative prices,
+  - green for cheaper positive periods,
+  - yellow/orange through to red for more expensive periods.
+- Prices, Chart and Details views.
+- Offline-first persistent cache.
+- Manual **Refresh from Octopus** action.
+- Clear **SERVER DATA**, **LOCAL CACHE** or **NO DATA** status.
+- UK BST/GMT handling for 46-, 48- and 50-period days.
+- In-app **Guide & Documentation** available from the information button.
+- No Octopus login, API key, MPAN or meter credentials required for the public tariff/rate endpoints used by the app.
+
+---
+
+## Architecture
 
 ```text
 AgilePriceWheelApp
@@ -49,19 +49,17 @@ AgileViewModel
         |        |
         |        +----> Application Support JSON cache
         |
-        +----> HalfHourRate / TariffOption models
+        +----> TariffOption / HalfHourRate models
         |
         v
 ContentView
         |
         +----> PriceWheelView
-        |
         +----> PriceColourScale
+        +----> DocumentationView
 ```
 
-`AgileViewModel` is the central application state. It obtains tariff and rate data through `OctopusAPI`, publishes the results to SwiftUI, and keeps track of the selected tariff, selected date and selected half-hour rate.
-
-The views do not make network requests directly.
+`AgileViewModel` is the central state controller. The SwiftUI views do not perform network requests directly.
 
 ---
 
@@ -69,158 +67,161 @@ The views do not make network requests directly.
 
 ### `AgilePriceWheelApp.swift`
 
-This is the application entry point.
-
-It creates one `AgileViewModel` as a `@StateObject` and injects it into the SwiftUI view hierarchy as an environment object:
-
-```swift
-@StateObject private var model = AgileViewModel()
-```
-
-`ContentView` and its child views therefore share the same application state.
-
----
+Application entry point. It creates one `AgileViewModel` as a `@StateObject` and injects it into the SwiftUI hierarchy through `.environmentObject(...)`.
 
 ### `AgileViewModel.swift`
 
-`AgileViewModel` contains the application state and coordinates the user interface with the Octopus API.
+Owns the application state and coordinates:
 
-It is declared `@MainActor` because its published properties drive the SwiftUI interface.
+- available tariffs,
+- selected tariff,
+- selected date,
+- downloaded/cached rates,
+- selected half-hour,
+- loading/error state,
+- server/cache source status,
+- refresh behaviour.
 
-Important published state includes:
+It also calculates daily minimum, maximum and average prices.
 
-- `tariffs` — all discovered Agile tariff choices.
-- `selectedTariff` — the tariff currently being displayed.
-- `selectedDate` — the UK calendar day requested.
-- `rates` — all half-hour rates returned for that day.
-- `selectedRateID` — identifies the selected half-hour period.
-- `isLoadingTariffs` and `isLoadingRates` — loading-state flags.
-- `errorMessage` — a user-displayable error message.
-
-It also calculates:
-
-```swift
-minPrice
-maxPrice
-averagePrice
-selectedRate
-```
-
-### Application startup
-
-When the main view appears, it calls:
-
-```swift
-await model.start()
-```
-
-`start()` now follows an **offline-first** sequence:
-
-1. restore the last cached tariff list, if available;
-2. restore cached half-hour prices for the selected tariff/date, if available;
-3. immediately make that local data available to the UI;
-4. attempt to refresh tariff metadata from Octopus;
-5. attempt to refresh the selected day's prices from Octopus;
-6. replace the local data with fresh server data when the requests succeed;
-7. keep the cached data on screen if the network or Octopus API is unavailable.
-
-After tariff discovery/restoration, the view model chooses a default tariff in this order:
-
-1. The previously selected tariff stored in `UserDefaults`.
-2. A Yorkshire (`_M`) tariff if available.
-3. The first available Agile tariff.
-
-It then automatically downloads the rates for the selected date.
-
-### Tariff persistence
-
-The selected tariff code is saved locally using:
-
-```text
-selectedTariffCode
-```
-
-in `UserDefaults`.
-
-Only the tariff selection is persisted. Downloaded price data is not stored permanently; it is fetched again from Octopus when required.
-
-### Rate selection
-
-After rates are loaded, the app selects:
-
-1. The half-hour containing the current time, if the selected day includes the current time.
-2. Otherwise, the first rate in the returned day.
-
-Touching or dragging around the price wheel updates `selectedRateID`.
-
----
-
-## Octopus Energy API integration
+The view model is `@MainActor` isolated because its published values directly drive SwiftUI.
 
 ### `OctopusAPI.swift`
 
-`OctopusAPI` is the networking layer.
+Networking layer using:
 
-It uses Apple's native:
+- `URLSession`,
+- `URLComponents`,
+- `JSONDecoder`,
+- Swift `async`/`await`.
 
-- `URLSession`
-- `URL`
-- `URLComponents`
-- `JSONDecoder`
-- Swift `async`/`await`
-
-No external networking framework is required.
-
-The base API URL is:
+The base API is:
 
 ```text
 https://api.octopus.energy/v1/
 ```
 
-### Authentication
+It discovers products, retrieves product detail, identifies Agile import tariffs, follows API pagination, and downloads standard unit rates for the requested UK local day.
 
-The product and standard-unit-rate endpoints used by this application are public endpoints. The current implementation therefore does **not** require:
+### `AgileCacheStore.swift`
 
-- an Octopus account number,
-- an Octopus API key,
-- an MPAN,
-- meter serial details,
-- login credentials.
+Persistent offline cache stored under the app's **Application Support** directory.
 
-The app only reads public product and tariff price information.
+It stores:
 
-### Tariff discovery
+- the latest tariff-list snapshot,
+- one rate snapshot for each tariff/date combination successfully downloaded.
 
-The app first obtains the Octopus product catalogue and follows API pagination until all product pages have been retrieved.
+The cache uses Codable JSON files and atomic writes.
 
-Products are filtered so that they:
+### `Models.swift`
 
-- contain `AGILE` in the product code or product name,
-- are import products,
-- belong to Octopus Energy where brand information is supplied,
-- have not passed their `available_to` date.
+Contains the decoded API models and app models, including:
 
-For each matching product, the app retrieves the full product detail and reads:
+- `ProductPage`,
+- `ProductSummary`,
+- `ProductDetail`,
+- `ElectricityTariff`,
+- `TariffOption`,
+- `RatePage`,
+- `HalfHourRate`,
+- UK region-name mapping.
 
-```text
-single_register_electricity_tariffs
-```
+`HalfHourRate` is Codable so rate data can be both decoded from Octopus and encoded into the local cache.
 
-Tariffs that expose a `standard_unit_rates` link are converted into `TariffOption` values.
+### `PriceColour.swift`
 
-This means the application is not tied to one historical Agile product code. A newly available Agile product can be discovered through the API without changing the source code, provided Octopus continues to expose it through the same API structure.
+Implements the day-relative colour scale.
+
+Positive prices are normalised between the selected day's minimum and maximum, then mapped from green through yellow/orange to red. Negative prices are always blue.
+
+The colour scale therefore describes **relative cost within the selected day**, not fixed universal price thresholds.
+
+### `PriceWheelView.swift`
+
+Renders the circular price wheel and handles user interaction.
+
+The wheel uses the actual number of rates returned, so it works with 46, 48 or 50 settlement periods.
+
+Touch/drag position is converted to an angle and then into the corresponding half-hour index. The chosen sector is highlighted and its price/time becomes the selected rate.
+
+### `ContentView.swift`
+
+Main dashboard.
+
+It provides:
+
+- header and source-status indicator,
+- settings button,
+- information/documentation button,
+- Prices tab,
+- Chart tab,
+- Details tab,
+- lowest/highest/average/chosen-slot tiles,
+- tariff/day settings,
+- manual refresh,
+- error/no-data handling.
+
+The information button opens `DocumentationView`.
+
+### `DocumentationView.swift`
+
+User-facing guide shipped inside the app.
+
+It explains:
+
+- how the wheel works,
+- selected/lowest/highest times,
+- colours,
+- tabs,
+- tariff/day selection,
+- server versus local-cache status,
+- manual refresh,
+- offline behaviour and limitations,
+- Octopus API use,
+- privacy/local storage,
+- architecture/dependencies,
+- documentation-maintenance policy.
+
+Because this view is part of the app binary, the guide remains available without a network connection.
 
 ---
 
-## Retrieving half-hour rates
+## Octopus tariff discovery
 
-For the selected tariff, the API client builds an endpoint in the following form:
+The app does not rely on one hard-coded Agile product code.
+
+It retrieves the Octopus product catalogue and keeps products that:
+
+- identify as Agile by code/name,
+- are import products,
+- belong to Octopus Energy where brand metadata is present,
+- are still available.
+
+It then retrieves each matching product's detail and extracts electricity tariffs that expose a `standard_unit_rates` link.
+
+A `TariffOption` contains:
+
+- product code,
+- product name,
+- tariff code,
+- region code,
+- payment method,
+- standing charge including VAT when supplied.
+
+The user's selected tariff code is remembered using `UserDefaults`.
+
+---
+
+## Half-hour rate retrieval
+
+For the selected tariff the app requests:
 
 ```text
 /v1/products/{product-code}/electricity-tariffs/{tariff-code}/standard-unit-rates/
 ```
 
-The request includes:
+with:
 
 ```text
 period_from
@@ -228,559 +229,352 @@ period_to
 page_size=100
 ```
 
-The start and end of the requested day are calculated using a UK calendar configured for:
+The requested day's boundaries are calculated using a `Europe/London` calendar. API timestamps are sent as UTC ISO-8601 values.
 
-```text
-Europe/London
-```
-
-The resulting dates are then sent to the Octopus API as UTC ISO-8601 timestamps.
-
-The app follows the API `next` link until all pages of results have been collected, then:
-
-1. filters the results to the requested local calendar day,
-2. sorts them by `valid_from`,
-3. publishes them to the interface.
+The API client follows pagination until all matching rates have been downloaded, then filters and sorts them by `valid_from`.
 
 ---
 
-## Daylight-saving time handling
+## UK daylight-saving handling
 
-UK electricity settlement periods can be 46, 48 or 50 half-hour slots because of BST/GMT transitions. The app computes the local day's start and end using `Calendar.uk` with `Europe/London` time zone, so
- the price wheel contains the actual number of rates for the day.
+A UK electricity day must not be assumed to contain exactly 48 half-hours.
+
+The application uses a UK calendar configured to `Europe/London` and calculates the end of the selected day by adding one local calendar day to its local start.
+
+Therefore:
+
+- normal day: **48** half-hours,
+- spring clock change: **46** half-hours,
+- autumn clock change: **50** half-hours.
+
+The price wheel divides itself by `rates.count`, so DST days render correctly.
 
 ---
 
-## Offline cache
+## Offline cache and refresh behaviour
 
-### `AgileCacheStore.swift`
+The application is offline-first.
 
-`AgileCacheStore` provides persistent on-device storage for the information required to use the app when no network connection is available.
+### Startup
 
-The cache is stored beneath the app's **Application Support** directory in a dedicated `AgilePriceWheel` folder. It uses JSON files encoded with `JSONEncoder` and decoded with `JSONDecoder`.
+On startup it attempts to:
 
-The cache contains two kinds of snapshots:
+1. load the cached tariff list,
+2. restore the last selected tariff,
+3. load cached rates for the selected tariff/date,
+4. display cached data immediately when available,
+5. contact Octopus,
+6. replace cached data with fresh server data if successful,
+7. keep cached data if the network/server request fails.
 
-### Tariff snapshot
+### Rate snapshots
 
-The latest successfully downloaded tariff list is stored together with the date/time it was saved.
-
-```text
-TariffSnapshot
-├─ savedAt
-└─ tariffs[]
-```
-
-This keeps the tariff picker and previously selected tariff available offline.
-
-### Rate snapshot
-
-Each successfully downloaded tariff/date combination is stored independently:
+Each tariff/day pair is stored independently with:
 
 ```text
 RateSnapshot
 ├─ savedAt
 ├─ tariffCode
 ├─ dayKey
-└▀ rates[]
+└─ rates[]
 ```
 
-The filename combines the tariff code and UK local calendar date. This allows prices for multiple days and tariffs that have already been viewed to remain available offline.
-
-Cache writes use atomic file replacement. A cache-write failure is deliberately non-fatal: live server data must still be shown even if local persistence fails.
-
-### Offline-first behaviour
-
-For a selected tariff/date, the app first restores any cached rate snapshot and then tries to obtain a fresh copy from Octopus.
-
-If the server request succeeds :
-
-- the screen displays the new server data;
-- the cache is replaced with the fresh response;
-- the source indicator identifies the information as server data.
-
-If the request fails:
-
-- cached data remains displayed when it exists;
-- the source indicator identifies the information as local cache data;
-- the app shows a non-destructive sync message explaining that refresh failed.
-
-If neither server nor cache data exists for the requested tariff/date, the app shows the normal no-data/error state.
+This means any tariff/date previously downloaded can later be displayed offline.
 
 ### Data-source indicator
 
-The view model publishes a `DataOrigin` value:
-
-```swift
-.none
-.server(Date)
-.localCache(Date)
-```
-
-The interface converts this into a concise status such as:
+The UI tells the user where the currently displayed data came from:
 
 ```text
-SERVER DATA · updated 21:15
-LOCAL CACHE ·’ saved 12 Sep 16:42
+SERVER DATA · updated <time>
+LOCAL CACHE · saved <date/time>
 NO DATA
 ```
 
-This makes it explicit whether the currently displayed prices came from Octopus or from persistent local storage.
+If a refresh fails while cached data is available, cached information remains on screen.
 
 ### Manual refresh
 
-The interface provides an explicit **Refresh from Octopus** action. Refresh attempts to update both the available Agile tariff metadata and the half-hour prices for the currently selected tariff/date.
+Open **Settings** and choose **Refresh from Octopus**.
 
-If the refresh fails, the existing cached information is not discarded.
+A successful refresh updates both the displayed data and persistent cache. A failed refresh never deliberately deletes valid cached data.
+
+### Offline limitation
+
+The app cannot invent or download a tariff/day that has never previously been cached. An internet connection is required for newly published prices or newly discovered tariffs.
 
 ---
 
-## Data models
+## Main screen behaviour
 
-### `Models.swift`
+### Prices
 
-This file contains the Codable/Decodable data structures used to map the Octopus JSON responses into Swift values.
+The Prices tab shows:
 
-Important types include:
+- interactive wheel,
+- lowest price and its half-hour,
+- highest price and its half-hour,
+- average price,
+- selected/chosen price and half-hour.
 
-### `ProductPage`
+Small time labels are intentionally used in the summary tiles so the existing two-column dashboard layout is preserved.
 
-Represents a paginated product-list response.
+### Chart
 
-### `ProductSummary`
+Lists each half-hour and provides a visual bar representation of the day's price values.
 
-Represents the summary of an Octopus product returned by the products endpoint.
+### Details
 
-### `ProductDetail`
+Shows precise information for the chosen half-hour plus the selected tariff's metadata.
 
-Contains the detailed tariff information for one product.
+---
 
-### `ElectricityTariff`
+## In-app documentation
 
-Contains the tariff code, standing charge and API links.
+Tap the **ⓘ information button** at the top-right of the main dashboard to open **Guide & Documentation**.
 
-### `TariffOption`
+This documentation is local to the app and does not depend on GitHub or a live network connection.
 
-The app-specific representation of a selectable Agile tariff.
+The GitHub `README.md` is the comprehensive developer/technical reference; `DocumentationView.swift` is the user-facing companion.
 
-It contains:
+---
 
-- product code,
-- product name,
-- tariff code,
-- region code,
-- payment method,
-- standing charge including VAT.
+## Documentation maintenance policy
 
-### `HalfHourRate`
-
-Represents one published pricing period:
+The repository also contains:
 
 ```text
-value_exc_vat
-value_inc_vat
-valid_from
-valid_to
-payment_method
+DOCUMENTATION_POLICY.md
 ```
 
-`validFrom` is also used as the unique identifier for a half-hour rate.
+The rule for this project is:
 
+> Any future change that affects features, controls, calculations, API behaviour, caching, networking, setup, dependencies, privacy, build or deployment must update the relevant documentation in the same change.
 
----
-
-## UK electricity regions
-
-`RegionNames` converts Octopus region identifiers into readable names.
-
-The current mapping is:
-
-]| Code | Region |
-|---|---|
-| `_A` | Eastern England |
-| `_B` | East Midlands |
-| `_C` | London |
-| `_D` | Merseyside & North Wales |
-| `_E` | West Midlands |
-| `_F` | North East England |
-| `_G` | North West England |
-| `_H` | Southern England |
-| `_J` | South East England |
-| `_K` | South Wales |
-| `_L` | South West England |
-| `_M` | Yorkshire |
-| `_N` | South Scotland |
-| `_P` | North Scotland |
-
----
-
-## Price colour calculation
-
-### `PriceColour.swift`
-
-`PriceColourScale` calculates colours relative to the prices available for the selected day.
-
-For positive prices:
-
-1. the day's minimum and maximum values are identified,
-2. the price is normalised into a value between 0 and 1,
-3. the SwiftUI hue is moved progressively from green to red.
-
-This deliberately makes the wheel useful as a visual comparison of periods **within the selected day**.
-
-The colours therefore do not represent fixed universal price thresholds. A green sector means that the rate is relatively cheap compared with the other rates in that displayed day.
-
-Negative prices are handled separately and displayed in blue.
-
-The code also assigns descriptive bands:
-
-- Negative price
-- Very low
-- Low
-- Mid-range
-- High
-- Very high
-
----
-
-## Price wheel
-
-### `PriceWheelView.swift`
-
-The price wheel is rendered using SwiftUI `Canvas`.
-
-For each half-hour rate the view:
-
-1. calculates the angular start and end position,
-2. creates a sector `Path`,
-3. fills it using `PriceColourScale`,
-4. draws a subtle separator between sectors.
-
-The sector count is dynamic and is not hard-coded to 48.
-
-### Hour markings
-
-The view checks the actual local time of each rate. Whole-hour periods are given rim marks and selected hour labels are placed around the wheel.
-
-This is preferable to assuming that a particular array index always corresponds to a particular clock time, especially on DST transition days.
-
-### Touch and drag selection
-
-A zero-distance `DragGesture` allows both taps and continuous dragging.
-
-The touch position is converted into an angle using `atan2`. That angle is converted into the corresponding sector index and the selected `HalfHourRate` is updated.
-
-The currently selected sector is drawn with a stronger outline.
-
-### Accessibility
-
-The wheel exposes an accessibility label and an accessibility value describing the selected time range and price in pence per kWh.
-
----
-
-## Main interface
-
-### `ContentView.swift`
-
-`ContentView` is the main SwiftUI screen.
-
-It is responsible for:
-
-- starting data loading,
-- displaying the currently selected tariff,
-- presenting the tariff picker,
-- allowing the date to be changed,
-- refreshing rates,
-- displaying loading states,
-- showing the price wheel,
-- displaying selected-rate details,
-- displaying lowest, average and highest prices,
-- presenting the colour legend,
-- presenting API errors,
-- showing whether displayed information is **SERVER DATA** or **LOCAL CACHE**,
-- providing an explicit **Refresh from Octopus** action.
-
-Changing the date first attempts to restore a matching cached day and then requests a fresh server copy.
-
-If no prices have yet been published for the selected tariff/date, the view model returns a user-friendly message rather than treating an empty result as a crash condition. If the server is unreachable but a cached copy exists, that cached copy remains usable.
-
----
-
-## Setup
-
-### Requirements
-
-The repository currently contains an Xcode project created with:
-
-- **Xcode 26.6**
-- **iOS SDK / deployment target 26.5**
-- SwiftUQ
-- Swift
-- automatic code signing
-- iPhone and iPad target device families
-
-The project currently has:
+At minimum, a functional change should review and update as necessary:
 
 ```text
-MARKETING_VERSION = 1.0
-CURRENT_PROJECT_VERSION = 1
-PRODUCT_BUNDLE_IDENTIFIER = KRH.AgilePriceWheel
+README.md
+AgilePriceWheel/DocumentationView.swift
 ```
 
-> **Important:** the checked-in Xcode project currently sets `IPHONEOS_DEPLOYMENT_TARGET = 26.5`. A device therefore needs to run a compatible iOS version unless that deployment target is deliberately lowered and the project is retested.
-
-### Clone the repository
-
-```bash
-git clone https://github.com/rhine59/AgilePriceWheel.git
-cd AgilePriceWheel
-```
-
-Open:
-
-```text
-AgilePriceWheel.xcodeproj
-```
-
-or from Terminal:
-
-```bash
-open AgilePriceWheel.xcodeproj
-```
-
-### Configure signing
-
-In Xcode:
-
-1. Select the **AgilePriceWheel** project.
-2. Select the **AgilePriceWheel** application target.
-3. Open **Signing & Capabilities**.
-4. Leave **Automatically manage signing** enabled.
-5. Select your Apple Developer team.
-6. If necessary, change the bundle identifier to a value that is unique to your developer account.
-
-No API secret needs to be added to the project.
-
-### Run in the Simulator
-
-1. Select an iPhone simulator from the Xcode destination menu.
-2. Press **Run** (`⌘R`).
-
-The Mac must have internet access so the simulated app can reach the Octopus API.
-
-### Run on a physical iPhone
-
-1. Connect the iPhone to the Mac.
-2. Trust the Mac if prompted.
-3. Enable Developer Mode on the iPhone if required.
-4. Select the iPhone as the Xcode run destination.
-5. Select the correct development team under Signing & Capabilities.
-6. Press **Run** (`⌘R`).
-
-For normal development, Xcode handles the development provisioning profile automatically when automatic signing is enabled.
-
----
-
-## Dependencies
-
-### Third-party dependencies
-
-**None.**
-
-The Xcode project currently contains no Swift Package Manager package product dependencies and requires no CocoaPods or Carthage setup.
-
-There is therefore no separate dependency-installation step such as:
-
-```text
-pod install
-swift package resolve
-npm install
-pip install
-```
-
-### Apple frameworks
-
-The application uses only frameworks supplied by Apple:
-
-- `SwiftUI`
-- `Foundation`
-- `Combine`
-
-Networking is provided by `URLSession`.
-
-JSON decoding is provided by `JSONDecoder`.
-
-Local preference storage is provided by `UserDefaults`.
-
-### External service dependency
-
-The app depends on the availability and continued compatibility of the public Octopus Energy REST API:
-
-```text
-https://api.octopus.energy/v1/
-```
-
-An active internet connection is therefore required for tariff discovery and price retrieval.
-
-The application does not bundle tariff data for offline operation.
+This is part of the definition of done for future updates.
 
 ---
 
 ## Privacy and credentials
 
-The current version does not request or store:
+The current version does **not** request or store:
 
-- Octopus account credentials,
+- Octopus login credentials,
 - Octopus API keys,
-- MPAN numbers,
-- electricity meter serial numbers,
+- account numbers,
+- MPANs,
+- meter serial numbers,
 - payment information,
 - user location.
 
-The app stores the previously selected tariff code in `UserDefaults`.
+The app stores only:
 
-It also stores public tariff metadata and previously downloaded half-hour price data in its Application Support directory so that the app can continue to work offline. The cache contains no Octopus credentials or personal account/meter information.
+- the selected tariff preference in `UserDefaults`,
+- public tariff metadata and public half-hour rates in Application Support for offline use.
 
-All cached tariff and rate information ultimately originates from the public Octopus Energy product/rate endpoints.
+---
+
+## Dependencies
+
+### Third-party packages
+
+**None.**
+
+No Swift Package Manager, CocoaPods or Carthage dependency-installation step is required.
+
+### Apple frameworks
+
+The project uses:
+
+- SwiftUI,
+- Foundation,
+- Combine.
+
+Networking uses `URLSession`; JSON uses `JSONEncoder`/`JSONDecoder`; simple preference persistence uses `UserDefaults`.
+
+### External service
+
+Fresh tariff/rate retrieval depends on availability of the public Octopus Energy REST API.
+
+Cached data and the in-app documentation remain available offline.
+
+---
+
+## Xcode / build setup
+
+The checked-in project was created with Xcode 26.6 and currently contains:
+
+```text
+PRODUCT_BUNDLE_IDENTIFIER = KRH.AgilePriceWheel
+MARKETING_VERSION = 1.0
+CURRENT_PROJECT_VERSION = 1
+```
+
+The checked-in project currently uses an iOS deployment target of **26.5**.
+
+### Clone
+
+```bash
+git clone https://github.com/rhine59/AgilePriceWheel.git
+cd AgilePriceWheel
+open AgilePriceWheel.xcodeproj
+```
+
+### Signing
+
+In Xcode:
+
+1. Select the AgilePriceWheel project.
+2. Select the AgilePriceWheel app target.
+3. Open **Signing & Capabilities**.
+4. Enable **Automatically manage signing**.
+5. Select your Apple Developer team.
+6. Change the bundle identifier if required for another developer account.
+
+No Octopus API secret is required.
+
+### Simulator
+
+Select an iPhone simulator and press:
+
+```text
+⌘R
+```
+
+### Physical iPhone
+
+1. Connect/trust the iPhone.
+2. Enable Developer Mode if required.
+3. Select the device in Xcode.
+4. Confirm signing team.
+5. Press `⌘R`.
+
+---
+
+## Building for distribution
+
+1. Select the appropriate generic iOS/device destination.
+2. Choose **Product → Archive**.
+3. Open the resulting archive in Organizer.
+4. Choose **Distribute App**.
+
+The available distribution choices depend on the Apple Developer membership and signing configuration.
 
 ---
 
 ## Error handling
 
-The API layer defines explicit errors for:
+The API layer provides explicit errors for:
 
-- invalid URL construction,
-- invalid calendar-date calculation,
+- invalid URL creation,
+- date-calculation failure,
 - non-success HTTP responses,
-- JSON decoding failures.
+- JSON decoding failure.
 
-These errors implement `LocalizedError`, allowing readable error descriptions to be shown in the interface.
+If no rates are published for a requested date, the app shows a no-data message.
 
-If the API returns no rate periods for a selected date, the app displays an explanatory message. This is particularly relevant when requesting future Agile prices before Octopus has published them.
+If server refresh fails but cached rates exist, the cached rates remain usable and the data-source indicator identifies them as local data.
 
 ---
 
 ## Concurrency
 
-The application uses Swift structured concurrency (`async`/`await`).
+The app uses Swift structured concurrency (`async`/`await`).
 
-Both `AgileViewModel` and `OctopusAPI` are `@MainActor` isolated in the current implementation.
+`AgileViewModel` and the current API client are MainActor isolated to align with the project's actor-isolation settings and SwiftUI state updates.
 
-The Xcode project also enables Main Actor default isolation. Keeping the model and API client on the same actor avoids Swift concurrency isolation conflicts when decoded application model values are passed directly into UI state.
-
-Network I/O itself is performed asynchronously through `URLSession.data(from:)`, so awaiting an API request does not require manually creating background queues.
+`URLSession` network operations remain asynchronous while being awaited.
 
 ---
 
-## Tests
+## Testing checklist
 
-The Xcode project contains:
+Before a release or significant commit, test at least:
 
-```text
-AgilePriceWheelTests
-AgilePriceWheelUITests
-```
+- successful tariff discovery,
+- selected tariff persistence,
+- current/future date selection,
+- 48-period normal day,
+- 46-period spring DST day,
+- 50-period autumn DST day,
+- touch/drag wheel selection,
+- lowest/highest/selected time labels,
+- negative-price colouring,
+- Prices/Chart/Details tabs,
+- server-data status,
+- manual refresh,
+- cached startup,
+- Airplane Mode/local-cache operation,
+- no-cache/no-network state,
+- in-app Guide & Documentation,
+- README and in-app documentation consistency.
 
-These are the standard unit-test and UI-test targets created with the project.
-
-Further useful tests would include:
-
-- tariff filtering,
-- region-name mapping,
-- colour-scale boundaries,
-- negative-price handling,
-- normal 48-period days,
-- 46-period spring DST days,
-- 50-period autumn DST days,
-- API decoding using saved sample responses,
-- selection of the current half-hour,
-- tariff persistence.
-
----
-
-## Building an archive
-
-To create an archive suitable for distribution:
-
-1. In Xcode select **Any iOS Device (arm64)** or the appropriate generic device destination.
-2. Choose **Product → Archive**.
-3. When the archive completes, Xcode opens **Organizer**.
-4. Select the AgilePriceWheel archive.
-5. Choose **Distribute App**.
-
-Distribution options depend on the Apple Developer account and signing configuration.
-
-An Apple Developer Program membership is required for normal App Store, TestFlight and registered-device distribution workflows.
+Automated unit/UI coverage can be expanded around API decoding, caching, DST handling, colour mapping and interaction.
 
 ---
 
-## Development workflow
+## Git workflow
 
-A typical Git workflow is:
+Typical local workflow:
 
 ```bash
+git pull
 git status
 git add .
 git commit -m "Describe the change"
 git push
 ```
 
-Before committing a release, it is good practice to:
-
-1. build the project,
-2. run it on a simulator or physical device,
-3. test tariff retrieval,
-4. test rate selection,
-5. verify the selected date,
-6. confirm the lowest/average/highest values,
-7. test a future date with unpublished prices,
-8. check a daylight-saving transition day when making date-related changes.
+For functional changes, include documentation updates in the same commit or change set.
 
 ---
 
-## Design notes
-
-A few implementation choices are deliberate:
+## Design decisions
 
 **Dynamic tariff discovery**  
-The application discovers current Agile products instead of embedding one tariff code. This reduces maintenance when Octopus introduces a newer Agile product.
+Avoids tying the app to one historic Agile tariff code.
 
-**UK calendar rather than a fixed 24-hour interval**  
-This ensures the data model remains correct over UK daylight-saving transitions.
+**UK local-day calculation**  
+Handles BST/GMT correctly instead of assuming every day is exactly 24 hours.
 
-**Relative daily colour scale**  
-The wheel is intended to show the best and worst periods of the displayed day at a glance. It is therefore scaled to that day's actual prices rather than fixed arbitrary thresholds.
+**Day-relative price colours**  
+Optimised for quickly finding the cheaper/more expensive periods within the displayed day.
 
-**Persistent offline cache rather than a database**  
-Agile prices are relatively small datasets, so the app uses simple Codable JSON snapshots in Application Support rather than introducing Core Data or another database. The Octopus API remains the source of truth, while cached tariff/date snapshots provide fast startup and offline operation.
+**Simple JSON cache**  
+Agile rate datasets are small, so Codable JSON snapshots avoid unnecessary database complexity while providing reliable offline use.
 
 **No third-party libraries**  
-Using standard Apple frameworks keeps the project small and makes it easier to build on a clean Mac with Xcode.
+Keeps setup, maintenance and dependency risk low.
+
+**Bundled in-app guide**  
+Ensures help remains available when offline and keeps user-facing documentation alongside the code that implements the interface.
 
 ---
 
 ## Possible future enhancements
 
-Potential additions include:
-
-- cache management controls (age/size display and selective clearing),
-- chart and tabular views,
-- notifications for particularly cheap or negative periods,
+- cache-age/size controls and selective cache clearing,
+- cheap/negative-price notifications,
 - configurable fixed colour thresholds,
 - Home Screen widgets,
 - Apple Watch support,
-- automatic selection of a region from a configured postcode,
+- postcode-assisted region selection,
 - comparison of multiple Agile days,
-- integration with EV charging, batteries or smart loads,
-- export of rates to CSV/JSON,
-- more comprehensive automated tests.
+- EV/battery/smart-load integrations,
+- CSV/JSON export,
+- broader automated test coverage.
 
 ---
 
 ## Disclaimer
 
-Agile Price Wheel is an independent application that consumes publicly available Octopus Energy tariff data.
+Agile Price Wheel is an independent application that consumes publicly available Octopus Energy tariff data. It is not an official Octopus Energy application.
 
-It is not an official Octopus Energy application.
-
-Electricity prices displayed by the app should be verified against the user's actual Octopus tariff/account information before they are relied upon for billing or other financial decisions.
+Prices should be checked against the user's actual Octopus tariff/account before being relied upon for billing or other financial decisions.
