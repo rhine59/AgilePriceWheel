@@ -4,13 +4,13 @@ Agile Price Wheel is a native SwiftUI iPhone/iPad application that combines Octo
 
 The app uses only Apple frameworks (`SwiftUI`, `Foundation`, `Combine`) and has no third-party package dependencies.
 
-For operating instructions see `USER_GUIDE.md`. The same user guide is also available inside the app from the information button.
+For operating instructions see `USER_GUIDE.md`. The same complete user guide is built into the app as the final swipe page and can also be opened from the information buttons.
 
 ---
 
 # Main swipe navigation
 
-The application has five horizontal pages, with **App Settings always last**:
+The application has six horizontal pages:
 
 ```text
 1. Agile Prices
@@ -22,11 +22,19 @@ The application has five horizontal pages, with **App Settings always last**:
 4. Net Electricity Price
         ↓ swipe left
 5. App Settings
+        ↓ swipe left
+6. User Guide
+        ↓ swipe left
+1. Agile Prices
 ```
 
-Swipe right to move back in the opposite direction.
+The forward swipe path is therefore circular. Swiping left from the User Guide wraps directly back to Agile Prices.
 
-The five page dots show the current position. The selected date is shared across the price, solar, generation and net-price pages. Gear buttons on the solar, generation and net-price pages jump directly to App Settings.
+Swipe right moves back one page. From the User Guide, a right swipe returns to App Settings. The first Agile Prices page remains the start of the reverse path, so a right swipe from it does not wrap.
+
+Six page dots show the current position. The selected date is shared across the price, solar, generation and net-price pages. Gear buttons on the solar, generation and net-price pages jump directly to App Settings.
+
+The User Guide page is the same `DocumentationView` used by the information-button sheet, but when embedded as the sixth swipe page it has no Done button.
 
 ---
 
@@ -108,7 +116,7 @@ The page contains another interactive half-hour wheel and shows:
 
 ## 5. App Settings
 
-The final swipe page contains all application configuration:
+Contains all application configuration:
 
 - Agile tariff and region;
 - selected date;
@@ -118,6 +126,18 @@ The final swipe page contains all application configuration:
 - PV-array details;
 - optimiser controllable-load power;
 - Agile and solar source status.
+
+Swipe left from App Settings to open the User Guide. Swipe right to return to Net Electricity Price.
+
+## 6. User Guide
+
+The final swipe page is the complete in-app operating guide.
+
+It is bundled into the app and remains available offline. It explains navigation, all four data/optimisation pages, settings, calculations, caching, privacy, limitations and troubleshooting.
+
+Swiping left from the User Guide returns to Agile Prices and starts the page sequence again. Swiping right returns to App Settings.
+
+The same guide is also available as a modal sheet from the information buttons elsewhere in the app.
 
 ---
 
@@ -157,7 +177,7 @@ It does **not** yet subtract ordinary background household demand before allocat
 
 ### Fixed net-price colour bands
 
-The Net Electricity Price wheel uses the same fixed bands as the established email optimiser so colours can be compared between days:
+The Net Electricity Price wheel uses fixed bands so colours can be compared between days:
 
 ```text
 < 0 p/kWh     dark green
@@ -268,13 +288,15 @@ SwipeDashboardView
         |       +--> AppSettingsStore
         |
         +--> AppSettingsView
-                +--> AppSettingsStore
+        |       +--> AppSettingsStore
+        |
+        +--> DocumentationView
 ```
 
 ## Key source files
 
 - `AgilePriceWheelApp.swift` — application entry point.
-- `SwipeDashboardView.swift` — five-page swipe navigation and shared coordination.
+- `SwipeDashboardView.swift` — six-page swipe navigation, circular forward wrap and shared coordination.
 - `ContentView.swift` — Agile dashboard.
 - `PriceWheelView.swift` — Agile wheel rendering/selection.
 - `AgileViewModel.swift` — tariff/rate state and refresh logic.
@@ -285,9 +307,9 @@ SwipeDashboardView
 - `GenerationEstimateView.swift` — generation calculation and wheel.
 - `NetEffectivePriceView.swift` — Agile + PV optimiser calculation and net-price wheel.
 - `AppSettingsStore.swift` — persistent PV and optimiser settings.
-- `AppSettingsView.swift` — final settings page.
+- `AppSettingsView.swift` — settings page.
 - `SolarSiteSettingsView.swift` — geocoding/manual-coordinate editor.
-- `DocumentationView.swift` — in-app user guide.
+- `DocumentationView.swift` — complete in-app User Guide and information-sheet content.
 
 ---
 
@@ -387,6 +409,8 @@ Actual timestamps and period durations are used throughout.
 
 When both required source datasets are cached, PV Generation and Net Electricity Price can be recalculated offline because their calculations are local.
 
+The User Guide is compiled into the app, so it is always available offline.
+
 Offline mode cannot fetch a tariff/day/site that was never previously downloaded.
 
 ---
@@ -452,11 +476,14 @@ If an online refresh fails and a cache exists, the cached source data remains av
 Before release test:
 
 - clean Xcode build;
-- five-page order Prices → Solar → Generation → Net Price → Settings;
-- reverse swiping;
-- Settings remains last;
-- page dots show 1–5 correctly;
-- vertical scrolling does not trigger page changes;
+- six-page order Prices → Solar → Generation → Net Price → Settings → User Guide;
+- left swipe from User Guide wraps to Prices;
+- right swipe from User Guide returns to Settings;
+- right swipe from Prices remains on Prices;
+- six page dots show the current page correctly;
+- User Guide scrolls vertically without accidental page changes;
+- information buttons still open the guide as a modal sheet with Done;
+- vertical scrolling elsewhere does not trigger page changes;
 - tariff discovery/selection;
 - selected date synchronization;
 - 46/48/50-period days;
