@@ -133,6 +133,8 @@ struct AppSettingsView: View {
             Section("Navigation") {
                 Label("Swipe right to return to Net Electricity Price", systemImage: "arrow.right")
                     .foregroundStyle(.secondary)
+                Label("Swipe left to open the User Guide", systemImage: "arrow.left")
+                    .foregroundStyle(.secondary)
             }
         }
         .scrollContentBackground(.hidden)
