@@ -186,7 +186,7 @@
 					};
 				};
 			};
-			buildConfigurationList = F8A623D23052FF8100C622D2 /* Build configuration list for PBXProject "AgilePriceWheel" */;
+			buildConfigurationList = F8A623D23052FF7F00C622D2 /* Build configuration list for PBXProject "AgilePriceWheel" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
