@@ -12,7 +12,9 @@ struct NetPriceHalfHour: Identifiable, Hashable {
     let agilePricePPerKWh: Double
     let loadEnergyKWh: Double
     let forecastGenerationKWh: Double
+    let avoidedGridImportKWh: Double
     let gridImportKWh: Double
+    let pvCostSavingPence: Double
     let slotCostPence: Double
     let effectivePricePPerKWh: Double
 
@@ -59,7 +61,9 @@ struct NetEffectivePriceView: View {
 
             let forecastGenerationKWh = generationPowerKW * hours
             let loadEnergyKWh = loadKW * hours
+            let avoidedGridImportKWh = min(max(forecastGenerationKWh, 0), loadEnergyKWh)
             let gridImportKWh = max(loadEnergyKWh - forecastGenerationKWh, 0)
+            let pvCostSavingPence = avoidedGridImportKWh * rate.valueIncVAT
             let slotCostPence = gridImportKWh * rate.valueIncVAT
             let effectivePrice = loadEnergyKWh > 0 ? slotCostPence / loadEnergyKWh : rate.valueIncVAT
 
@@ -69,7 +73,9 @@ struct NetEffectivePriceView: View {
                 agilePricePPerKWh: rate.valueIncVAT,
                 loadEnergyKWh: loadEnergyKWh,
                 forecastGenerationKWh: forecastGenerationKWh,
+                avoidedGridImportKWh: avoidedGridImportKWh,
                 gridImportKWh: gridImportKWh,
+                pvCostSavingPence: pvCostSavingPence,
                 slotCostPence: slotCostPence,
                 effectivePricePPerKWh: effectivePrice
             )
@@ -197,6 +203,8 @@ struct NetEffectivePriceView: View {
             breakdownRow("Published Agile price", String(format: "%.2f p/kWh", item.agilePricePPerKWh))
             breakdownRow("Configured load energy", String(format: "%.3f kWh", item.loadEnergyKWh))
             breakdownRow("Forecast PV generation", String(format: "%.3f kWh", item.forecastGenerationKWh))
+            breakdownRow("PV used against load", String(format: "%.3f kWh", item.avoidedGridImportKWh))
+            breakdownRow("PV cost saving", String(format: "%.2f p", item.pvCostSavingPence))
             breakdownRow("Expected grid import", String(format: "%.3f kWh", item.gridImportKWh))
             breakdownRow("Expected slot cost", String(format: "%.2f p", item.slotCostPence))
             breakdownRow("Net / adjusted price", String(format: "%.2f p/kWh", item.effectivePricePPerKWh))
@@ -229,7 +237,7 @@ struct NetEffectivePriceView: View {
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.72))
 
-            Text("All forecast PV is assumed available to this controllable load. Normal household background consumption and export income are not separately included, matching the earlier email optimiser assumption.")
+            Text("PV cost saving = min(forecast PV, load energy) × Agile price. This is avoided import cost only; surplus export income is not included. At negative Agile prices the saving can be negative because importing would have been financially beneficial.")
                 .font(.caption2)
                 .foregroundStyle(.white.opacity(0.58))
         }
@@ -341,12 +349,16 @@ struct NetPriceWheelView: View {
                             .font(.system(size: 12, weight: .medium, design: .rounded))
                             .foregroundStyle(.orange.opacity(0.88))
                         Text(String(format: "%.2f", selected.effectivePricePPerKWh))
-                            .font(.system(size: 39, weight: .bold, design: .rounded))
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
                             .monospacedDigit()
                             .foregroundStyle(colour(for: selected.effectivePricePPerKWh))
                         Text("p/kWh")
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
                             .foregroundStyle(.white.opacity(0.72))
+                        Text(String(format: "PV saving %.2f p", selected.pvCostSavingPence))
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundStyle(selected.pvCostSavingPence < 0 ? .red : .green)
+                            .monospacedDigit()
                         Text("\(time(selected.validFrom))–\(time(selected.validTo))")
                             .font(.system(size: 10, weight: .medium, design: .rounded))
                             .foregroundStyle(.orange.opacity(0.82))
@@ -429,7 +441,7 @@ struct NetPriceWheelView: View {
         guard let selected = results.first(where: { $0.id == selectedID }) ?? results.first else {
             return "No net price selected"
         }
-        return "\(time(selected.validFrom)) to \(time(selected.validTo)), \(String(format: "%.2f", selected.effectivePricePPerKWh)) pence per kilowatt hour"
+        return "\(time(selected.validFrom)) to \(time(selected.validTo)), \(String(format: "%.2f", selected.effectivePricePPerKWh)) pence per kilowatt hour, PV saving \(String(format: "%.2f", selected.pvCostSavingPence)) pence"
     }
 
     private func time(_ date: Date) -> String {
