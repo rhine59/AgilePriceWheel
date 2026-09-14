@@ -166,7 +166,7 @@ struct NetEffectivePriceView: View {
             }
 
             HStack(spacing: 8) {
-                Text("Swipe right for PV Generation")
+                Text("Swipe right for PV Forecast")
                 Image(systemName: "arrow.left.and.right")
                 Text("left for Settings")
             }
@@ -400,26 +400,24 @@ struct NetPriceWheelView: View {
         }
     }
 
-    /// Fixed bands copied from the established nightly email optimiser so
-    /// colours remain comparable between days rather than being rescaled daily.
     private func colour(for value: Double) -> Color {
         switch value {
         case ..<0:
-            return Color(red: 0.086, green: 0.396, blue: 0.204)   // #166534
+            return Color(red: 0.086, green: 0.396, blue: 0.204)
         case 0..<5:
-            return Color(red: 0.133, green: 0.773, blue: 0.369)   // #22c55e
+            return Color(red: 0.133, green: 0.773, blue: 0.369)
         case 5..<10:
-            return Color(red: 0.518, green: 0.800, blue: 0.086)   // #84cc16
+            return Color(red: 0.518, green: 0.800, blue: 0.086)
         case 10..<20:
-            return Color(red: 0.745, green: 0.949, blue: 0.392)   // #bef264
+            return Color(red: 0.745, green: 0.949, blue: 0.392)
         case 20..<30:
-            return Color(red: 0.992, green: 0.878, blue: 0.278)   // #fde047
+            return Color(red: 0.992, green: 0.878, blue: 0.278)
         case 30..<40:
-            return Color(red: 0.984, green: 0.573, blue: 0.235)   // #fb923c
+            return Color(red: 0.984, green: 0.573, blue: 0.235)
         case 40..<50:
-            return Color(red: 0.937, green: 0.267, blue: 0.267)   // #ef4444
+            return Color(red: 0.937, green: 0.267, blue: 0.267)
         default:
-            return Color(red: 0.600, green: 0.106, blue: 0.106)   // #991b1b
+            return Color(red: 0.600, green: 0.106, blue: 0.106)
         }
     }
 
