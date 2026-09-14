@@ -80,12 +80,23 @@ struct SwipeDashboardView: View {
                         withAnimation { page = .settings }
                     }
 
-                    GenerationEstimateView(
-                        solarModel: solarModel,
-                        settings: appSettings,
-                        selectedDate: model.selectedDate,
-                        openSettings: { withAnimation { page = .settings } }
-                    )
+                    ZStack {
+                        GenerationEstimateView(
+                            solarModel: solarModel,
+                            settings: appSettings,
+                            selectedDate: model.selectedDate,
+                            openSettings: { withAnimation { page = .settings } }
+                        )
+                        .disabled(!appSettings.hasPVPanelsInstalled)
+                        .opacity(appSettings.hasPVPanelsInstalled ? 1.0 : 0.24)
+
+                        if !appSettings.hasPVPanelsInstalled {
+                            pvDisabledOverlay(
+                                title: "PV generation disabled",
+                                message: "Solar PV panels installed is turned off in App Settings."
+                            )
+                        }
+                    }
 
                     pageDots
                 }
@@ -106,12 +117,23 @@ struct SwipeDashboardView: View {
                         withAnimation { page = .settings }
                     }
 
-                    NetEffectivePriceView(
-                        agileModel: model,
-                        solarModel: solarModel,
-                        settings: appSettings,
-                        openSettings: { withAnimation { page = .settings } }
-                    )
+                    ZStack {
+                        NetEffectivePriceView(
+                            agileModel: model,
+                            solarModel: solarModel,
+                            settings: appSettings,
+                            openSettings: { withAnimation { page = .settings } }
+                        )
+                        .disabled(!appSettings.hasPVPanelsInstalled)
+                        .opacity(appSettings.hasPVPanelsInstalled ? 1.0 : 0.22)
+
+                        if !appSettings.hasPVPanelsInstalled {
+                            pvDisabledOverlay(
+                                title: "Net price disabled",
+                                message: "This wheel needs forecast PV generation. Turn on Solar PV panels installed in App Settings to use it."
+                            )
+                        }
+                    }
 
                     pageDots
                 }
@@ -249,6 +271,32 @@ struct SwipeDashboardView: View {
             }
             .accessibilityLabel("Guide and documentation")
         }
+    }
+
+    private func pvDisabledOverlay(title: String, message: String) -> some View {
+        VStack(spacing: 10) {
+            Image(systemName: "solar-panel")
+                .font(.system(size: 34, weight: .medium))
+            Text(title)
+                .font(.headline)
+            Text(message)
+                .font(.caption)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+            Button("Open App Settings") {
+                withAnimation { page = .settings }
+            }
+            .buttonStyle(.bordered)
+        }
+        .foregroundStyle(.secondary)
+        .padding(18)
+        .frame(maxWidth: 330)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.gray.opacity(0.35), lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
     }
 
     private var dashboardBackground: some View {
