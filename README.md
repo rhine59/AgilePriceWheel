@@ -9,6 +9,7 @@ The app uses Apple frameworks only (`SwiftUI`, `Foundation`, `Combine`, `CoreLoc
 ## Documentation index
 
 - [Main page navigation](#main-page-navigation)
+- [Adaptive screen handling](#adaptive-screen-handling)
 - [Octopus Agile Prices](#octopus-agile-prices)
 - [Solar Forecast](#solar-forecast)
 - [PV Forecast](#pv-forecast)
@@ -20,8 +21,10 @@ The app uses Apple frameworks only (`SwiftUI`, `Foundation`, `Combine`, `CoreLoc
 - [APIs and persistence](#apis-and-persistence)
 - [Build and setup](#build-and-setup)
 - [Testing checklist](#testing-checklist)
-- [`USER_GUIDE.md`](USER_GUIDE.md) — complete user guide
+- [`USER_GUIDE.md`](USER_GUIDE.md) — complete indexed user guide
 - [`docs/INDEX.md`](docs/INDEX.md) — central documentation index
+- [`docs/NOW_BUTTON_AND_CURRENT_TIME.md`](docs/NOW_BUTTON_AND_CURRENT_TIME.md) — current-time behaviour
+- [`docs/SCREEN_LAYOUT_AND_DEVICE_SUPPORT.md`](docs/SCREEN_LAYOUT_AND_DEVICE_SUPPORT.md) — responsive layout rules and test matrix
 - [`DOCUMENTATION_POLICY.md`](DOCUMENTATION_POLICY.md) — documentation maintenance policy
 
 The same core guidance is built into the app in `AgilePriceWheel/DocumentationView.swift`.
@@ -42,7 +45,7 @@ The app defines seven pages:
 
 Horizontal swipe navigation is deliberately disabled so dragging around an interactive wheel cannot accidentally change the main page.
 
-When **Solar PV panels installed** is **ON**, the bottom navigation shows all seven buttons:
+When **Solar PV panels installed** is **ON**, the bottom navigation exposes all seven pages:
 
 | Button | SF Symbol | Page |
 |---|---|---|
@@ -54,13 +57,32 @@ When **Solar PV panels installed** is **ON**, the bottom navigation shows all se
 | Settings | `slider.horizontal.3` | App Settings |
 | Guide | `book.closed.fill` | User Guide |
 
-The PV button deliberately uses the simple filled lightning-bolt SF Symbol so it matches the visual weight and style of the other bottom-navigation controls.
+When **Solar PV panels installed** is **OFF**, **PV**, **Net** and **Save** are hidden, leaving **Prices**, **Solar**, **Settings** and **Guide**. Turning PV back on immediately restores the three hidden pages. Saved PV-array and optimiser values are retained.
 
-When **Solar PV panels installed** is **OFF**, the PV-dependent buttons **PV**, **Net** and **Save** are hidden, leaving four visible buttons: **Prices**, **Solar**, **Settings** and **Guide**. Turning PV back on immediately restores the three hidden pages and buttons. Saved PV-array and optimiser values are retained while PV is off.
+The selected page button is highlighted in orange.
 
-The selected page button is highlighted in orange. The previous Back/Next controls, page dots and page-number indicator remain removed.
+---
 
-The visible metric pages show a **Now** button. With PV enabled there are five metric pages; with PV disabled only Prices and Solar remain visible.
+## Adaptive screen handling
+
+The top-level dashboard is designed to adapt across compact iPhone widths, larger iPhones and regular-width iPad layouts without device-specific positioning.
+
+`SwipeDashboardView` now uses:
+
+- `ViewThatFits(in: .horizontal)` for bottom navigation;
+- normal icon + label navigation when space permits;
+- compact icon + label navigation on narrower widths;
+- icon-only navigation as a final narrow-width fallback while preserving accessibility labels;
+- minimum 44-point navigation tap height;
+- `ViewThatFits` for metric and Settings headers, switching from a single-row header to a stacked layout when necessary;
+- smaller horizontal margins in compact width and wider margins in regular width;
+- centred, width-limited metric content on large displays rather than stretching indefinitely;
+- normal layout flow for the Now button rather than floating overlays;
+- a scalable Octopus Agile Prices title overlay that reserves space for the gear and information controls.
+
+Current content limits are 680 points on compact-width layouts and 760 points on regular-width layouts.
+
+See [`docs/SCREEN_LAYOUT_AND_DEVICE_SUPPORT.md`](docs/SCREEN_LAYOUT_AND_DEVICE_SUPPORT.md) for the detailed rules and release test matrix.
 
 ---
 
@@ -78,19 +100,17 @@ Negative Agile prices are blue. Positive prices use a day-relative green-to-red 
 
 Solar Forecast displays global horizontal irradiance (GHI / shortwave radiation) in W/m² for the selected day. Open-Meteo 15-minute `shortwave_radiation` samples are combined into half-hour values.
 
-The page shows an interactive solar wheel, selected irradiance, peak irradiance/time, daylight average, forecast-site coordinates and source/cache status.
-
 The solar site can be set using Current Location, place/postcode search or manual latitude/longitude. Current-location access is opt-in and When-In-Use only.
 
-When **Use Current Location** is selected, the app reverse-geocodes the returned coordinates using Apple's geocoding service and saves a familiar locality/town name as the solar-site label. If no suitable place name can be resolved, the label falls back to **Current location**. The saved site name can then be edited by the user without changing the latitude or longitude used for the forecast.
+When **Use Current Location** is selected, the app reverse-geocodes the coordinates using Apple's geocoding service and saves a familiar locality/town name as the site label. If no suitable name is resolved, the label falls back to **Current location**. The user can edit the saved site name without changing latitude or longitude.
 
-Solar Forecast remains available even when the property is configured as having no PV panels installed.
+Solar Forecast remains available when PV is disabled.
 
 ---
 
 ## PV Forecast
 
-PV Forecast converts the solar irradiance forecast into a first-order estimate of PV electrical output for the configured array. Each wheel sector represents estimated kWh during that half-hour.
+PV Forecast converts solar irradiance into a first-order estimate of PV electrical output for the configured array.
 
 ```text
 irradiance factor = max(GHI, 0) / 1000
@@ -100,17 +120,13 @@ estimated power = min(loss-adjusted power, inverter maximum)  [if set]
 estimated energy = estimated power × actual period duration
 ```
 
-Rated kWp takes priority. If blank, capacity can be derived from panel count × panel watts / 1000.
+Rated kWp takes priority. If blank, capacity can be derived from panel count × panel watts / 1000. Tilt and azimuth are stored but not yet applied by the current GHI-based model.
 
-Tilt and azimuth are stored but are not yet applied because the current weather input is horizontal GHI rather than plane-of-array irradiance.
-
-PV Forecast is hidden from navigation when **Solar PV panels installed** is off and returns when it is turned on again.
+PV Forecast is hidden from navigation when PV is off and returns when PV is turned on again.
 
 ---
 
 ## Net Electricity Price
-
-This page combines Agile price, forecast PV and a configured controllable load.
 
 ```text
 load energy = load kW × period hours
@@ -120,39 +136,22 @@ slot cost = grid import × Agile price
 net effective price = slot cost / complete load energy
 ```
 
-The selected wheel sector also displays its **PV cost saving** in pence. The same figure appears in the Selected half-hour breakdown.
-
-PV cost saving is:
+The selected wheel sector also displays its **PV cost saving** in pence.
 
 ```text
 avoided grid import = min(forecast PV, load energy)
 PV cost saving = avoided grid import × Agile price
 ```
 
-The default optimiser load is **3.0 kW**. The model assumes forecast PV is first available to the configured controllable load. Household background consumption and export revenue are not separately included.
+The default optimiser load is **3.0 kW**. Household background demand and export revenue are not separately included.
 
-Fixed net-price colour bands remain:
-
-```text
-< 0 p/kWh     dark green
-0–5           green
-5–10          lime
-10–20         light green
-20–30         yellow
-30–40         orange
-40–50         red
->= 50         dark red
-```
-
-Net Electricity Price is hidden from navigation when **Solar PV panels installed** is off and returns when it is turned on again.
+Net Electricity Price is hidden from navigation when PV is off.
 
 ---
 
 ## Cost Savings
 
-Cost Savings is a separate half-hour wheel showing the forecast monetary saving from PV energy that offsets the configured load.
-
-For each half-hour:
+Cost Savings shows the forecast monetary value of PV generation that offsets the configured controllable load.
 
 ```text
 load energy = configured load kW × period hours
@@ -161,20 +160,9 @@ avoided grid import = min(forecast PV, load energy)
 PV cost saving = avoided grid import × Agile price
 ```
 
-The page shows:
+The page shows half-hour saving, day total, best-saving half-hour, total avoided grid import and a selected-period breakdown. Surplus export income is not included. Negative Agile prices can produce a negative saving.
 
-- saving for each half-hour;
-- selected half-hour saving;
-- forecast total saving for the selected day;
-- best-saving half-hour;
-- total avoided grid import;
-- selected Agile price, PV generation and PV used against the load.
-
-Only PV that offsets the configured load is treated as an import-cost saving. Surplus PV export income is **not** included.
-
-When Agile prices are negative, the calculated saving can be negative. In that situation importing electricity would have been financially beneficial, so PV generation can reduce that benefit. Negative saving sectors are shown red; positive saving sectors use green intensity.
-
-Cost Savings is hidden from navigation when **Solar PV panels installed** is off and returns when it is turned on again.
+Cost Savings is hidden from navigation when PV is off.
 
 ---
 
@@ -182,21 +170,19 @@ Cost Savings is hidden from navigation when **Solar PV panels installed** is off
 
 App Settings contains Agile tariff/region, selected day, source refresh, solar site, PV availability, Solar PV array settings and optimiser load.
 
-The Current solar site section includes an editable site-name field. Editing the site name changes only the display label; the saved forecast coordinates remain unchanged.
+The Current solar site section includes an editable site name plus stored latitude/longitude.
 
 When **Solar PV panels installed** is off:
 
-- PV Forecast, Net Electricity Price and Cost Savings are hidden from bottom navigation;
+- PV Forecast, Net Electricity Price and Cost Savings are hidden from navigation;
 - the navigation contracts from seven buttons to four;
 - PV-array fields and optimiser controls are disabled;
 - Solar Forecast remains active;
 - saved PV and optimiser values are retained.
 
-Turning **Solar PV panels installed** back on restores the PV, Net and Save buttons immediately and reuses the retained settings.
+Turning PV back on restores the three hidden pages immediately.
 
 ### Solar PV array units
-
-Engineering units remain visible beside editable values:
 
 | Setting | Unit |
 |---|---|
@@ -207,23 +193,19 @@ Engineering units remain visible beside editable values:
 | Inverter maximum AC output | kW |
 | Estimated system losses | % |
 
-`Number of panels` is dimensionless. Unit labels are presentation-only.
+`Number of panels` is dimensionless.
 
 ---
 
 ## Now button
 
-The Now button is available on the metric pages that are currently visible:
+The Now button is available on every visible metric page. It returns the shared selected date to today, loads today's source data if needed and selects the half-hour satisfying:
 
-1. Octopus Agile Prices
-2. Solar Forecast
-3. PV Forecast — when PV is enabled
-4. Net Electricity Price — when PV is enabled
-5. Cost Savings — when PV is enabled
+```text
+validFrom <= now < validTo
+```
 
-Tapping it changes the shared selected date to today, loads today's Agile/solar source data if needed, selects the period satisfying `validFrom <= now < validTo`, and refreshes derived metric views.
-
-The button is part of the adaptive page layout rather than a floating overlay, so SwiftUI reserves space for it and it should not cover descriptions, wheels or metric cards on supported iPhone sizes.
+The button is part of normal layout flow and does not use fixed vertical offsets.
 
 ---
 
@@ -244,17 +226,17 @@ SwipeDashboardView
         +--> DocumentationView
 ```
 
-`SwipeDashboardView` keeps its historical type name but no longer installs a page-swipe gesture. It owns conditional bottom navigation, shared Now behaviour, and the rule that PV-dependent pages are hidden when PV is disabled.
+`SwipeDashboardView` owns conditional navigation, adaptive screen layout, shared Now behaviour and PV-dependent page visibility.
 
 ---
 
 ## APIs and persistence
 
-Octopus public tariff/rate endpoints are used without account credentials or API key. Open-Meteo supplies forecast and place/postcode search data. Apple's reverse-geocoding service is used only after the user taps **Use Current Location**, to turn the returned coordinates into a readable solar-site name.
+Octopus public tariff/rate endpoints are used without account credentials or API key. Open-Meteo supplies forecast and place/postcode search data. Apple's reverse-geocoding service is used after **Use Current Location** to obtain a readable site name.
 
-`AgileCacheStore` persists tariff/rate snapshots. `SolarForecastCache` persists site/date solar forecasts. PV Forecast, Net Electricity Price and Cost Savings are calculated locally from source data and settings.
+`AgileCacheStore` persists tariff/rate snapshots. `SolarForecastCache` persists site/date solar forecasts. PV Forecast, Net Electricity Price and Cost Savings are calculated locally.
 
-The app uses `Europe/London` and actual period timestamps/durations, supporting normal 48-period days and 46/50-period DST days.
+The app uses `Europe/London` and actual period timestamps/durations, supporting 46/48/50-period days.
 
 ---
 
@@ -268,7 +250,7 @@ open AgilePriceWheel.xcodeproj
 
 Configure Signing & Capabilities, choose the Apple Developer team and run on a simulator or physical device.
 
-Current metadata includes:
+Current metadata:
 
 ```text
 MARKETING_VERSION = 1.0
@@ -283,31 +265,27 @@ PRODUCT_BUNDLE_IDENTIFIER = KRH.AgilePriceWheel
 Before release verify:
 
 - clean Xcode build;
-- with PV enabled, all seven bottom buttons are visible on supported iPhone sizes;
-- the PV button uses the simple filled lightning-bolt icon;
+- small iPhone, standard iPhone, Max-size iPhone and regular-width iPad layouts;
+- at least one larger Dynamic Type setting;
+- no header/title collisions;
+- no clipped bottom navigation;
+- navigation correctly falls back from normal labels to compact labels or icons only when required;
+- all visible navigation targets remain at least 44 points high;
+- with PV enabled, all seven page buttons are available;
 - with PV disabled, only Prices, Solar, Settings and Guide are visible;
-- turning PV back on restores PV, Net and Save immediately;
-- saved PV-array and optimiser values survive an off/on cycle;
-- each visible button directly opens the correct page;
-- selected button highlighting follows the current page;
-- horizontal dragging never changes pages;
-- wheel dragging selects sectors without navigating;
-- Now works on every visible metric page and does not cover data;
-- Use Current Location resolves a familiar place name when reverse geocoding succeeds;
-- unresolved current-location names fall back to `Current location`;
-- editing the solar-site name changes only the label and preserves the saved coordinates;
-- Cost Savings wheel has one sector per matched half-hour;
-- selected Cost Savings value matches `min(PV, load) × Agile price`;
-- selected Net Electricity Price sector shows the same PV saving value;
-- negative Agile prices produce a negative saving when PV offsets load;
-- day saving equals the sum of half-hour savings;
-- surplus PV above the configured load is not counted as import-cost saving;
-- tariff discovery and 46/48/50-period days;
-- solar-site selection and caching;
-- documentation index and in-app guide match the implementation.
+- turning PV back on restores PV, Net and Save;
+- the PV button uses `bolt.fill`;
+- wheel dragging never changes page;
+- Now never overlays page content;
+- Use Current Location resolves a familiar name when possible and falls back safely;
+- editing the site name preserves coordinates;
+- Cost Savings and Net selected-sector PV saving agree;
+- negative Agile prices can produce negative savings;
+- tariff discovery and 46/48/50-period days work;
+- documentation matches the implementation.
 
 ---
 
 ## Disclaimer
 
-Agile Price Wheel is independent and is not an official Octopus Energy or Open-Meteo application. Solar irradiance, PV Forecast, Net Electricity Price and Cost Savings are forecasts/derived planning estimates and may differ from actual generation, energy flows and bills.
+Agile Price Wheel is independent and is not an official Octopus Energy or Open-Meteo application. Solar irradiance, PV Forecast, Net Electricity Price and Cost Savings are forecast/derived planning estimates and may differ from actual generation, energy flows and bills.
