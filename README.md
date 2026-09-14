@@ -48,11 +48,13 @@ When **Solar PV panels installed** is **ON**, the bottom navigation shows all se
 |---|---|---|
 | Prices | `bolt.circle.fill` | Octopus Agile Prices |
 | Solar | `sun.max.fill` | Solar Forecast |
-| PV | `bolt.sun.fill` | PV Forecast |
+| PV | `bolt.fill` | PV Forecast |
 | Net | `sterlingsign.circle.fill` | Net Electricity Price |
 | Save | `banknote.fill` | Cost Savings |
 | Settings | `slider.horizontal.3` | App Settings |
 | Guide | `book.closed.fill` | User Guide |
+
+The PV button deliberately uses the simple filled lightning-bolt SF Symbol so it matches the visual weight and style of the other bottom-navigation controls.
 
 When **Solar PV panels installed** is **OFF**, the PV-dependent buttons **PV**, **Net** and **Save** are hidden, leaving four visible buttons: **Prices**, **Solar**, **Settings** and **Guide**. Turning PV back on immediately restores the three hidden pages and buttons. Saved PV-array and optimiser values are retained while PV is off.
 
@@ -282,6 +284,7 @@ Before release verify:
 
 - clean Xcode build;
 - with PV enabled, all seven bottom buttons are visible on supported iPhone sizes;
+- the PV button uses the simple filled lightning-bolt icon;
 - with PV disabled, only Prices, Solar, Settings and Guide are visible;
 - turning PV back on restores PV, Net and Save immediately;
 - saved PV-array and optimiser values survive an off/on cycle;
