@@ -126,6 +126,8 @@ Current-location access must remain opt-in. Request **When In Use** permission o
 
 After a current-location fix, the app should reverse-geocode the coordinates to a familiar locality/town name where possible. If no suitable common name is found, use `Current location`. The saved site name must be editable without changing latitude or longitude.
 
+On iOS 26 and later, reverse geocoding must use MapKit `MKReverseGeocodingRequest` rather than deprecated `CLGeocoder`. A legacy Core Location geocoder may remain only inside an availability-limited compatibility path for earlier supported systems. Location authorization changes should be handled through `locationManagerDidChangeAuthorization(_:)`; do not synchronously call Location Services availability APIs on the main actor when that can trigger responsiveness diagnostics.
+
 If permission is denied, restricted or unavailable, place/postcode search and manual coordinates must remain usable. The app must not continuously track the user.
 
 ## PV-installed feature-state requirement
@@ -156,7 +158,7 @@ Estimated system losses      %
 
 Compiler or Xcode compatibility fixes that do not alter user-visible behaviour do not require edits to every user-facing guide, but repository build/troubleshooting documentation must still be corrected when relevant.
 
-`AppSettingsView.swift` and `SolarSiteSettingsView.swift` use the explicit SwiftUI `Section { ... } header: { ... } footer: { ... }` form for sections that have footers on the current project toolchain.
+Current release builds should be checked for SDK deprecation warnings and runtime responsiveness warnings, particularly around location APIs. `AppSettingsView.swift` and `SolarSiteSettingsView.swift` use the explicit SwiftUI `Section { ... } header: { ... } footer: { ... }` form for sections that have footers on the current project toolchain.
 
 ## Source of truth
 
