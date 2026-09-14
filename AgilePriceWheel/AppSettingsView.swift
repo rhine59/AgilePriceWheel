@@ -84,24 +84,24 @@ struct AppSettingsView: View {
                 Group {
                     TextField("Array name", text: $settings.arrayName)
 
-                    unitField("Rated peak power", text: $settings.peakPowerKWpText, unit: "kWp", keyboard: .decimalPad)
+                    unitField("Rated peak power", text: $settings.peakPowerKWpText, unit: "kWp")
 
                     TextField("Number of panels", text: $settings.panelCountText)
                         .keyboardType(.numberPad)
 
-                    unitField("Panel rating", text: $settings.panelPowerWattsText, unit: "W", keyboard: .decimalPad)
+                    unitField("Panel rating", text: $settings.panelPowerWattsText, unit: "W")
 
                     if let calculated = settings.calculatedPanelPeakKWp {
                         LabeledContent("Panels imply", value: String(format: "%.2f kWp", calculated))
                     }
 
-                    unitField("Panel tilt from horizontal", text: $settings.tiltDegreesText, unit: "°", keyboard: .decimalPad)
+                    unitField("Panel tilt from horizontal", text: $settings.tiltDegreesText, unit: "°")
 
-                    unitField("Azimuth", text: $settings.azimuthDegreesText, unit: "°", keyboard: .decimalPad)
+                    unitField("Azimuth", text: $settings.azimuthDegreesText, unit: "°")
 
-                    unitField("Inverter maximum AC output", text: $settings.inverterMaxKWText, unit: "kW", keyboard: .decimalPad)
+                    unitField("Inverter maximum AC output", text: $settings.inverterMaxKWText, unit: "kW")
 
-                    unitField("Estimated system losses", text: $settings.systemLossPercentText, unit: "%", keyboard: .decimalPad)
+                    unitField("Estimated system losses", text: $settings.systemLossPercentText, unit: "%")
 
                     TextField("Notes", text: $settings.notes, axis: .vertical)
                         .lineLimit(2...5)
@@ -180,14 +180,13 @@ struct AppSettingsView: View {
     private func unitField(
         _ title: String,
         text: Binding<String>,
-        unit: String,
-        keyboard: UIKeyboardType
+        unit: String
     ) -> some View {
         HStack(spacing: 10) {
             Text(title)
             Spacer(minLength: 12)
             TextField("", text: text)
-                .keyboardType(keyboard)
+                .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
                 .frame(minWidth: 72, idealWidth: 95, maxWidth: 120)
             Text(unit)
