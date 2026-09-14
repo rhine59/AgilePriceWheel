@@ -11,19 +11,31 @@ struct SolarSiteSettingsView: View {
     @State private var searchText = ""
     @State private var latitudeText = ""
     @State private var longitudeText = ""
+    @State private var siteNameText = ""
     @State private var manualError: String?
+    @State private var isResolvingPlaceName = false
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("Current solar site") {
+                Section {
                     if let site = solarModel.site {
-                        LabeledContent("Name", value: site.name)
+                        TextField("Site name", text: $siteNameText)
+                            .textInputAutocapitalization(.words)
+                            .autocorrectionDisabled()
+                            .onSubmit { saveSiteName() }
+
+                        Button("Save site name") {
+                            saveSiteName()
+                        }
+                        .disabled(siteNameText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || siteNameText == site.name)
+
                         LabeledContent("Latitude", value: String(format: "%.6f", site.latitude))
                         LabeledContent("Longitude", value: String(format: "%.6f", site.longitude))
 
                         Button("Clear solar site", role: .destructive) {
                             solarModel.clearSite()
+                            siteNameText = ""
                             latitudeText = ""
                             longitudeText = ""
                         }
@@ -31,6 +43,10 @@ struct SolarSiteSettingsView: View {
                         Text("No solar forecast site has been set.")
                             .foregroundStyle(.secondary)
                     }
+                } header: {
+                    Text("Current solar site")
+                } footer: {
+                    Text("The site name is only a label for display. Editing it does not change the saved latitude or longitude.")
                 }
 
                 Section {
@@ -39,13 +55,13 @@ struct SolarSiteSettingsView: View {
                     } label: {
                         HStack {
                             Label("Use Current Location", systemImage: "location.fill")
-                            if locationProvider.isLocating {
+                            if locationProvider.isLocating || isResolvingPlaceName {
                                 Spacer()
                                 ProgressView()
                             }
                         }
                     }
-                    .disabled(locationProvider.isLocating)
+                    .disabled(locationProvider.isLocating || isResolvingPlaceName)
 
                     if let locationError = locationProvider.errorMessage {
                         Text(locationError)
@@ -55,7 +71,7 @@ struct SolarSiteSettingsView: View {
                 } header: {
                     Text("Current location")
                 } footer: {
-                    Text("Uses the iPhone or iPad location only when you tap Use Current Location. The resulting coordinates are saved as the solar forecast site. You can deny location access and continue to use place/postcode search or manual coordinates instead.")
+                    Text("Uses the iPhone or iPad location only when you tap Use Current Location. The app then reverse-geocodes the coordinates to a familiar place name such as the locality or town and saves that as the solar-site name. You can edit the name afterwards. If no common place name can be found, Current location is used as a fallback. You can deny location access and continue to use place/postcode search or manual coordinates instead.")
                 }
 
                 Section {
@@ -95,7 +111,7 @@ struct SolarSiteSettingsView: View {
                 } header: {
                     Text("Find site")
                 } footer: {
-                    Text("Search is provided by Open-Meteo geocoding. Choose the result that best represents the solar installation site.")
+                    Text("Search is provided by Open-Meteo geocoding. Choose the result that best represents the solar installation site. The saved site name can be edited above without changing its coordinates.")
                 }
 
                 Section {
@@ -141,20 +157,25 @@ struct SolarSiteSettingsView: View {
                 }
             }
             .onAppear { fillManualFields() }
+            .onChange(of: solarModel.site) { _, _ in fillManualFields() }
             .onChange(of: locationProvider.fix) { _, fix in
                 guard let fix else { return }
 
                 latitudeText = String(format: "%.6f", fix.latitude)
                 longitudeText = String(format: "%.6f", fix.longitude)
                 manualError = nil
+                isResolvingPlaceName = true
 
                 Task {
+                    let resolvedName = await commonName(latitude: fix.latitude, longitude: fix.longitude)
                     await solarModel.setManualSite(
-                        name: "Current location",
+                        name: resolvedName,
                         latitude: fix.latitude,
                         longitude: fix.longitude,
                         for: selectedDate
                     )
+                    siteNameText = resolvedName
+                    isResolvingPlaceName = false
                     locationProvider.consumeFix()
                 }
             }
@@ -163,8 +184,28 @@ struct SolarSiteSettingsView: View {
 
     private func fillManualFields() {
         guard let site = solarModel.site else { return }
+        siteNameText = site.name
         latitudeText = String(format: "%.6f", site.latitude)
         longitudeText = String(format: "%.6f", site.longitude)
+    }
+
+    private func saveSiteName() {
+        guard let site = solarModel.site else { return }
+        let trimmed = siteNameText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            siteNameText = site.name
+            return
+        }
+
+        Task {
+            await solarModel.setManualSite(
+                name: trimmed,
+                latitude: site.latitude,
+                longitude: site.longitude,
+                for: selectedDate
+            )
+            siteNameText = trimmed
+        }
     }
 
     private func saveManualCoordinates() {
@@ -180,13 +221,44 @@ struct SolarSiteSettingsView: View {
         }
 
         manualError = nil
+        let preferredName = siteNameText.trimmingCharacters(in: .whitespacesAndNewlines)
         Task {
             await solarModel.setManualSite(
+                name: preferredName.isEmpty ? "Custom site" : preferredName,
                 latitude: latitude,
                 longitude: longitude,
                 for: selectedDate
             )
+            fillManualFields()
         }
+    }
+
+    private func commonName(latitude: Double, longitude: Double) async -> String {
+        let geocoder = CLGeocoder()
+        let location = CLLocation(latitude: latitude, longitude: longitude)
+
+        do {
+            let placemarks = try await geocoder.reverseGeocodeLocation(location)
+            guard let placemark = placemarks.first else { return "Current location" }
+
+            let candidates = [
+                placemark.locality,
+                placemark.subLocality,
+                placemark.subAdministrativeArea,
+                placemark.administrativeArea,
+                placemark.name
+            ]
+
+            if let name = candidates
+                .compactMap({ $0?.trimmingCharacters(in: .whitespacesAndNewlines) })
+                .first(where: { !$0.isEmpty }) {
+                return name
+            }
+        } catch {
+            return "Current location"
+        }
+
+        return "Current location"
     }
 }
 
