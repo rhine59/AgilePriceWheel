@@ -35,13 +35,18 @@ validFrom <= now < validTo
 
 If no period contains the current time, the first available period is used as a safe fallback.
 
-## Placement
+## Adaptive placement
 
-The Now control is anchored at the trailing edge in the unused dark band immediately above the wheel area. It must not cover page descriptions, source-status text, wheel sectors, metric cards or other controls.
+The Now control is no longer positioned with fixed top offsets inside a floating `ZStack` overlay. That approach could cover descriptive text or other controls on different iPhone screen sizes.
 
-The vertical clearance is deliberately larger than the original implementation after testing on a physical iPhone showed that the earlier position could cover descriptive text on Solar Forecast, Net Electricity Price and Cost Savings. The Octopus Agile Prices page retains its own page-specific offset because its header layout differs from the other metric pages.
+Instead, the control now participates in normal SwiftUI layout:
 
-The placement must be checked on all supported iPhone screen sizes whenever page-header or wheel geometry changes.
+- Solar Forecast, PV Forecast, Net Electricity Price and Cost Savings place a dedicated right-aligned Now row directly below the page header and above the page-specific metric content;
+- Octopus Agile Prices uses a reserved safe-area row above the bottom navigation so the control cannot obscure the existing price-page header, wheel, summary cards or tab control;
+- no fixed per-device vertical positioning is used;
+- the surrounding `ScrollView` can naturally move content on shorter screens.
+
+This makes the control substantially more robust across supported iPhone sizes because SwiftUI allocates real layout space for the button instead of drawing it over other views.
 
 ## Shared date
 
@@ -63,10 +68,11 @@ For each of the five metric pages:
 2. tap **Now**;
 3. confirm the highlighted wheel sector is the half-hour containing the current time;
 4. confirm the centre/selected metrics correspond to that sector;
-5. confirm the Now control does not obscure the page description, source-status text, wheel, or metric cards.
+5. confirm the Now control occupies its own layout space and never obscures headings, descriptive text, source-status text, wheel sectors, metric cards, tabs or other controls;
+6. repeat on the smallest and largest supported iPhone screen sizes, in both portrait and any supported larger text settings.
 
 For Cost Savings, confirm the selected saving corresponds to the same current half-hour used by Net Electricity Price.
 
 Also test after selecting tomorrow or another date. Tapping Now must return the shared selected date to today and then select the current half-hour.
 
-Test with cached data and with a network connection. The control must not appear on App Settings or User Guide and must not obscure content on supported iPhone sizes.
+Test with cached data and with a network connection. The control must not appear on App Settings or User Guide.
