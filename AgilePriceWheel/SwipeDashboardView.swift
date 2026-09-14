@@ -13,7 +13,7 @@ struct SwipeDashboardView: View {
         ZStack {
             switch page {
             case .prices:
-                ContentView()
+                pricesScreen
                     .transition(.opacity)
             case .solar:
                 solarScreen
@@ -47,18 +47,6 @@ struct SwipeDashboardView: View {
                     .frame(maxHeight: .infinity, alignment: .top)
                     .padding(.top, 10)
                     .allowsHitTesting(false)
-            }
-
-            if page.isMetricsPage {
-                VStack {
-                    HStack {
-                        Spacer()
-                        nowButton
-                    }
-                    Spacer()
-                }
-                .padding(.top, nowButtonTopPadding)
-                .padding(.trailing, 18)
             }
         }
         .animation(.easeInOut(duration: 0.18), value: page)
@@ -133,15 +121,12 @@ struct SwipeDashboardView: View {
         .accessibilityLabel("Show values for the current time")
     }
 
-    private var nowButtonTopPadding: CGFloat {
-        switch page {
-        case .prices:
-            return 155
-        case .solar, .generation, .netPrice, .savings:
-            return 175
-        case .settings, .guide:
-            return 0
+    private var metricNowRow: some View {
+        HStack {
+            Spacer(minLength: 0)
+            nowButton
         }
+        .frame(maxWidth: .infinity)
     }
 
     @MainActor
@@ -165,12 +150,23 @@ struct SwipeDashboardView: View {
         nowRefreshID = UUID()
     }
 
+    private var pricesScreen: some View {
+        ContentView()
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                metricNowRow
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .background(Color(red: 0.012, green: 0.105, blue: 0.175).opacity(0.96))
+            }
+    }
+
     private var solarScreen: some View {
         ZStack {
             dashboardBackground
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
                     pageHeader(title: "Solar Forecast", subtitle: dayLabel, icon: "gearshape") { withAnimation { page = .settings } }
+                    metricNowRow
                     SolarForecastView(model: solarModel, selectedDate: model.selectedDate, openSettings: { withAnimation { page = .settings } })
                 }
                 .padding(.horizontal, 16)
@@ -186,6 +182,7 @@ struct SwipeDashboardView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
                     pageHeader(title: "PV Forecast", subtitle: dayLabel, icon: "gearshape") { withAnimation { page = .settings } }
+                    metricNowRow
                     ZStack {
                         GenerationEstimateView(
                             solarModel: solarModel,
@@ -218,6 +215,7 @@ struct SwipeDashboardView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
                     pageHeader(title: "Net Electricity Price", subtitle: dayLabel, icon: "gearshape") { withAnimation { page = .settings } }
+                    metricNowRow
                     ZStack {
                         NetEffectivePriceView(
                             agileModel: model,
@@ -250,6 +248,7 @@ struct SwipeDashboardView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
                     pageHeader(title: "Cost Savings", subtitle: dayLabel, icon: "gearshape") { withAnimation { page = .settings } }
+                    metricNowRow
                     ZStack {
                         CostSavingsView(
                             agileModel: model,
@@ -415,13 +414,4 @@ private enum DashboardPage: Equatable {
     case savings
     case settings
     case guide
-
-    var isMetricsPage: Bool {
-        switch self {
-        case .prices, .solar, .generation, .netPrice, .savings:
-            return true
-        case .settings, .guide:
-            return false
-        }
-    }
 }
