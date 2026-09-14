@@ -4,7 +4,7 @@ This file is the central index for project and user documentation.
 
 ## User documentation
 
-1. [`../USER_GUIDE.md`](../USER_GUIDE.md) — complete operating guide for all seven pages.
+1. [`../USER_GUIDE.md`](../USER_GUIDE.md) — complete operating guide for all seven defined pages, including conditional PV-page visibility.
 2. `AgilePriceWheel/DocumentationView.swift` — in-app indexed User Guide, available offline.
 3. [`NOW_BUTTON_AND_CURRENT_TIME.md`](NOW_BUTTON_AND_CURRENT_TIME.md) — Now-button behaviour and testing.
 
@@ -15,6 +15,8 @@ This file is the central index for project and user documentation.
 
 ## Current page index
 
+The app defines seven pages:
+
 1. Octopus Agile Prices
 2. Solar Forecast
 3. PV Forecast
@@ -22,6 +24,12 @@ This file is the central index for project and user documentation.
 5. Cost Savings
 6. App Settings
 7. User Guide
+
+Navigation is conditional on **Solar PV panels installed**:
+
+- **PV on:** all seven page buttons are shown.
+- **PV off:** PV Forecast, Net Electricity Price and Cost Savings are hidden; the bottom bar shows Prices, Solar, Settings and Guide.
+- Turning PV back on restores the three PV-dependent page buttons immediately and keeps the saved PV-array and optimiser settings.
 
 ## Cost Savings model
 
