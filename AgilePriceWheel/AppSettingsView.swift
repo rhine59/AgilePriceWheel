@@ -44,7 +44,7 @@ struct AppSettingsView: View {
                 .disabled(agileModel.selectedTariff == nil || agileModel.isLoadingRates)
             }
 
-            Section("Solar forecast site") {
+            Section {
                 if let site = solarModel.site {
                     LabeledContent("Site", value: site.name)
                     LabeledContent("Latitude", value: String(format: "%.6f", site.latitude))
@@ -66,17 +66,21 @@ struct AppSettingsView: View {
                     Label("Refresh solar forecast", systemImage: "sun.max")
                 }
                 .disabled(solarModel.site == nil || solarModel.isLoading)
+            } header: {
+                Text("Solar forecast site")
             } footer: {
                 Text("The site coordinates are used for the half-hour irradiance forecast shown on the Solar Forecast page. The irradiance page remains available even if no PV panels are installed.")
             }
 
-            Section("Solar PV availability") {
+            Section {
                 Toggle("Solar PV panels installed", isOn: $settings.hasPVPanelsInstalled)
+            } header: {
+                Text("Solar PV availability")
             } footer: {
                 Text("Turn this off for a property without PV panels. PV-array settings and the net-price optimiser controls are then disabled, while saved values are retained in case PV is enabled again later.")
             }
 
-            Section("Solar PV array") {
+            Section {
                 Group {
                     TextField("Array name", text: $settings.arrayName)
 
@@ -116,6 +120,8 @@ struct AppSettingsView: View {
                 }
                 .disabled(!settings.hasPVPanelsInstalled)
                 .opacity(settings.hasPVPanelsInstalled ? 1.0 : 0.38)
+            } header: {
+                Text("Solar PV array")
             } footer: {
                 if settings.hasPVPanelsInstalled {
                     Text("These details feed the PV Generation and Net Electricity Price pages. Azimuth uses 0° = North, 90° = East, 180° = South and 270° = West. Tilt and azimuth are stored but are not yet applied by the current GHI-based generation model.")
@@ -124,7 +130,7 @@ struct AppSettingsView: View {
                 }
             }
 
-            Section("Net price optimiser") {
+            Section {
                 Group {
                     TextField("Controllable load power (kW)", text: $settings.optimiserLoadKWText)
                         .keyboardType(.decimalPad)
@@ -135,6 +141,8 @@ struct AppSettingsView: View {
                 }
                 .disabled(!settings.hasPVPanelsInstalled)
                 .opacity(settings.hasPVPanelsInstalled ? 1.0 : 0.38)
+            } header: {
+                Text("Net price optimiser")
             } footer: {
                 if settings.hasPVPanelsInstalled {
                     Text("This is the load used by the Net Electricity Price wheel. It defaults to 3.0 kW to match the established nightly email optimiser. Forecast PV is offset against this load before the remaining grid import is costed at the Agile rate.")
