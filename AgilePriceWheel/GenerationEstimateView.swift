@@ -72,7 +72,7 @@ struct GenerationEstimateView: View {
                 emptyState(
                     icon: "location.circle",
                     title: "Set the solar site",
-                    message: "A solar forecast site is required before PV generation can be estimated."
+                    message: "A solar forecast site is required before PV output can be forecast."
                 )
             } else if settings.effectivePeakPowerKWp == nil {
                 emptyState(
@@ -119,18 +119,10 @@ struct GenerationEstimateView: View {
             } else {
                 emptyState(
                     icon: "sun.max.trianglebadge.exclamationmark",
-                    title: "No generation estimate",
+                    title: "No PV forecast",
                     message: solarModel.errorMessage ?? "No solar forecast is available for this day."
                 )
             }
-
-            HStack(spacing: 8) {
-                Text("Swipe right for Solar Forecast")
-                Image(systemName: "arrow.left.and.right")
-                Text("left for Net Electricity Price")
-            }
-            .font(.caption2)
-            .foregroundStyle(.white.opacity(0.5))
         }
         .onAppear { chooseInitialSelection() }
         .onChange(of: solarModel.forecast) { _, _ in chooseInitialSelection() }
@@ -139,7 +131,7 @@ struct GenerationEstimateView: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("PV generation estimate")
+                Text("PV forecast")
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
                     .foregroundStyle(accent)
                 Text("Half-hour estimated electrical energy")
@@ -292,7 +284,7 @@ struct GenerationWheelView: View {
 
                 if let selected = estimates.first(where: { $0.id == selectedID }) ?? estimates.first {
                     VStack(spacing: 2) {
-                        Text("Generation")
+                        Text("PV forecast")
                             .font(.system(size: 12, weight: .medium, design: .rounded))
                             .foregroundStyle(.orange.opacity(0.88))
                         Text(String(format: "%.3f", selected.estimatedEnergyKWh))
@@ -320,7 +312,7 @@ struct GenerationWheelView: View {
                     }
             )
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Half-hour PV generation estimate wheel")
+            .accessibilityLabel("Half-hour PV forecast wheel")
             .accessibilityValue(accessibilityValue)
         }
         .aspectRatio(1, contentMode: .fit)
@@ -367,7 +359,7 @@ struct GenerationWheelView: View {
 
     private var accessibilityValue: String {
         guard let selected = estimates.first(where: { $0.id == selectedID }) ?? estimates.first else {
-            return "No generation estimate selected"
+            return "No PV forecast selected"
         }
         return "\(time(selected.validFrom)) to \(time(selected.validTo)), \(String(format: "%.3f", selected.estimatedEnergyKWh)) kilowatt hours"
     }
