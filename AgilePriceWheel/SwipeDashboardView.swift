@@ -57,6 +57,12 @@ struct SwipeDashboardView: View {
         .onChange(of: model.selectedDate) { _, newDate in
             Task { await solarModel.loadForecast(for: newDate) }
         }
+        .onChange(of: appSettings.hasPVPanelsInstalled) { _, installed in
+            guard !installed else { return }
+            if page.isPVDependent {
+                withAnimation { page = .solar }
+            }
+        }
         .sheet(isPresented: $showingDocumentation) {
             DocumentationView().preferredColorScheme(.dark)
         }
@@ -66,9 +72,13 @@ struct SwipeDashboardView: View {
         HStack(spacing: 1) {
             navigationButton(.prices, title: "Prices", systemImage: "bolt.circle.fill")
             navigationButton(.solar, title: "Solar", systemImage: "sun.max.fill")
-            navigationButton(.generation, title: "PV", systemImage: "bolt.sun.fill")
-            navigationButton(.netPrice, title: "Net", systemImage: "sterlingsign.circle.fill")
-            navigationButton(.savings, title: "Save", systemImage: "banknote.fill")
+
+            if appSettings.hasPVPanelsInstalled {
+                navigationButton(.generation, title: "PV", systemImage: "bolt.sun.fill")
+                navigationButton(.netPrice, title: "Net", systemImage: "sterlingsign.circle.fill")
+                navigationButton(.savings, title: "Save", systemImage: "banknote.fill")
+            }
+
             navigationButton(.settings, title: "Settings", systemImage: "slider.horizontal.3")
             navigationButton(.guide, title: "Guide", systemImage: "book.closed.fill")
         }
@@ -81,6 +91,7 @@ struct SwipeDashboardView: View {
                 .fill(Color.orange.opacity(0.22))
                 .frame(height: 1)
         }
+        .animation(.easeInOut(duration: 0.18), value: appSettings.hasPVPanelsInstalled)
     }
 
     private func navigationButton(_ target: DashboardPage, title: String, systemImage: String) -> some View {
@@ -414,4 +425,13 @@ private enum DashboardPage: Equatable {
     case savings
     case settings
     case guide
+
+    var isPVDependent: Bool {
+        switch self {
+        case .generation, .netPrice, .savings:
+            return true
+        case .prices, .solar, .settings, .guide:
+            return false
+        }
+    }
 }
