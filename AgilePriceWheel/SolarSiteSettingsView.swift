@@ -1,10 +1,13 @@
 import SwiftUI
+import CoreLocation
+import Combine
 
 struct SolarSiteSettingsView: View {
     @ObservedObject var solarModel: SolarForecastModel
     let selectedDate: Date
 
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var locationProvider = SolarSiteLocationProvider()
     @State private var searchText = ""
     @State private var latitudeText = ""
     @State private var longitudeText = ""
@@ -28,6 +31,31 @@ struct SolarSiteSettingsView: View {
                         Text("No solar forecast site has been set.")
                             .foregroundStyle(.secondary)
                     }
+                }
+
+                Section {
+                    Button {
+                        locationProvider.findCurrentLocation()
+                    } label: {
+                        HStack {
+                            Label("Use Current Location", systemImage: "location.fill")
+                            if locationProvider.isLocating {
+                                Spacer()
+                                ProgressView()
+                            }
+                        }
+                    }
+                    .disabled(locationProvider.isLocating)
+
+                    if let locationError = locationProvider.errorMessage {
+                        Text(locationError)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                } header: {
+                    Text("Current location")
+                } footer: {
+                    Text("Uses the iPhone or iPad location only when you tap Use Current Location. The resulting coordinates are saved as the solar forecast site. You can deny location access and continue to use place/postcode search or manual coordinates instead.")
                 }
 
                 Section {
@@ -113,6 +141,23 @@ struct SolarSiteSettingsView: View {
                 }
             }
             .onAppear { fillManualFields() }
+            .onChange(of: locationProvider.fix) { _, fix in
+                guard let fix else { return }
+
+                latitudeText = String(format: "%.6f", fix.latitude)
+                longitudeText = String(format: "%.6f", fix.longitude)
+                manualError = nil
+
+                Task {
+                    await solarModel.setManualSite(
+                        name: "Current location",
+                        latitude: fix.latitude,
+                        longitude: fix.longitude,
+                        for: selectedDate
+                    )
+                    locationProvider.consumeFix()
+                }
+            }
         }
     }
 
@@ -142,5 +187,92 @@ struct SolarSiteSettingsView: View {
                 for: selectedDate
             )
         }
+    }
+}
+
+private struct SolarSiteLocationFix: Equatable {
+    let latitude: Double
+    let longitude: Double
+}
+
+@MainActor
+private final class SolarSiteLocationProvider: NSObject, ObservableObject, CLLocationManagerDelegate {
+    @Published private(set) var isLocating = false
+    @Published private(set) var fix: SolarSiteLocationFix?
+    @Published private(set) var errorMessage: String?
+
+    private let manager = CLLocationManager()
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+    }
+
+    func findCurrentLocation() {
+        errorMessage = nil
+        fix = nil
+
+        guard CLLocationManager.locationServicesEnabled() else {
+            errorMessage = "Location Services are turned off. Enable them in Settings, or use place/postcode search or manual coordinates."
+            return
+        }
+
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            isLocating = true
+            manager.requestWhenInUseAuthorization()
+        case .authorizedAlways, .authorizedWhenInUse:
+            requestLocation()
+        case .denied, .restricted:
+            errorMessage = "Location access is not available. Allow location access for Agile Price Wheel in Settings, or use place/postcode search or manual coordinates."
+        @unknown default:
+            errorMessage = "Current location is unavailable. Use place/postcode search or manual coordinates instead."
+        }
+    }
+
+    func consumeFix() {
+        fix = nil
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            if isLocating {
+                requestLocation()
+            }
+        case .denied, .restricted:
+            isLocating = false
+            errorMessage = "Location access was not allowed. You can still use place/postcode search or manual coordinates."
+        case .notDetermined:
+            break
+        @unknown default:
+            isLocating = false
+            errorMessage = "Current location is unavailable. Use place/postcode search or manual coordinates instead."
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        isLocating = false
+
+        guard let location = locations.last else {
+            errorMessage = "No current location was returned. Try again, or use place/postcode search or manual coordinates."
+            return
+        }
+
+        fix = SolarSiteLocationFix(
+            latitude: location.coordinate.latitude,
+            longitude: location.coordinate.longitude
+        )
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        isLocating = false
+        errorMessage = "Could not determine the current location. \(error.localizedDescription)"
+    }
+
+    private func requestLocation() {
+        isLocating = true
+        manager.requestLocation()
     }
 }
