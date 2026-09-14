@@ -24,6 +24,9 @@ struct SwipeDashboardView: View {
             case .netPrice:
                 netPriceScreen
                     .transition(.opacity)
+            case .savings:
+                savingsScreen
+                    .transition(.opacity)
             case .settings:
                 settingsScreen
                     .transition(.opacity)
@@ -72,15 +75,16 @@ struct SwipeDashboardView: View {
     }
 
     private var bottomNavigation: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 1) {
             navigationButton(.prices, title: "Prices", systemImage: "bolt.circle.fill")
             navigationButton(.solar, title: "Solar", systemImage: "sun.max.fill")
             navigationButton(.generation, title: "PV", systemImage: "bolt.sun.fill")
             navigationButton(.netPrice, title: "Net", systemImage: "sterlingsign.circle.fill")
+            navigationButton(.savings, title: "Save", systemImage: "banknote.fill")
             navigationButton(.settings, title: "Settings", systemImage: "slider.horizontal.3")
             navigationButton(.guide, title: "Guide", systemImage: "book.closed.fill")
         }
-        .padding(.horizontal, 6)
+        .padding(.horizontal, 3)
         .padding(.top, 6)
         .padding(.bottom, 6)
         .background(.ultraThinMaterial)
@@ -97,18 +101,18 @@ struct SwipeDashboardView: View {
         } label: {
             VStack(spacing: 3) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 19, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                 Text(title)
-                    .font(.system(size: 9, weight: .semibold, design: .rounded))
+                    .font(.system(size: 8, weight: .semibold, design: .rounded))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .minimumScaleFactor(0.65)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 5)
         }
         .buttonStyle(.plain)
         .foregroundStyle(page == target ? Color.orange : Color.white.opacity(0.62))
-        .accessibilityLabel(title)
+        .accessibilityLabel(title == "Save" ? "Cost Savings" : title)
         .accessibilityAddTraits(page == target ? .isSelected : [])
     }
 
@@ -133,7 +137,7 @@ struct SwipeDashboardView: View {
         switch page {
         case .prices:
             return 92
-        case .solar, .generation, .netPrice:
+        case .solar, .generation, .netPrice, .savings:
             return 86
         case .settings, .guide:
             return 0
@@ -228,6 +232,38 @@ struct SwipeDashboardView: View {
                         if !appSettings.hasPVPanelsInstalled {
                             pvDisabledOverlay(
                                 title: "Net price disabled",
+                                message: "This wheel needs forecast PV generation. Turn on Solar PV panels installed in App Settings to use it."
+                            )
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 20)
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private var savingsScreen: some View {
+        ZStack {
+            dashboardBackground
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+                    pageHeader(title: "Cost Savings", subtitle: dayLabel, icon: "gearshape") { withAnimation { page = .settings } }
+                    ZStack {
+                        CostSavingsView(
+                            agileModel: model,
+                            solarModel: solarModel,
+                            settings: appSettings,
+                            openSettings: { withAnimation { page = .settings } }
+                        )
+                        .id(nowRefreshID)
+                        .disabled(!appSettings.hasPVPanelsInstalled)
+                        .opacity(appSettings.hasPVPanelsInstalled ? 1.0 : 0.22)
+
+                        if !appSettings.hasPVPanelsInstalled {
+                            pvDisabledOverlay(
+                                title: "Cost savings disabled",
                                 message: "This wheel needs forecast PV generation. Turn on Solar PV panels installed in App Settings to use it."
                             )
                         }
@@ -376,12 +412,13 @@ private enum DashboardPage: Equatable {
     case solar
     case generation
     case netPrice
+    case savings
     case settings
     case guide
 
     var isMetricsPage: Bool {
         switch self {
-        case .prices, .solar, .generation, .netPrice:
+        case .prices, .solar, .generation, .netPrice, .savings:
             return true
         case .settings, .guide:
             return false
