@@ -28,9 +28,9 @@ The application has six horizontal pages:
 1. Agile Prices
 ```
 
-The forward swipe path is therefore circular. Swiping left from the User Guide wraps directly back to Agile Prices.
+The forward swipe path is circular. Swiping left from the User Guide wraps directly back to Agile Prices.
 
-Swipe right moves back one page. From the User Guide, a right swipe returns to App Settings. The first Agile Prices page remains the start of the reverse path, so a right swipe from it does not wrap.
+Swipe right moves back one page. From the User Guide, a right swipe returns to App Settings. A right swipe from Agile Prices does not wrap.
 
 Six page dots show the current position. The selected date is shared across the price, solar, generation and net-price pages. Gear buttons on the solar, generation and net-price pages jump directly to App Settings.
 
@@ -75,6 +75,8 @@ Features:
 
 A solar site can be set by place/postcode search or manual latitude/longitude.
 
+The Solar Forecast page remains available even when the property is configured as having no PV panels installed, because it is a weather/irradiance view rather than a PV-generation calculation.
+
 ## 3. PV Generation
 
 Converts the solar forecast into a first-order estimate of PV electrical generation.
@@ -88,6 +90,8 @@ The page shows:
 - selected half-hour energy (kWh);
 - selected half-hour average power (kW);
 - effective array capacity used.
+
+When **Solar PV panels installed** is turned off in App Settings, the PV Generation content is disabled and greyed with an explanatory overlay. Existing PV settings are retained so they can be restored simply by turning the setting back on.
 
 ## 4. Net Electricity Price
 
@@ -114,6 +118,8 @@ The page contains another interactive half-hour wheel and shows:
 - selected expected slot cost;
 - selected net/effective p/kWh.
 
+When **Solar PV panels installed** is off, the complete Net Electricity Price calculation area, including the wheel, is greyed and disabled. A clear message explains that the page requires PV to be enabled in App Settings.
+
 ## 5. App Settings
 
 Contains all application configuration:
@@ -123,6 +129,7 @@ Contains all application configuration:
 - Agile refresh;
 - solar site;
 - solar refresh;
+- **Solar PV panels installed** toggle;
 - PV-array details;
 - optimiser controllable-load power;
 - Agile and solar source status.
@@ -138,6 +145,42 @@ It is bundled into the app and remains available offline. It explains navigation
 Swiping left from the User Guide returns to Agile Prices and starts the page sequence again. Swiping right returns to App Settings.
 
 The same guide is also available as a modal sheet from the information buttons elsewhere in the app.
+
+---
+
+# PV installed configuration
+
+`AppSettingsStore` persists a Boolean configuration named `hasPVPanelsInstalled`, stored in `UserDefaults` under:
+
+```text
+solarArray.installed
+```
+
+For backward compatibility with existing installs, the setting defaults to **true** if the key has never been stored before.
+
+In App Settings it is shown as:
+
+```text
+Solar PV panels installed
+```
+
+When enabled:
+
+- PV-array fields are editable;
+- the optimiser load field is editable;
+- PV Generation operates normally;
+- Net Electricity Price operates normally.
+
+When disabled:
+
+- PV-array fields are disabled and shown with reduced opacity;
+- Net price optimiser settings are disabled and shown with reduced opacity;
+- the PV Generation page is greyed and blocked from interaction;
+- the Net Electricity Price page, including its wheel, is greyed and blocked from interaction;
+- the Solar Forecast page remains available;
+- existing PV-array and optimiser values are retained rather than erased.
+
+This allows one installation of the app to support both homes with PV and homes without PV without requiring separate builds or deleting configuration.
 
 ---
 
@@ -167,7 +210,7 @@ Slot cost               12 p
 Net effective price      8 p/kWh
 ```
 
-The configured optimiser load defaults to **3.0 kW**, matching the historical nightly email model, but can be changed in App Settings.
+The configured optimiser load defaults to **3.0 kW**, matching the historical nightly email model, but can be changed in App Settings while PV is enabled.
 
 ### Important optimiser assumptions
 
@@ -196,6 +239,7 @@ The Net Electricity Price wheel uses fixed bands so colours can be compared betw
 
 `AppSettingsStore` persists:
 
+- whether PV panels are installed;
 - array name;
 - rated peak power (kWp);
 - panel count;
@@ -223,6 +267,8 @@ panel count × panel watts / 1000
 ```
 
 An explicitly entered rated kWp value takes priority.
+
+Turning PV off does **not** clear these stored values.
 
 ---
 
@@ -293,10 +339,12 @@ SwipeDashboardView
         +--> DocumentationView
 ```
 
+`SwipeDashboardView` observes `AppSettingsStore.hasPVPanelsInstalled` and visually disables the PV Generation and Net Electricity Price content when it is false.
+
 ## Key source files
 
 - `AgilePriceWheelApp.swift` — application entry point.
-- `SwipeDashboardView.swift` — six-page swipe navigation, circular forward wrap and shared coordination.
+- `SwipeDashboardView.swift` — six-page swipe navigation, circular forward wrap, shared coordination and PV-disabled presentation state.
 - `ContentView.swift` — Agile dashboard.
 - `PriceWheelView.swift` — Agile wheel rendering/selection.
 - `AgileViewModel.swift` — tariff/rate state and refresh logic.
@@ -306,8 +354,8 @@ SwipeDashboardView
 - `SolarForecastView.swift` — irradiance wheel.
 - `GenerationEstimateView.swift` — generation calculation and wheel.
 - `NetEffectivePriceView.swift` — Agile + PV optimiser calculation and net-price wheel.
-- `AppSettingsStore.swift` — persistent PV and optimiser settings.
-- `AppSettingsView.swift` — settings page.
+- `AppSettingsStore.swift` — persistent PV-installed state, PV configuration and optimiser settings.
+- `AppSettingsView.swift` — settings page including the PV-installed toggle and disabled dependent controls.
 - `SolarSiteSettingsView.swift` — geocoding/manual-coordinate editor.
 - `DocumentationView.swift` — complete in-app User Guide and information-sheet content.
 
@@ -337,6 +385,8 @@ Open-Meteo → SolarForecastAPI → SolarForecastModel → Solar UI
 SolarForecastModel + AppSettingsStore → local PV calculation → Generation wheel
 ```
 
+The Generation wheel is presented as disabled when PV is configured as not installed.
+
 ## Net electricity price
 
 ```text
@@ -350,6 +400,8 @@ local half-hour optimiser
         ↓
 NetPriceHalfHour → Net Price wheel
 ```
+
+The Net Price wheel is presented as disabled when PV is configured as not installed.
 
 No separate server or cache is needed for generation or net-price results because both are deterministically recalculated from the loaded price/solar data and local settings.
 
@@ -407,7 +459,9 @@ Actual timestamps and period durations are used throughout.
 
 `SolarForecastCache` persists downloaded site/date solar forecasts.
 
-When both required source datasets are cached, PV Generation and Net Electricity Price can be recalculated offline because their calculations are local.
+When PV is enabled and both required source datasets are cached, PV Generation and Net Electricity Price can be recalculated offline because their calculations are local.
+
+The PV-installed toggle itself is stored locally in `UserDefaults`, so its disabled/enabled state also persists offline.
 
 The User Guide is compiled into the app, so it is always available offline.
 
@@ -421,6 +475,7 @@ Offline mode cannot fetch a tariff/day/site that was never previously downloaded
 
 - selected tariff code;
 - solar site name/coordinates;
+- PV-panels-installed Boolean;
 - PV-array configuration;
 - optimiser load.
 
@@ -428,7 +483,7 @@ Application Support JSON stores Agile and solar cache snapshots.
 
 The app does not require Octopus login credentials, API key, MPAN, meter serial number, payment details or live GPS permission.
 
-Configured coordinates are sent to Open-Meteo for forecast/geocoding requests. PV settings, optimiser load, generation estimates and net-price calculations remain local.
+Configured coordinates are sent to Open-Meteo for forecast/geocoding requests. PV settings, optimiser load, generation estimates, PV-installed state and net-price calculations remain local.
 
 ---
 
@@ -465,7 +520,7 @@ Refresh Agile prices
 Refresh solar forecast
 ```
 
-PV Generation and Net Electricity Price recalculate automatically when prices, solar data or settings change.
+PV Generation and Net Electricity Price recalculate automatically when prices, solar data or settings change, but their UI is disabled when the PV-installed toggle is off.
 
 If an online refresh fails and a cache exists, the cached source data remains available.
 
@@ -490,6 +545,14 @@ Before release test:
 - price-wheel selection;
 - solar site search/manual coordinates;
 - solar-wheel selection;
+- PV-installed setting defaults to on for existing/new unconfigured installs;
+- PV-installed setting persists after restart;
+- turning PV off greys and disables PV-array controls;
+- turning PV off greys and disables optimiser-load controls;
+- turning PV off greys and blocks interaction with PV Generation;
+- turning PV off greys and blocks interaction with Net Electricity Price, including its wheel;
+- Solar Forecast remains usable when PV is off;
+- turning PV back on restores previously entered PV details;
 - PV settings persistence;
 - PV generation totals/selection;
 - optimiser-load persistence and default 3.0 kW;
