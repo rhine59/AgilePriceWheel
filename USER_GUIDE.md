@@ -41,15 +41,7 @@ User Guide
 Agile Prices
 ```
 
-The final left swipe from User Guide therefore starts the sequence again.
-
-Swipe right to move back one page:
-
-```text
-User Guide → App Settings → Net Electricity Price → PV Generation → Solar Forecast → Agile Prices
-```
-
-A right swipe from Agile Prices does not wrap; it remains on the first page.
+Swipe right to move back one page. A right swipe from Agile Prices does not wrap.
 
 Six page dots show the current position.
 
@@ -63,9 +55,7 @@ The User Guide can also be opened from any **ⓘ** information button. In that c
 
 This is the first page when the app launches.
 
-Each sector of the wheel represents one Agile settlement period.
-
-On a normal day there are 48 half-hours. UK clock-change days can contain 46 or 50.
+Each sector of the wheel represents one Agile settlement period. On a normal day there are 48 half-hours. UK clock-change days can contain 46 or 50.
 
 Touch or drag around the wheel to choose a half-hour.
 
@@ -84,25 +74,9 @@ Use the bottom controls for:
 - **Chart** — chronological half-hour bars;
 - **Details** — selected-period and tariff information.
 
-### Colours
+Negative prices are blue. Positive prices progress from green through yellow/orange to red relative to that day.
 
-- negative prices: blue;
-- cheaper positive periods: green;
-- progressively higher positive periods: yellow/orange/red.
-
-The positive colour scale is relative to that day.
-
-### Data source
-
-The page reports:
-
-```text
-SERVER DATA
-LOCAL CACHE
-NO DATA
-```
-
-Cached data can be used when the network is unavailable.
+The data-source label shows whether the values are live server data, local cached data, or unavailable.
 
 ---
 
@@ -112,31 +86,19 @@ Swipe left from Agile Prices.
 
 The solar page follows the same selected day.
 
-Each wheel sector shows forecast **global horizontal irradiance (GHI)** in:
+Each wheel sector shows forecast **global horizontal irradiance (GHI)** in W/m². Touch or drag around the wheel to inspect a period.
 
-```text
-W/m²
-```
-
-Touch or drag around the wheel to inspect a period.
-
-The page shows:
-
-- selected half-hour irradiance;
-- peak irradiance and time;
-- daylight average;
-- forecast site coordinates;
-- server/cache status.
+The page shows selected irradiance, peak irradiance and time, daylight average, forecast site coordinates and server/cache status.
 
 Solar data comes from Open-Meteo 15-minute `shortwave_radiation` forecasts. The app combines consecutive 15-minute values into half-hour values.
 
+The Solar Forecast page remains available even if you configure the app as having **no PV panels installed**. It is a weather/irradiance view and does not itself require a PV system.
+
 ### Setting the solar site
 
-Go to App Settings and choose **Set solar site** or **Change solar site**.
+Go to App Settings and choose **Set solar site** or **Change solar site**. Search by place/postcode or enter latitude/longitude manually.
 
-You can search by place/postcode or enter latitude/longitude manually.
-
-The app does not currently need live iPhone GPS permission.
+The app does not currently require live iPhone GPS permission.
 
 ---
 
@@ -144,33 +106,22 @@ The app does not currently need live iPhone GPS permission.
 
 Swipe left from Solar Forecast.
 
-This page estimates electrical energy from your configured PV array.
+This page estimates electrical energy from your configured PV array. Each wheel sector represents estimated kWh generated during that half-hour.
 
-Each wheel sector represents:
+The page shows estimated day total, peak estimated power and time, selected half-hour energy, selected half-hour average power and effective array capacity used.
 
-```text
-estimated kWh generated during that half-hour
-```
+### If no PV panels are installed
 
-The page shows:
+In App Settings, turn **Solar PV panels installed** off.
 
-- estimated day total;
-- peak estimated power and time;
-- selected half-hour energy;
-- selected half-hour average power;
-- effective array capacity used.
+When that setting is off:
 
-Touch or drag around the wheel to inspect a period.
+- the PV Generation page is greyed;
+- the page cannot be interacted with;
+- a message explains that PV generation is disabled;
+- your existing PV-array details are retained rather than erased.
 
-### Required setup
-
-Generation needs:
-
-1. a solar site;
-2. a solar forecast for the selected day;
-3. an effective PV-array capacity.
-
-Capacity comes from either rated kWp or panel count × panel watts. Rated kWp takes priority when entered.
+Turn the setting back on to restore normal PV Generation operation.
 
 ---
 
@@ -198,11 +149,7 @@ estimated energy = estimated power × actual period duration
 
 The model uses actual timestamps, not a hard-coded half hour.
 
-### Important limitations
-
-The current model uses horizontal GHI. Tilt and azimuth are stored but not yet applied because the app does not yet calculate plane-of-array irradiance.
-
-It also does not yet model shading, panel temperature, snow, soiling, detailed inverter efficiency, mismatch, degradation, horizon obstruction or albedo.
+The current model uses horizontal GHI. Tilt and azimuth are stored but not yet applied because the app does not yet calculate plane-of-array irradiance. It also does not yet explicitly model shading, panel temperature, snow, soiling, detailed inverter efficiency, mismatch, degradation, horizon obstruction or albedo.
 
 Treat the result as a planning forecast, not guaranteed generation.
 
@@ -212,28 +159,24 @@ Treat the result as a planning forecast, not guaranteed generation.
 
 Swipe left from PV Generation.
 
-This page uses the same optimiser idea as the nightly Agile + solar email.
-
-It answers:
+This page uses the same optimiser idea as the nightly Agile + solar email. It answers:
 
 > What is the effective p/kWh cost of running my configured load in each half-hour after forecast PV has reduced the amount bought from the grid?
 
-Each sector of the wheel shows that net/effective price in **p/kWh**.
+Each wheel sector shows that net/effective price in p/kWh.
 
-The page shows:
+The page shows best net price and time, highest net price and time, average net price, configured load power, selected published Agile price, selected load energy, selected forecast PV generation, expected grid import, expected slot cost and net/adjusted p/kWh.
 
-- best net price and time;
-- highest net price and time;
-- average net price;
-- configured load power;
-- selected published Agile price;
-- selected load energy;
-- selected forecast PV generation;
-- expected grid import;
-- expected slot cost;
-- net/adjusted p/kWh.
+### If no PV panels are installed
 
-Touch or drag around the wheel to inspect a half-hour.
+When **Solar PV panels installed** is off:
+
+- the Net Electricity Price calculation area is greyed;
+- the net-price wheel is greyed;
+- the wheel and related controls are disabled;
+- an overlay explains that the feature requires PV to be enabled.
+
+This prevents a solar-adjusted net price from appearing active for a property without PV.
 
 ---
 
@@ -261,21 +204,9 @@ Expected slot cost      12 p
 Net effective price      8 p/kWh
 ```
 
-The optimiser load defaults to **3.0 kW**, matching the previous nightly email model, but you can change it in App Settings.
+The optimiser load defaults to **3.0 kW**, matching the previous nightly email model, but you can change it in App Settings while PV is enabled.
 
-### What the net price means
-
-The net price is not the published tariff. It is an effective cost for the complete configured load after allowing for forecast self-generation.
-
-A period with a higher published Agile rate can therefore be cheaper overall if enough solar is expected.
-
-### Important assumptions
-
-The calculation assumes all forecast PV is available to the configured load.
-
-It does not yet subtract household background demand first, and it does not add export revenue when generation exceeds the load.
-
-If forecast PV is greater than the configured load, expected grid import is floored at zero.
+The calculation assumes all forecast PV is available to the configured load. It does not yet subtract household background demand first, and it does not add export revenue when generation exceeds the load.
 
 ---
 
@@ -294,8 +225,6 @@ below 0 p/kWh   dark green
 50+             dark red
 ```
 
-These bands reproduce the established nightly email optimiser colouring.
-
 ---
 
 # 10. App Settings
@@ -304,39 +233,42 @@ Swipe left from Net Electricity Price.
 
 App Settings is page 5 of 6. Swipe left again to reach the User Guide.
 
-It contains all application configuration.
-
 ## Agile electricity
 
-Choose:
-
-- Agile tariff/region;
-- selected day;
-- **Refresh Agile prices**.
-
-Changing the day updates all day-based pages.
+Choose the Agile tariff/region, selected day and **Refresh Agile prices**.
 
 ## Solar site
 
-Set or change the site by search or coordinates.
+Set or change the site by search or coordinates. Use **Refresh solar forecast** to request a fresh forecast.
 
-Use **Refresh solar forecast** to request a fresh forecast.
+## Solar PV availability
+
+The setting:
+
+```text
+Solar PV panels installed
+```
+
+controls whether PV-derived features are active.
+
+It is on by default for an installation that has never stored this setting before, preserving existing app behaviour.
+
+When switched off:
+
+- PV-array fields are greyed and disabled;
+- Net price optimiser fields are greyed and disabled;
+- PV Generation is greyed and disabled;
+- Net Electricity Price is greyed and disabled;
+- Solar Forecast remains available;
+- saved PV and optimiser values are retained.
+
+When switched back on, the saved PV configuration becomes available again immediately.
 
 ## PV array
 
-Available fields:
+Available fields include array name, rated peak power in kWp, number of panels, panel watts, tilt, azimuth, inverter maximum AC power, estimated system losses and notes.
 
-- array name;
-- rated peak power in kWp;
-- number of panels;
-- panel watts;
-- tilt;
-- azimuth;
-- inverter maximum AC power;
-- estimated system losses;
-- notes.
-
-Azimuth:
+Azimuth convention:
 
 ```text
 0° North
@@ -347,11 +279,7 @@ Azimuth:
 
 ## Net price optimiser
 
-Set **Controllable load power (kW)**.
-
-The default is 3.0 kW. The settings page also shows the equivalent energy for a normal 30-minute slot.
-
-Change this value to model a different appliance or flexible load.
+Set **Controllable load power (kW)**. The default is 3.0 kW. This section is disabled when Solar PV panels installed is off.
 
 ### Navigation from Settings
 
@@ -371,8 +299,6 @@ Navigation from the User Guide:
 - swipe right to return to App Settings;
 - swipe left to wrap directly back to Agile Prices.
 
-This makes the forward page sequence continuous rather than stopping at the guide.
-
 The guide can still be opened as a sheet from **ⓘ** buttons elsewhere in the app. That sheet version includes a Done button; the swipe-page version does not.
 
 ---
@@ -384,44 +310,19 @@ Online refresh buttons exist only for source data:
 - Refresh Agile prices;
 - Refresh solar forecast.
 
-PV Generation recalculates automatically from solar data and PV settings.
-
-Net Electricity Price recalculates automatically when any of these change:
-
-- Agile rates;
-- solar forecast;
-- PV-array settings;
-- system losses;
-- inverter maximum;
-- optimiser load.
+PV Generation and Net Electricity Price recalculate from their underlying data and settings when PV is enabled. When PV is disabled, those pages remain greyed and non-interactive.
 
 ---
 
 # 13. Offline use
 
-The app stores previously downloaded Agile and solar data.
+Previously downloaded Agile and solar data are cached locally.
 
-### Agile cache
+PV Generation and Net Electricity Price are local calculations and can work from cached source data when PV is enabled.
 
-Previously downloaded tariff/day prices can be displayed offline.
-
-### Solar cache
-
-Previously downloaded site/day forecasts can be displayed offline.
-
-### PV Generation offline
-
-Generation is calculated locally, so it can be recalculated from cached solar data and saved PV settings.
-
-### Net Price offline
-
-Net price is also calculated locally. If both Agile prices and solar data for the selected day are cached, the net-price wheel can be recalculated offline.
-
-### User Guide offline
+The PV-installed switch is stored locally, so its enabled/disabled state persists without a network connection.
 
 The User Guide is part of the app itself and is always available offline.
-
-Offline mode cannot obtain new source data that was never downloaded.
 
 ---
 
@@ -443,25 +344,19 @@ The app works from actual timestamps and durations.
 
 # 15. Privacy
 
-The app does not require:
-
-- Octopus login;
-- Octopus API key;
-- MPAN;
-- meter serial number;
-- payment details;
-- live GPS permission.
+The app does not require Octopus login, Octopus API key, MPAN, meter serial number, payment details or live GPS permission.
 
 Stored locally:
 
 - selected tariff;
 - site name/coordinates;
+- whether PV panels are installed;
 - PV-array settings;
 - optimiser load;
 - cached Agile prices;
 - cached solar forecasts.
 
-Coordinates are sent to Open-Meteo when required for geocoding/forecast requests. PV settings, optimiser load and derived calculations remain local.
+Coordinates are sent to Open-Meteo when required for geocoding/forecast requests. PV settings, the PV-installed switch, optimiser load and derived calculations remain local.
 
 ---
 
@@ -475,36 +370,25 @@ Check tariff, date, publication status and network/cache availability. Try **Ref
 
 Check the solar site and date. Try **Refresh solar forecast**.
 
-## No PV generation
+## PV Generation is greyed out
+
+Open App Settings and check **Solar PV panels installed**. If the property has PV, turn it on. If the property does not have PV, the greyed state is intentional.
+
+## Net Electricity Price wheel is greyed out
+
+Open App Settings and check **Solar PV panels installed**. The net-price optimiser depends on forecast self-generation, so it is intentionally disabled when PV is configured as not installed.
+
+## PV is enabled but no generation appears
 
 Check that solar data exists and rated kWp or panel count + panel watts are configured.
 
-## No net-price wheel
+## PV is enabled but no net-price wheel appears
 
-Check:
-
-- Agile prices exist for the selected day;
-- solar forecast exists for the same day;
-- PV-array capacity is configured;
-- optimiser load is greater than zero.
-
-## Net price seems too low/high
-
-Check:
-
-- optimiser load kW;
-- PV kWp;
-- system losses;
-- inverter maximum;
-- selected Agile tariff/day.
-
-Remember that the model currently assumes all forecast PV is available to the evaluated load and ignores background household consumption/export income.
+Check Agile prices, solar forecast, PV capacity and optimiser load.
 
 ## Swipe navigation does not move pages
 
-Use a clearly horizontal swipe. The app deliberately requires the horizontal movement to dominate the vertical movement so ordinary scrolling does not accidentally change pages.
-
-On the User Guide, vertical scrolling reads the guide; a deliberate left swipe wraps to Agile Prices.
+Use a clearly horizontal swipe. The app deliberately requires horizontal movement to dominate vertical movement so ordinary scrolling does not accidentally change pages.
 
 ---
 
@@ -528,9 +412,9 @@ SwipeDashboardView
              └─ DocumentationView
 ```
 
-Agile and solar are source-data pipelines. Generation and net price are local derived calculations. The guide is local static app content.
+`AppSettingsStore.hasPVPanelsInstalled` is the feature-state switch. `SwipeDashboardView` observes it and dims/disables the PV Generation and Net Electricity Price content when false. `AppSettingsView` uses the same value to disable PV-array and optimiser controls.
 
-`SwipeDashboardView` owns the six-page navigation state. The left-swipe transition from User Guide sets the page back to Agile Prices; the right-swipe transition from User Guide returns to App Settings.
+Agile and solar are source-data pipelines. Generation and net price are local derived calculations. The guide is local static app content.
 
 ---
 
