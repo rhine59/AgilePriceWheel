@@ -244,15 +244,15 @@ struct SolarSiteSettingsView: View {
             request.preferredLocale = Locale(identifier: "en_GB")
 
             do {
-                guard let mapItem = try await request.mapItems.first else {
+                let mapItems = try await request.mapItems
+                guard let mapItem = mapItems.first else {
                     return "Current location"
                 }
 
                 let candidates = [
                     mapItem.addressRepresentations?.cityName,
                     mapItem.addressRepresentations?.cityWithContext,
-                    mapItem.name,
-                    mapItem.address?.shortAddress
+                    mapItem.name
                 ]
 
                 if let name = candidates
@@ -270,7 +270,7 @@ struct SolarSiteSettingsView: View {
         }
     }
 
-    @available(iOS, introduced: 2.0, obsoleted: 26.0)
+    @available(iOS, introduced: 5.0, obsoleted: 26.0)
     private func legacyCommonName(for location: CLLocation) async -> String {
         let geocoder = CLGeocoder()
 
