@@ -68,9 +68,9 @@ struct DocumentationView: View {
                 Section("Solar site") {
                     Text("Set or change the forecast site from App Settings.")
                     Text("Use Current Location requests iOS When-In-Use permission only when tapped. The app does not continuously track location.")
-                    Text("After obtaining coordinates, the app reverse-geocodes them to a familiar locality or town name. If a common name cannot be resolved, Current location is used as a fallback.")
-                    Text("The saved site name is editable. Changing the label does not alter the saved latitude or longitude used for the forecast.")
-                    Text("Place/postcode search and manual coordinates remain available if location permission is denied.")
+                    Text("After obtaining coordinates, the app reverse-geocodes them to a familiar locality or town name. On iOS 26 and later this uses MapKit's modern reverse-geocoding request; earlier supported systems use the compatibility geocoder.")
+                    Text("If a common name cannot be resolved, Current location is used as a fallback. The saved site name is editable without altering latitude or longitude.")
+                    Text("Place/postcode search and manual coordinates remain available if location permission is denied or Location Services are unavailable.")
                 }
 
                 Section("PV Forecast") {
@@ -115,11 +115,12 @@ struct DocumentationView: View {
 
                 Section("Privacy") {
                     Text("The public tariff/rate features do not require Octopus login credentials, API key, MPAN, meter serial number or payment information.")
-                    Text("Location permission is requested only when Use Current Location is tapped. Coordinates are stored locally, used with Apple's reverse-geocoding service for the readable site name, and sent to Open-Meteo for solar forecast requests.")
+                    Text("Location permission is requested only when Use Current Location is tapped. Coordinates are stored locally, reverse-geocoded by Apple to obtain a readable site name, and sent to Open-Meteo for solar forecast requests. The app does not continuously monitor location.")
                 }
 
                 Section("Technical architecture") {
                     Text("SwipeDashboardView coordinates the defined pages, conditional bottom navigation, adaptive header/navigation layout, Now behaviour and PV-dependent visibility.")
+                    Text("SolarSiteSettingsView uses Core Location for explicit one-shot location fixes and MapKit reverse geocoding on iOS 26 and later, with a legacy compatibility path for earlier systems.")
                     Text("GenerationEstimateView implements PV Forecast. CostSavingsView implements Cost Savings. NetEffectivePriceView also calculates and displays the selected sector's PV saving.")
                     Text("The app is native Swift/SwiftUI with no third-party package dependencies.")
                 }
