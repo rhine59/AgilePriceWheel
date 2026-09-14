@@ -82,13 +82,6 @@ struct SolarForecastView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 340)
             }
-
-            HStack(spacing: 8) {
-                Image(systemName: "arrow.left.and.right")
-                Text("Swipe right for prices · swipe left for PV Forecast")
-            }
-            .font(.caption)
-            .foregroundStyle(.white.opacity(0.5))
         }
     }
 
