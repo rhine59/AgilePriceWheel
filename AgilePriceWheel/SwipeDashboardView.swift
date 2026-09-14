@@ -55,7 +55,7 @@ struct SwipeDashboardView: View {
                     }
                 }
                 .padding(.trailing, 18)
-                .padding(.bottom, 72)
+                .padding(.bottom, 76)
             }
         }
         .animation(.easeInOut(duration: 0.18), value: page)
@@ -72,46 +72,39 @@ struct SwipeDashboardView: View {
     }
 
     private var bottomNavigation: some View {
-        HStack(spacing: 12) {
-            Button {
-                goPrevious()
-            } label: {
-                Label("Back", systemImage: "chevron.left")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .frame(minWidth: 72)
-                    .padding(.vertical, 10)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(page == .prices ? Color.white.opacity(0.25) : Color.orange)
-            .disabled(page == .prices)
-            .accessibilityLabel(page == .prices ? "Back unavailable on first page" : "Previous page")
-
-            VStack(spacing: 4) {
-                pageDots
-                Text("\(page.accessibilityPosition) of 6")
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.58))
-            }
-            .frame(maxWidth: .infinity)
-
-            Button {
-                goNext()
-            } label: {
-                HStack(spacing: 5) {
-                    Text(page == .guide ? "Prices" : "Next")
-                    Image(systemName: "chevron.right")
+        HStack(spacing: 2) {
+            ForEach(DashboardPage.allCases, id: \.self) { target in
+                Button {
+                    withAnimation { page = target }
+                } label: {
+                    VStack(spacing: 3) {
+                        Image(systemName: target.symbolName)
+                            .font(.system(size: 19, weight: .semibold))
+                            .frame(height: 23)
+                        Text(target.shortTitle)
+                            .font(.system(size: 9, weight: page == target ? .semibold : .medium, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
                 }
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
-                .frame(minWidth: 72)
-                .padding(.vertical, 10)
+                .buttonStyle(.plain)
+                .foregroundStyle(page == target ? Color.orange : Color.white.opacity(0.58))
+                .background {
+                    if page == target {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.orange.opacity(0.12))
+                    }
+                }
+                .accessibilityLabel(target.accessibilityLabel)
+                .accessibilityAddTraits(page == target ? .isSelected : [])
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(.orange)
-            .accessibilityLabel(page == .guide ? "Return to Octopus Agile Prices" : "Next page")
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 7)
-        .padding(.bottom, 7)
+        .padding(.horizontal, 6)
+        .padding(.top, 5)
+        .padding(.bottom, 5)
         .background(.ultraThinMaterial)
         .overlay(alignment: .top) {
             Rectangle()
@@ -361,63 +354,6 @@ struct SwipeDashboardView: View {
         .ignoresSafeArea()
     }
 
-    private var pageDots: some View {
-        HStack(spacing: 7) {
-            pageDot(.prices)
-            pageDot(.solar)
-            pageDot(.generation)
-            pageDot(.netPrice)
-            pageDot(.settings)
-            pageDot(.guide)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Page \(page.accessibilityPosition) of 6")
-    }
-
-    private func pageDot(_ target: DashboardPage) -> some View {
-        Circle()
-            .fill(page == target ? Color.orange : Color.white.opacity(0.28))
-            .frame(width: 7, height: 7)
-    }
-
-    private func goPrevious() {
-        withAnimation {
-            switch page {
-            case .prices:
-                break
-            case .solar:
-                page = .prices
-            case .generation:
-                page = .solar
-            case .netPrice:
-                page = .generation
-            case .settings:
-                page = .netPrice
-            case .guide:
-                page = .settings
-            }
-        }
-    }
-
-    private func goNext() {
-        withAnimation {
-            switch page {
-            case .prices:
-                page = .solar
-            case .solar:
-                page = .generation
-            case .generation:
-                page = .netPrice
-            case .netPrice:
-                page = .settings
-            case .settings:
-                page = .guide
-            case .guide:
-                page = .prices
-            }
-        }
-    }
-
     private var dayLabel: String {
         if Calendar.uk.isDateInToday(model.selectedDate) { return "Today" }
         if Calendar.uk.isDateInTomorrow(model.selectedDate) { return "Tomorrow" }
@@ -425,7 +361,7 @@ struct SwipeDashboardView: View {
     }
 }
 
-private enum DashboardPage: Equatable {
+private enum DashboardPage: CaseIterable, Hashable {
     case prices
     case solar
     case generation
@@ -442,14 +378,36 @@ private enum DashboardPage: Equatable {
         }
     }
 
-    var accessibilityPosition: Int {
+    var shortTitle: String {
         switch self {
-        case .prices: return 1
-        case .solar: return 2
-        case .generation: return 3
-        case .netPrice: return 4
-        case .settings: return 5
-        case .guide: return 6
+        case .prices: return "Prices"
+        case .solar: return "Solar"
+        case .generation: return "PV"
+        case .netPrice: return "Net"
+        case .settings: return "Settings"
+        case .guide: return "Guide"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .prices: return "bolt.fill"
+        case .solar: return "sun.max.fill"
+        case .generation: return "bolt.sun.fill"
+        case .netPrice: return "sterlingsign.circle.fill"
+        case .settings: return "slider.horizontal.3"
+        case .guide: return "book.closed.fill"
+        }
+    }
+
+    var accessibilityLabel: String {
+        switch self {
+        case .prices: return "Octopus Agile Prices page"
+        case .solar: return "Solar Forecast page"
+        case .generation: return "PV Forecast page"
+        case .netPrice: return "Net Electricity Price page"
+        case .settings: return "App Settings page"
+        case .guide: return "User Guide page"
         }
     }
 }
