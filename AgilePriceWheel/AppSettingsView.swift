@@ -77,7 +77,7 @@ struct AppSettingsView: View {
             } header: {
                 Text("Solar PV availability")
             } footer: {
-                Text("Turn this off for a property without PV panels. PV-array settings, the net-price optimiser, PV Forecast, Net Electricity Price and Cost Savings are then disabled, while saved values are retained in case PV is enabled again later.")
+                Text("Turn this off for a property without PV panels. PV Forecast, Net Electricity Price and Cost Savings are then hidden from the bottom navigation, while Solar Forecast remains available. Turn it back on to show those three pages again. PV-array and optimiser settings are disabled while off, but their saved values are retained.")
             }
 
             Section {
