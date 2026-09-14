@@ -44,7 +44,7 @@ Documentation-only wording changes do not require a corresponding code change.
 
 Compiler or Xcode compatibility fixes that do not alter user-visible behaviour do not require changes to all three user-facing documentation surfaces. They must still be reflected in the repository documentation where they affect build, setup, diagnostics, troubleshooting or source-maintenance guidance.
 
-`AppSettingsView.swift` currently uses the explicit SwiftUI `Section { ... } header: { ... } footer: { ... }` form for sections that have footers. This avoids the generic-inference errors produced by combining a shorthand string-title initializer with a separate footer closure on the current project toolchain.
+`AppSettingsView.swift` and `SolarSiteSettingsView.swift` use the explicit SwiftUI `Section { ... } header: { ... } footer: { ... }` form for sections that have footers. This avoids the generic-inference errors produced by combining a shorthand string-title initializer with a separate footer closure on the current project toolchain.
 
 ## Source of truth
 
