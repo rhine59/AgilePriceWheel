@@ -18,7 +18,7 @@ This includes changes to:
 - price-wheel, solar-wheel, generation-wheel or net-price-wheel behaviour;
 - tariff discovery or Octopus API integration;
 - Open-Meteo forecast/geocoding integration;
-- solar-site settings;
+- solar-site settings, including current-location access and permissions;
 - PV-array settings;
 - PV-generation calculations or assumptions;
 - net/effective-price calculations or assumptions;
@@ -45,6 +45,20 @@ Documentation-only wording changes do not require a corresponding code change.
 Compiler or Xcode compatibility fixes that do not alter user-visible behaviour do not require changes to all three user-facing documentation surfaces. They must still be reflected in the repository documentation where they affect build, setup, diagnostics, troubleshooting or source-maintenance guidance.
 
 `AppSettingsView.swift` and `SolarSiteSettingsView.swift` use the explicit SwiftUI `Section { ... } header: { ... } footer: { ... }` form for sections that have footers. This avoids the generic-inference errors produced by combining a shorthand string-title initializer with a separate footer closure on the current project toolchain.
+
+## Current-location solar-site requirement
+
+The Solar Site screen supports three ways to set the forecast site:
+
+- `Use Current Location`, using Core Location when explicitly requested by the user;
+- place/postcode search through Open-Meteo geocoding;
+- manual latitude/longitude entry.
+
+Current-location access must remain opt-in. The app must request **When In Use** permission only after the user taps `Use Current Location`, and the generated Info.plist must contain an `NSLocationWhenInUseUsageDescription` string explaining that location is used to set the solar forecast site.
+
+If location access is denied, restricted or unavailable, the app must continue to offer place/postcode search and manual coordinates. A successful current-location fix is persisted only as the selected solar-site coordinates, in the same way as the other site-selection methods.
+
+Any change to this behaviour must update `README.md`, `USER_GUIDE.md`, and `DocumentationView.swift` together with the implementation.
 
 ## Source of truth
 
