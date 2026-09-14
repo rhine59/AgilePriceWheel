@@ -164,14 +164,6 @@ struct NetEffectivePriceView: View {
                     message: "Agile prices and the solar forecast could not be aligned for this selected day."
                 )
             }
-
-            HStack(spacing: 8) {
-                Text("Swipe right for PV Forecast")
-                Image(systemName: "arrow.left.and.right")
-                Text("left for Settings")
-            }
-            .font(.caption2)
-            .foregroundStyle(.white.opacity(0.5))
         }
         .onAppear { chooseInitialSelection() }
         .onChange(of: agileModel.rates) { _, _ in chooseInitialSelection() }
