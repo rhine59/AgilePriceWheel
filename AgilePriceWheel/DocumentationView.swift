@@ -12,7 +12,7 @@ struct DocumentationView: View {
         NavigationStack {
             List {
                 Section("Index") {
-                    Text("1. Seven page buttons")
+                    Text("1. Conditional page buttons")
                     Text("2. Now button")
                     Text("3. Octopus Agile Prices")
                     Text("4. Solar Forecast and solar site")
@@ -28,8 +28,9 @@ struct DocumentationView: View {
                     Text("The first dashboard page is titled Octopus Agile Prices. The project and repository remain named AgilePriceWheel.")
                 }
 
-                Section("Seven page buttons") {
-                    Text("A fixed seven-button navigation bar is shown at the bottom of every page. Tap Prices, Solar, PV, Net, Save, Settings or Guide to jump directly to that page.")
+                Section("Conditional page buttons") {
+                    Text("When Solar PV panels installed is on, the bottom navigation shows Prices, Solar, PV, Net, Save, Settings and Guide.")
+                    Text("When Solar PV panels installed is off, PV, Net and Save are hidden, leaving Prices, Solar, Settings and Guide. Turning PV back on restores the three hidden pages immediately and keeps the saved PV-array and optimiser values.")
                     Text("Save opens Cost Savings. The selected page button is highlighted in orange.")
                     Text("Horizontal swipe navigation is intentionally disabled so touching or dragging a wheel sector cannot accidentally change the main page.")
                 }
@@ -39,7 +40,7 @@ struct DocumentationView: View {
                 }
 
                 Section("Now button") {
-                    Text("Octopus Agile Prices, Solar Forecast, PV Forecast, Net Electricity Price and Cost Savings each have a Now button.")
+                    Text("Octopus Agile Prices and Solar Forecast always have a Now button. PV Forecast, Net Electricity Price and Cost Savings also have Now when those pages are visible.")
                     Text("Tapping Now returns the shared selected date to today, loads today's source data if required and selects the half-hour containing the current time using validFrom ≤ now < validTo.")
                     Text("Now is part of the page layout rather than a floating overlay, so SwiftUI reserves space for it and it should not cover descriptions, wheels or metric cards on supported iPhone sizes.")
                 }
@@ -68,13 +69,14 @@ struct DocumentationView: View {
                     Text("PV Forecast estimates half-hour PV electrical output from the solar forecast plus configured array capacity, losses and inverter limit.")
                     Text("Estimated power = array kWp × (GHI ÷ 1000) × (1 − system-loss percentage), clipped to the configured inverter maximum when one is set. Energy = power × actual period duration.")
                     Text("Rated kWp takes priority; otherwise panel count × panel watts ÷ 1000 can provide array capacity.")
-                    Text("If Solar PV panels installed is off, PV Forecast is greyed and disabled while saved settings are retained.")
+                    Text("If Solar PV panels installed is off, PV Forecast and its bottom navigation button are hidden. They return when PV is switched on again.")
                 }
 
                 Section("Net Electricity Price") {
                     Text("The Net Electricity Price wheel estimates the effective p/kWh cost of running the configured load after forecast PV reduces expected grid import.")
                     Text("Load energy = load kW × period hours; grid import = max(load energy − forecast PV, 0); slot cost = grid import × Agile price; net price = slot cost ÷ complete load energy.")
                     Text("The selected wheel sector also shows PV saving in pence. The Selected half-hour breakdown repeats that saving and the PV energy used against the load.")
+                    Text("This page is hidden when Solar PV panels installed is off and returns when PV is enabled again.")
                 }
 
                 Section("Cost Savings") {
@@ -82,6 +84,7 @@ struct DocumentationView: View {
                     Text("Avoided grid import = min(forecast PV energy, configured load energy). PV cost saving = avoided grid import × Agile price.")
                     Text("The page shows each half-hour saving, forecast day saving, best half-hour, total avoided grid import and a selected-period breakdown.")
                     Text("Surplus PV export income is not included. If the Agile price is negative, the saving can be negative because importing would have been financially beneficial. Negative saving sectors are red and positive sectors are green.")
+                    Text("This page is hidden when Solar PV panels installed is off and returns when PV is enabled again.")
                 }
 
                 Section("PV-array units") {
@@ -92,7 +95,7 @@ struct DocumentationView: View {
 
                 Section("App Settings") {
                     Text("App Settings centralises Agile tariff/day controls, source refresh, solar site, PV availability, Solar PV array settings and optimiser load.")
-                    Text("When Solar PV panels installed is off, PV-array and optimiser controls are disabled; PV Forecast, Net Electricity Price and Cost Savings are greyed; Solar Forecast stays active; saved values are retained.")
+                    Text("When Solar PV panels installed is off, PV, Net and Save disappear from bottom navigation; PV-array and optimiser controls are disabled; Solar Forecast stays active; saved values are retained. Turning PV back on restores the three pages immediately.")
                     Text("Azimuth convention: 0° North, 90° East, 180° South, 270° West.")
                 }
 
@@ -108,7 +111,7 @@ struct DocumentationView: View {
                 }
 
                 Section("Technical architecture") {
-                    Text("SwipeDashboardView coordinates seven pages, direct bottom-button navigation, Now behaviour and PV-disabled presentation state. Its historical name remains even though swipe page-changing is no longer used.")
+                    Text("SwipeDashboardView coordinates seven defined pages, conditional bottom-button navigation, Now behaviour and PV-dependent visibility. Its historical name remains even though swipe page-changing is no longer used.")
                     Text("GenerationEstimateView implements PV Forecast. CostSavingsView implements Cost Savings. NetEffectivePriceView also calculates and displays the selected sector's PV saving.")
                     Text("The app is native Swift/SwiftUI with no third-party package dependencies.")
                 }
