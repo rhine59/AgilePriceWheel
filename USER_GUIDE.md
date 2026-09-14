@@ -122,11 +122,11 @@ You can use:
 2. place/postcode search;
 3. manual latitude/longitude.
 
-When **Use Current Location** succeeds, the app reverse-geocodes the coordinates using Apple's geocoding service and tries to use a familiar locality or town name. If no suitable common name is returned, the label falls back to **Current location**.
+When **Use Current Location** succeeds, the app reverse-geocodes the coordinates using Apple geocoding APIs and tries to use a familiar locality or town name. On iOS 26 and later this uses MapKit; older supported systems use the compatibility geocoder. If no suitable common name is returned, the label falls back to **Current location**.
 
 The saved site name is editable. Renaming it does not change the saved latitude or longitude.
 
-The app does not continuously track location. Search and manual coordinates remain available if permission is denied.
+The app does not continuously track location. Search and manual coordinates remain available if permission is denied or Location Services are unavailable.
 
 ---
 
@@ -245,7 +245,7 @@ The in-app User Guide remains available offline.
 
 The public Octopus tariff/rate functions do not require Octopus account login details, API key, MPAN, meter serial number or payment details.
 
-Location permission is requested only when **Use Current Location** is tapped. Coordinates are stored locally, used with Apple's reverse-geocoding service for the readable site name and sent to Open-Meteo for solar forecast requests.
+Location permission is requested only when **Use Current Location** is tapped. Coordinates are stored locally, reverse-geocoded by Apple to obtain the readable site name and sent to Open-Meteo for solar forecast requests. The app does not continuously monitor location.
 
 ---
 
@@ -268,6 +268,8 @@ If no Agile prices appear, check tariff/date/network and try **Refresh Agile pri
 If no solar forecast appears, check the solar site/date and try **Refresh solar forecast**.
 
 If **Use Current Location** shows **Current location**, reverse geocoding did not return a suitable locality. The coordinates are still valid and the label can be edited.
+
+If current location is unavailable, check both iPhone/iPad Location Services and Agile Price Wheel's When-In-Use permission. Place/postcode search and manual coordinates remain available.
 
 If PV, Net and Save are missing, check **Solar PV panels installed**. If it is off, that is expected.
 
