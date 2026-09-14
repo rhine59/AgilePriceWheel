@@ -84,30 +84,24 @@ struct AppSettingsView: View {
                 Group {
                     TextField("Array name", text: $settings.arrayName)
 
-                    TextField("Rated peak power (kWp)", text: $settings.peakPowerKWpText)
-                        .keyboardType(.decimalPad)
+                    unitField("Rated peak power", text: $settings.peakPowerKWpText, unit: "kWp", keyboard: .decimalPad)
 
                     TextField("Number of panels", text: $settings.panelCountText)
                         .keyboardType(.numberPad)
 
-                    TextField("Panel rating (W each)", text: $settings.panelPowerWattsText)
-                        .keyboardType(.decimalPad)
+                    unitField("Panel rating", text: $settings.panelPowerWattsText, unit: "W", keyboard: .decimalPad)
 
                     if let calculated = settings.calculatedPanelPeakKWp {
                         LabeledContent("Panels imply", value: String(format: "%.2f kWp", calculated))
                     }
 
-                    TextField("Panel tilt from horizontal (°)", text: $settings.tiltDegreesText)
-                        .keyboardType(.decimalPad)
+                    unitField("Panel tilt from horizontal", text: $settings.tiltDegreesText, unit: "°", keyboard: .decimalPad)
 
-                    TextField("Azimuth (°)", text: $settings.azimuthDegreesText)
-                        .keyboardType(.decimalPad)
+                    unitField("Azimuth", text: $settings.azimuthDegreesText, unit: "°", keyboard: .decimalPad)
 
-                    TextField("Inverter maximum AC output (kW)", text: $settings.inverterMaxKWText)
-                        .keyboardType(.decimalPad)
+                    unitField("Inverter maximum AC output", text: $settings.inverterMaxKWText, unit: "kW", keyboard: .decimalPad)
 
-                    TextField("Estimated system losses (%)", text: $settings.systemLossPercentText)
-                        .keyboardType(.decimalPad)
+                    unitField("Estimated system losses", text: $settings.systemLossPercentText, unit: "%", keyboard: .decimalPad)
 
                     TextField("Notes", text: $settings.notes, axis: .vertical)
                         .lineLimit(2...5)
@@ -124,7 +118,7 @@ struct AppSettingsView: View {
                 Text("Solar PV array")
             } footer: {
                 if settings.hasPVPanelsInstalled {
-                    Text("These details feed the PV Generation and Net Electricity Price pages. Azimuth uses 0° = North, 90° = East, 180° = South and 270° = West. Tilt and azimuth are stored but are not yet applied by the current GHI-based generation model.")
+                    Text("Units remain visible beside each PV value while editing: kWp for rated array power, W for panel rating, degrees for tilt/azimuth, kW for inverter output and % for system losses. These details feed the PV Forecast and Net Electricity Price pages. Azimuth uses 0° = North, 90° = East, 180° = South and 270° = West. Tilt and azimuth are stored but are not yet applied by the current GHI-based generation model.")
                 } else {
                     Text("PV-array options are disabled because Solar PV panels installed is turned off.")
                 }
@@ -179,6 +173,26 @@ struct AppSettingsView: View {
                 selectedDate: agileModel.selectedDate
             )
             .preferredColorScheme(.dark)
+        }
+    }
+
+    @ViewBuilder
+    private func unitField(
+        _ title: String,
+        text: Binding<String>,
+        unit: String,
+        keyboard: UIKeyboardType
+    ) -> some View {
+        HStack(spacing: 10) {
+            Text(title)
+            Spacer(minLength: 12)
+            TextField("", text: text)
+                .keyboardType(keyboard)
+                .multilineTextAlignment(.trailing)
+                .frame(minWidth: 72, idealWidth: 95, maxWidth: 120)
+            Text(unit)
+                .foregroundStyle(.secondary)
+                .frame(minWidth: 30, alignment: .leading)
         }
     }
 }
