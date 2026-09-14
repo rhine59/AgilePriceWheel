@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SwipeDashboardView: View {
     @EnvironmentObject private var model: AgileViewModel
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     @StateObject private var solarModel = SolarForecastModel()
     @StateObject private var appSettings = AppSettingsStore()
 
@@ -39,11 +41,12 @@ struct SwipeDashboardView: View {
                 Text("Octopus Agile Prices")
                     .font(.system(size: 27, weight: .semibold, design: .rounded))
                     .foregroundStyle(.orange)
-                    .minimumScaleFactor(0.72)
+                    .minimumScaleFactor(0.56)
                     .lineLimit(1)
                     .padding(.horizontal, 8)
                     .background(Color(red: 0.012, green: 0.105, blue: 0.175))
-                    .frame(maxWidth: 270)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 68)
                     .frame(maxHeight: .infinity, alignment: .top)
                     .padding(.top, 10)
                     .allowsHitTesting(false)
@@ -68,23 +71,23 @@ struct SwipeDashboardView: View {
         }
     }
 
+    private var contentHorizontalPadding: CGFloat {
+        horizontalSizeClass == .regular ? 24 : 14
+    }
+
+    private var contentMaxWidth: CGFloat {
+        horizontalSizeClass == .regular ? 760 : 680
+    }
+
     private var bottomNavigation: some View {
-        HStack(spacing: 1) {
-            navigationButton(.prices, title: "Prices", systemImage: "bolt.circle.fill")
-            navigationButton(.solar, title: "Solar", systemImage: "sun.max.fill")
-
-            if appSettings.hasPVPanelsInstalled {
-                navigationButton(.generation, title: "PV", systemImage: "bolt.fill")
-                navigationButton(.netPrice, title: "Net", systemImage: "sterlingsign.circle.fill")
-                navigationButton(.savings, title: "Save", systemImage: "banknote.fill")
-            }
-
-            navigationButton(.settings, title: "Settings", systemImage: "slider.horizontal.3")
-            navigationButton(.guide, title: "Guide", systemImage: "book.closed.fill")
+        ViewThatFits(in: .horizontal) {
+            navigationStrip(showLabels: true, compact: false)
+            navigationStrip(showLabels: true, compact: true)
+            navigationStrip(showLabels: false, compact: true)
         }
-        .padding(.horizontal, 3)
-        .padding(.top, 6)
-        .padding(.bottom, 6)
+        .padding(.horizontal, horizontalSizeClass == .regular ? 12 : 3)
+        .padding(.top, 5)
+        .padding(.bottom, 5)
         .background(.ultraThinMaterial)
         .overlay(alignment: .top) {
             Rectangle()
@@ -94,20 +97,48 @@ struct SwipeDashboardView: View {
         .animation(.easeInOut(duration: 0.18), value: appSettings.hasPVPanelsInstalled)
     }
 
-    private func navigationButton(_ target: DashboardPage, title: String, systemImage: String) -> some View {
+    private func navigationStrip(showLabels: Bool, compact: Bool) -> some View {
+        HStack(spacing: compact ? 0 : 2) {
+            navigationButton(.prices, title: "Prices", systemImage: "bolt.circle.fill", showLabel: showLabels, compact: compact)
+            navigationButton(.solar, title: "Solar", systemImage: "sun.max.fill", showLabel: showLabels, compact: compact)
+
+            if appSettings.hasPVPanelsInstalled {
+                navigationButton(.generation, title: "PV", systemImage: "bolt.fill", showLabel: showLabels, compact: compact)
+                navigationButton(.netPrice, title: "Net", systemImage: "sterlingsign.circle.fill", showLabel: showLabels, compact: compact)
+                navigationButton(.savings, title: "Save", systemImage: "banknote.fill", showLabel: showLabels, compact: compact)
+            }
+
+            navigationButton(.settings, title: "Settings", systemImage: "slider.horizontal.3", showLabel: showLabels, compact: compact)
+            navigationButton(.guide, title: "Guide", systemImage: "book.closed.fill", showLabel: showLabels, compact: compact)
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func navigationButton(
+        _ target: DashboardPage,
+        title: String,
+        systemImage: String,
+        showLabel: Bool,
+        compact: Bool
+    ) -> some View {
         Button {
             withAnimation { page = target }
         } label: {
-            VStack(spacing: 3) {
+            VStack(spacing: compact ? 2 : 3) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 18, weight: .semibold))
-                Text(title)
-                    .font(.system(size: 8, weight: .semibold, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.65)
+                    .font(.system(size: compact ? 17 : 19, weight: .semibold))
+                    .frame(height: 22)
+
+                if showLabel {
+                    Text(title)
+                        .font(.system(size: compact ? 8 : 9, weight: .semibold, design: .rounded))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 5)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .padding(.horizontal, compact ? 1 : 2)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .foregroundStyle(page == target ? Color.orange : Color.white.opacity(0.62))
@@ -121,6 +152,7 @@ struct SwipeDashboardView: View {
         } label: {
             Label("Now", systemImage: "clock.fill")
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .lineLimit(1)
                 .padding(.horizontal, 13)
                 .padding(.vertical, 9)
         }
@@ -165,122 +197,109 @@ struct SwipeDashboardView: View {
         ContentView()
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 metricNowRow
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, contentHorizontalPadding)
                     .padding(.vertical, 6)
                     .background(Color(red: 0.012, green: 0.105, blue: 0.175).opacity(0.96))
             }
     }
 
     private var solarScreen: some View {
-        ZStack {
-            dashboardBackground
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 14) {
-                    pageHeader(title: "Solar Forecast", subtitle: dayLabel, icon: "gearshape") { withAnimation { page = .settings } }
-                    metricNowRow
-                    SolarForecastView(model: solarModel, selectedDate: model.selectedDate, openSettings: { withAnimation { page = .settings } })
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 20)
-            }
+        standardMetricScreen(title: "Solar Forecast") {
+            SolarForecastView(
+                model: solarModel,
+                selectedDate: model.selectedDate,
+                openSettings: { withAnimation { page = .settings } }
+            )
         }
-        .preferredColorScheme(.dark)
     }
 
     private var generationScreen: some View {
-        ZStack {
-            dashboardBackground
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 14) {
-                    pageHeader(title: "PV Forecast", subtitle: dayLabel, icon: "gearshape") { withAnimation { page = .settings } }
-                    metricNowRow
-                    ZStack {
-                        GenerationEstimateView(
-                            solarModel: solarModel,
-                            settings: appSettings,
-                            selectedDate: model.selectedDate,
-                            openSettings: { withAnimation { page = .settings } }
-                        )
-                        .id(nowRefreshID)
-                        .disabled(!appSettings.hasPVPanelsInstalled)
-                        .opacity(appSettings.hasPVPanelsInstalled ? 1.0 : 0.24)
+        standardMetricScreen(title: "PV Forecast") {
+            ZStack {
+                GenerationEstimateView(
+                    solarModel: solarModel,
+                    settings: appSettings,
+                    selectedDate: model.selectedDate,
+                    openSettings: { withAnimation { page = .settings } }
+                )
+                .id(nowRefreshID)
+                .disabled(!appSettings.hasPVPanelsInstalled)
+                .opacity(appSettings.hasPVPanelsInstalled ? 1.0 : 0.24)
 
-                        if !appSettings.hasPVPanelsInstalled {
-                            pvDisabledOverlay(
-                                title: "PV forecast disabled",
-                                message: "Solar PV panels installed is turned off in App Settings."
-                            )
-                        }
-                    }
+                if !appSettings.hasPVPanelsInstalled {
+                    pvDisabledOverlay(
+                        title: "PV forecast disabled",
+                        message: "Solar PV panels installed is turned off in App Settings."
+                    )
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 20)
             }
         }
-        .preferredColorScheme(.dark)
     }
 
     private var netPriceScreen: some View {
-        ZStack {
-            dashboardBackground
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 14) {
-                    pageHeader(title: "Net Electricity Price", subtitle: dayLabel, icon: "gearshape") { withAnimation { page = .settings } }
-                    metricNowRow
-                    ZStack {
-                        NetEffectivePriceView(
-                            agileModel: model,
-                            solarModel: solarModel,
-                            settings: appSettings,
-                            openSettings: { withAnimation { page = .settings } }
-                        )
-                        .id(nowRefreshID)
-                        .disabled(!appSettings.hasPVPanelsInstalled)
-                        .opacity(appSettings.hasPVPanelsInstalled ? 1.0 : 0.22)
+        standardMetricScreen(title: "Net Electricity Price") {
+            ZStack {
+                NetEffectivePriceView(
+                    agileModel: model,
+                    solarModel: solarModel,
+                    settings: appSettings,
+                    openSettings: { withAnimation { page = .settings } }
+                )
+                .id(nowRefreshID)
+                .disabled(!appSettings.hasPVPanelsInstalled)
+                .opacity(appSettings.hasPVPanelsInstalled ? 1.0 : 0.22)
 
-                        if !appSettings.hasPVPanelsInstalled {
-                            pvDisabledOverlay(
-                                title: "Net price disabled",
-                                message: "This wheel needs forecast PV generation. Turn on Solar PV panels installed in App Settings to use it."
-                            )
-                        }
-                    }
+                if !appSettings.hasPVPanelsInstalled {
+                    pvDisabledOverlay(
+                        title: "Net price disabled",
+                        message: "This wheel needs forecast PV generation. Turn on Solar PV panels installed in App Settings to use it."
+                    )
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 20)
             }
         }
-        .preferredColorScheme(.dark)
     }
 
     private var savingsScreen: some View {
+        standardMetricScreen(title: "Cost Savings") {
+            ZStack {
+                CostSavingsView(
+                    agileModel: model,
+                    solarModel: solarModel,
+                    settings: appSettings,
+                    openSettings: { withAnimation { page = .settings } }
+                )
+                .id(nowRefreshID)
+                .disabled(!appSettings.hasPVPanelsInstalled)
+                .opacity(appSettings.hasPVPanelsInstalled ? 1.0 : 0.22)
+
+                if !appSettings.hasPVPanelsInstalled {
+                    pvDisabledOverlay(
+                        title: "Cost savings disabled",
+                        message: "This wheel needs forecast PV generation. Turn on Solar PV panels installed in App Settings to use it."
+                    )
+                }
+            }
+        }
+    }
+
+    private func standardMetricScreen<Content: View>(
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
         ZStack {
             dashboardBackground
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
-                    pageHeader(title: "Cost Savings", subtitle: dayLabel, icon: "gearshape") { withAnimation { page = .settings } }
-                    metricNowRow
-                    ZStack {
-                        CostSavingsView(
-                            agileModel: model,
-                            solarModel: solarModel,
-                            settings: appSettings,
-                            openSettings: { withAnimation { page = .settings } }
-                        )
-                        .id(nowRefreshID)
-                        .disabled(!appSettings.hasPVPanelsInstalled)
-                        .opacity(appSettings.hasPVPanelsInstalled ? 1.0 : 0.22)
-
-                        if !appSettings.hasPVPanelsInstalled {
-                            pvDisabledOverlay(
-                                title: "Cost savings disabled",
-                                message: "This wheel needs forecast PV generation. Turn on Solar PV panels installed in App Settings to use it."
-                            )
-                        }
+                    pageHeader(title: title, subtitle: dayLabel, icon: "gearshape") {
+                        withAnimation { page = .settings }
                     }
+                    metricNowRow
+                    content()
                 }
-                .padding(.horizontal, 16)
+                .frame(maxWidth: contentMaxWidth)
+                .padding(.horizontal, contentHorizontalPadding)
                 .padding(.bottom, 20)
+                .frame(maxWidth: .infinity)
             }
         }
         .preferredColorScheme(.dark)
@@ -290,42 +309,67 @@ struct SwipeDashboardView: View {
         ZStack {
             dashboardBackground
             VStack(spacing: 8) {
-                HStack {
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 24, weight: .medium))
-                        .foregroundStyle(.orange)
-                        .frame(width: 42, height: 42)
-
-                    Spacer()
-
-                    VStack(spacing: 1) {
-                        Text("App Settings")
-                            .font(.system(size: 28, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.orange)
-                            .minimumScaleFactor(0.75)
-                            .lineLimit(1)
-                        Text("Tariff · site · PV array · optimiser load")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundStyle(.orange.opacity(0.82))
-                    }
-
-                    Spacer()
-
-                    Button { showingDocumentation = true } label: {
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 27, weight: .medium))
-                            .foregroundStyle(.orange)
-                            .frame(width: 42, height: 42)
-                    }
-                    .accessibilityLabel("Guide and documentation")
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
+                settingsHeader
+                    .frame(maxWidth: contentMaxWidth)
+                    .padding(.horizontal, contentHorizontalPadding)
 
                 AppSettingsView(agileModel: model, solarModel: solarModel, settings: appSettings)
+                    .frame(maxWidth: contentMaxWidth)
             }
+            .frame(maxWidth: .infinity)
         }
         .preferredColorScheme(.dark)
+    }
+
+    private var settingsHeader: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundStyle(.orange)
+                    .frame(width: 42, height: 42)
+
+                Spacer()
+
+                VStack(spacing: 1) {
+                    Text("App Settings")
+                        .font(.system(size: 28, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.orange)
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+                    Text("Tariff · site · PV array · optimiser load")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundStyle(.orange.opacity(0.82))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+
+                Spacer()
+
+                documentationButton
+            }
+
+            VStack(spacing: 3) {
+                HStack {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(.orange)
+                        .frame(width: 42, height: 42)
+                    Spacer()
+                    documentationButton
+                }
+                Text("App Settings")
+                    .font(.system(size: 24, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.orange)
+                    .lineLimit(1)
+                Text("Tariff · site · PV array · optimiser load")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(.orange.opacity(0.82))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
+        }
+        .padding(.top, 4)
     }
 
     private var guideScreen: some View {
@@ -337,38 +381,58 @@ struct SwipeDashboardView: View {
     }
 
     private func pageHeader(title: String, subtitle: String, icon: String, action: @escaping () -> Void) -> some View {
-        HStack {
-            Button(action: action) {
-                Image(systemName: icon)
-                    .font(.system(size: 26, weight: .medium))
-                    .foregroundStyle(.orange)
-                    .frame(width: 42, height: 42)
-            }
-            .accessibilityLabel("App settings")
-
-            Spacer()
-
-            VStack(spacing: 1) {
-                Text(title)
-                    .font(.system(size: 28, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.orange)
-                    .minimumScaleFactor(0.72)
-                    .lineLimit(1)
-                Text(subtitle)
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                    .foregroundStyle(.orange.opacity(0.85))
+        ViewThatFits(in: .horizontal) {
+            HStack {
+                settingsButton(icon: icon, action: action)
+                Spacer(minLength: 8)
+                headerTitle(title: title, subtitle: subtitle, titleSize: 28)
+                Spacer(minLength: 8)
+                documentationButton
             }
 
-            Spacer()
-
-            Button { showingDocumentation = true } label: {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 27, weight: .medium))
-                    .foregroundStyle(.orange)
-                    .frame(width: 42, height: 42)
+            VStack(spacing: 3) {
+                HStack {
+                    settingsButton(icon: icon, action: action)
+                    Spacer()
+                    documentationButton
+                }
+                headerTitle(title: title, subtitle: subtitle, titleSize: 24)
             }
-            .accessibilityLabel("Guide and documentation")
         }
+    }
+
+    private func headerTitle(title: String, subtitle: String, titleSize: CGFloat) -> some View {
+        VStack(spacing: 1) {
+            Text(title)
+                .font(.system(size: titleSize, weight: .semibold, design: .rounded))
+                .foregroundStyle(.orange)
+                .minimumScaleFactor(0.62)
+                .lineLimit(1)
+            Text(subtitle)
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundStyle(.orange.opacity(0.85))
+                .lineLimit(1)
+        }
+    }
+
+    private func settingsButton(icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 26, weight: .medium))
+                .foregroundStyle(.orange)
+                .frame(width: 44, height: 44)
+        }
+        .accessibilityLabel("App settings")
+    }
+
+    private var documentationButton: some View {
+        Button { showingDocumentation = true } label: {
+            Image(systemName: "info.circle")
+                .font(.system(size: 27, weight: .medium))
+                .foregroundStyle(.orange)
+                .frame(width: 44, height: 44)
+        }
+        .accessibilityLabel("Guide and documentation")
     }
 
     private func pvDisabledOverlay(title: String, message: String) -> some View {
