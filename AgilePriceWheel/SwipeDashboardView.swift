@@ -74,7 +74,7 @@ struct SwipeDashboardView: View {
             navigationButton(.solar, title: "Solar", systemImage: "sun.max.fill")
 
             if appSettings.hasPVPanelsInstalled {
-                navigationButton(.generation, title: "PV", systemImage: "bolt.sun.fill")
+                navigationButton(.generation, title: "PV", systemImage: "bolt.fill")
                 navigationButton(.netPrice, title: "Net", systemImage: "sterlingsign.circle.fill")
                 navigationButton(.savings, title: "Save", systemImage: "banknote.fill")
             }
