@@ -36,7 +36,8 @@ struct DocumentationView: View {
                 }
 
                 Section("Navigation symbols") {
-                    Text("Prices uses a lightning bolt, Solar a sun, PV a sun/bolt, Net a pound symbol, Save a banknote, Settings sliders and Guide a book.")
+                    Text("Prices uses a lightning bolt in a circle, Solar a sun, PV a simple filled lightning bolt, Net a pound symbol, Save a banknote, Settings sliders and Guide a book.")
+                    Text("The simpler PV lightning-bolt symbol is deliberately used to match the visual weight of the other bottom-navigation icons.")
                 }
 
                 Section("Now button") {
