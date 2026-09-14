@@ -8,7 +8,7 @@ The affected pages are:
 
 1. Octopus Agile Prices
 2. Solar Forecast
-3. PV Generation
+3. PV Forecast
 4. Net Electricity Price
 
 App Settings and User Guide do not show a Now button because they do not display half-hour metrics.
@@ -22,7 +22,7 @@ Tapping **Now**:
 - loads today's solar forecast if required;
 - selects the Agile half-hour containing the current time;
 - selects the solar irradiance half-hour containing the current time;
-- refreshes the PV Generation view so its selected half-hour is the current period;
+- refreshes the PV Forecast view so its selected half-hour is the current period;
 - refreshes the Net Electricity Price view so its selected half-hour is the current period.
 
 If today's source data is already loaded, the app reuses it rather than forcing an unnecessary network download.
@@ -37,17 +37,17 @@ If no period contains the current time, the first available period is used as a 
 
 ## Shared date
 
-The selected date remains shared across Agile Prices, Solar Forecast, PV Generation and Net Electricity Price. Therefore tapping Now on any one of those pages returns the whole metric dashboard to today.
+The selected date is shared across Octopus Agile Prices, Solar Forecast, PV Forecast and Net Electricity Price. Tapping Now on any of those pages therefore returns the whole metric dashboard to today.
 
 ## Display title
 
-The first dashboard page is presented to the user as:
+The first dashboard page is presented as:
 
 ```text
 Octopus Agile Prices
 ```
 
-This replaces the previous visible title `Agile Price Wheel` while retaining the existing project/repository name `AgilePriceWheel`.
+The Xcode project/repository name remains `AgilePriceWheel`.
 
 ## Accessibility
 
