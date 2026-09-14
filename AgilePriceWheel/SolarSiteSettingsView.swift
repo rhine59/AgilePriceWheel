@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreLocation
 import Combine
+import MapKit
 
 struct SolarSiteSettingsView: View {
     @ObservedObject var solarModel: SolarForecastModel
@@ -234,8 +235,44 @@ struct SolarSiteSettingsView: View {
     }
 
     private func commonName(latitude: Double, longitude: Double) async -> String {
-        let geocoder = CLGeocoder()
         let location = CLLocation(latitude: latitude, longitude: longitude)
+
+        if #available(iOS 26.0, *) {
+            guard let request = MKReverseGeocodingRequest(location: location) else {
+                return "Current location"
+            }
+            request.preferredLocale = Locale(identifier: "en_GB")
+
+            do {
+                guard let mapItem = try await request.mapItems.first else {
+                    return "Current location"
+                }
+
+                let candidates = [
+                    mapItem.addressRepresentations?.cityName,
+                    mapItem.addressRepresentations?.cityWithContext,
+                    mapItem.name,
+                    mapItem.address?.shortAddress
+                ]
+
+                if let name = candidates
+                    .compactMap({ $0?.trimmingCharacters(in: .whitespacesAndNewlines) })
+                    .first(where: { !$0.isEmpty }) {
+                    return name
+                }
+            } catch {
+                return "Current location"
+            }
+
+            return "Current location"
+        } else {
+            return await legacyCommonName(for: location)
+        }
+    }
+
+    @available(iOS, introduced: 2.0, obsoleted: 26.0)
+    private func legacyCommonName(for location: CLLocation) async -> String {
+        let geocoder = CLGeocoder()
 
         do {
             let placemarks = try await geocoder.reverseGeocodeLocation(location)
@@ -285,11 +322,6 @@ private final class SolarSiteLocationProvider: NSObject, ObservableObject, CLLoc
         errorMessage = nil
         fix = nil
 
-        guard CLLocationManager.locationServicesEnabled() else {
-            errorMessage = "Location Services are turned off. Enable them in Settings, or use place/postcode search or manual coordinates."
-            return
-        }
-
         switch manager.authorizationStatus {
         case .notDetermined:
             isLocating = true
@@ -297,7 +329,7 @@ private final class SolarSiteLocationProvider: NSObject, ObservableObject, CLLoc
         case .authorizedAlways, .authorizedWhenInUse:
             requestLocation()
         case .denied, .restricted:
-            errorMessage = "Location access is not available. Allow location access for Agile Price Wheel in Settings, or use place/postcode search or manual coordinates."
+            errorMessage = "Location access is unavailable. Check Location Services and Agile Price Wheel permission in Settings, or use place/postcode search or manual coordinates."
         @unknown default:
             errorMessage = "Current location is unavailable. Use place/postcode search or manual coordinates instead."
         }
@@ -315,7 +347,7 @@ private final class SolarSiteLocationProvider: NSObject, ObservableObject, CLLoc
             }
         case .denied, .restricted:
             isLocating = false
-            errorMessage = "Location access was not allowed. You can still use place/postcode search or manual coordinates."
+            errorMessage = "Location access was not allowed or Location Services are unavailable. You can still use place/postcode search or manual coordinates."
         case .notDetermined:
             break
         @unknown default:
