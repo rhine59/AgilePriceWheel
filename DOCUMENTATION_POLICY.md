@@ -13,7 +13,7 @@ Any change that alters application behaviour must update the relevant documentat
 
 This includes changes to:
 
-- swipe-page order, wrap behaviour or navigation;
+- page order, button-navigation behaviour or wrap behaviour;
 - page names and user-visible titles;
 - Now/current-time selection behaviour;
 - feature-enable/disable configuration such as the PV-installed switch;
@@ -101,7 +101,7 @@ Each must expose a Now control that returns the shared selected date to today an
 
 See `docs/NOW_BUTTON_AND_CURRENT_TIME.md` for the focused behaviour/testing note.
 
-## Page-order requirement
+## Main-navigation requirement
 
 The documented order must match `SwipeDashboardView`:
 
@@ -115,9 +115,22 @@ Octopus Agile Prices
 → Octopus Agile Prices
 ```
 
-The forward sequence wraps from User Guide to Octopus Agile Prices. Reverse navigation does not wrap from the first page.
+Main page changes must be performed with explicit bottom navigation buttons, not a horizontal drag/swipe gesture. This is intentional because the price, solar, PV Forecast and net-price wheels use touch/drag interaction and page swiping can conflict with sector selection.
 
-Any future page-order/name change must update `SwipeDashboardView.swift`, `README.md`, `USER_GUIDE.md` and `DocumentationView.swift` together.
+Required behaviour:
+
+- a fixed bottom navigation bar is available on all six pages;
+- `Back` moves to the preceding page;
+- `Back` is disabled on Octopus Agile Prices;
+- `Next` moves forward through the normal page order;
+- on User Guide, the forward button is labelled `Prices` and returns to Octopus Agile Prices;
+- six page dots and a page-position indicator identify the current page;
+- horizontal dragging elsewhere on a page must not change the main page;
+- wheel-sector dragging must never navigate to another page.
+
+The historical Swift type name `SwipeDashboardView` may remain even though page-changing swipe gestures are no longer used.
+
+Any future page-order, page-name or navigation-control change must update `SwipeDashboardView.swift`, `README.md`, `USER_GUIDE.md` and `DocumentationView.swift` together.
 
 ## Source of truth
 
