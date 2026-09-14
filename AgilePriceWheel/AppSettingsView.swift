@@ -77,7 +77,7 @@ struct AppSettingsView: View {
             } header: {
                 Text("Solar PV availability")
             } footer: {
-                Text("Turn this off for a property without PV panels. PV-array settings and the net-price optimiser controls are then disabled, while saved values are retained in case PV is enabled again later.")
+                Text("Turn this off for a property without PV panels. PV-array settings, the net-price optimiser, PV Forecast, Net Electricity Price and Cost Savings are then disabled, while saved values are retained in case PV is enabled again later.")
             }
 
             Section {
@@ -118,7 +118,7 @@ struct AppSettingsView: View {
                 Text("Solar PV array")
             } footer: {
                 if settings.hasPVPanelsInstalled {
-                    Text("Units remain visible beside each PV value while editing: kWp for rated array power, W for panel rating, degrees for tilt/azimuth, kW for inverter output and % for system losses. These details feed the PV Forecast and Net Electricity Price pages. Azimuth uses 0° = North, 90° = East, 180° = South and 270° = West. Tilt and azimuth are stored but are not yet applied by the current GHI-based generation model.")
+                    Text("Units remain visible beside each PV value while editing: kWp for rated array power, W for panel rating, degrees for tilt/azimuth, kW for inverter output and % for system losses. These details feed PV Forecast, Net Electricity Price and Cost Savings. Azimuth uses 0° = North, 90° = East, 180° = South and 270° = West. Tilt and azimuth are stored but are not yet applied by the current GHI-based generation model.")
                 } else {
                     Text("PV-array options are disabled because Solar PV panels installed is turned off.")
                 }
@@ -139,9 +139,9 @@ struct AppSettingsView: View {
                 Text("Net price optimiser")
             } footer: {
                 if settings.hasPVPanelsInstalled {
-                    Text("This is the load used by the Net Electricity Price wheel. It defaults to 3.0 kW to match the established nightly email optimiser. Forecast PV is offset against this load before the remaining grid import is costed at the Agile rate.")
+                    Text("This load is used by both Net Electricity Price and Cost Savings. It defaults to 3.0 kW to match the established nightly email optimiser. Forecast PV is offset against this load; Cost Savings values only the PV energy that avoids importing this configured load.")
                 } else {
-                    Text("The net-price optimiser is disabled when no PV panels are installed.")
+                    Text("The net-price optimiser and Cost Savings calculation are disabled when no PV panels are installed.")
                 }
             }
 
