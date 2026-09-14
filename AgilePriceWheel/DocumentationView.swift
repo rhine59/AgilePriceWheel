@@ -41,7 +41,7 @@ struct DocumentationView: View {
                 Section("Now button") {
                     Text("Octopus Agile Prices, Solar Forecast, PV Forecast, Net Electricity Price and Cost Savings each have a Now button.")
                     Text("Tapping Now returns the shared selected date to today, loads today's source data if required and selects the half-hour containing the current time using validFrom ≤ now < validTo.")
-                    Text("The Now button is placed in unused dark space above and to the right of the wheel rather than over data cards or wheel sectors.")
+                    Text("Now is part of the page layout rather than a floating overlay, so SwiftUI reserves space for it and it should not cover descriptions, wheels or metric cards on supported iPhone sizes.")
                 }
 
                 Section("Octopus Agile Prices") {
@@ -59,6 +59,8 @@ struct DocumentationView: View {
                 Section("Solar site") {
                     Text("Set or change the forecast site from App Settings.")
                     Text("Use Current Location requests iOS When-In-Use permission only when tapped. The app does not continuously track location.")
+                    Text("After obtaining the coordinates, the app reverse-geocodes them to a familiar locality or town name and saves that as the site label. If a common name cannot be resolved, Current location is used as a fallback.")
+                    Text("The saved site name is editable. Changing the label does not alter the saved latitude or longitude used for the forecast.")
                     Text("Place/postcode search and manual coordinates remain available if location permission is denied.")
                 }
 
@@ -102,11 +104,11 @@ struct DocumentationView: View {
 
                 Section("Privacy") {
                     Text("The public tariff/rate features do not require Octopus login credentials, API key, MPAN, meter serial number or payment information.")
-                    Text("Location permission is requested only when Use Current Location is tapped. Selected coordinates are stored locally and sent to Open-Meteo when needed for forecast/geocoding requests.")
+                    Text("Location permission is requested only when Use Current Location is tapped. The selected coordinates are stored locally, used with Apple's reverse-geocoding service to obtain a readable site name, and sent to Open-Meteo when needed for solar forecast requests.")
                 }
 
                 Section("Technical architecture") {
-                    Text("SwipeDashboardView coordinates seven pages, direct bottom-button navigation, Now behaviour, Now-button placement and PV-disabled presentation state. Its historical name remains even though swipe page-changing is no longer used.")
+                    Text("SwipeDashboardView coordinates seven pages, direct bottom-button navigation, Now behaviour and PV-disabled presentation state. Its historical name remains even though swipe page-changing is no longer used.")
                     Text("GenerationEstimateView implements PV Forecast. CostSavingsView implements Cost Savings. NetEffectivePriceView also calculates and displays the selected sector's PV saving.")
                     Text("The app is native Swift/SwiftUI with no third-party package dependencies.")
                 }
