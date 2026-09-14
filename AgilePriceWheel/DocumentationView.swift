@@ -11,26 +11,37 @@ struct DocumentationView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("Index") {
+                    Text("1. Seven page buttons")
+                    Text("2. Now button")
+                    Text("3. Octopus Agile Prices")
+                    Text("4. Solar Forecast and solar site")
+                    Text("5. PV Forecast")
+                    Text("6. Net Electricity Price")
+                    Text("7. Cost Savings")
+                    Text("8. App Settings and PV-array units")
+                    Text("9. Cache, privacy and technical architecture")
+                }
+
                 Section("What the app does") {
-                    Text("Agile Price Wheel combines Octopus Agile half-hour prices, solar irradiance forecasts, a PV Forecast and a solar-adjusted Net Electricity Price for a configurable load.")
+                    Text("Agile Price Wheel combines Octopus Agile half-hour prices, solar irradiance forecasts, a PV Forecast, a solar-adjusted Net Electricity Price and forecast PV Cost Savings.")
                     Text("The first dashboard page is titled Octopus Agile Prices. The project and repository remain named AgilePriceWheel.")
                 }
 
-                Section("Six page buttons") {
-                    Text("A fixed six-button navigation bar is shown at the bottom of every page. Tap Prices, Solar, PV, Net, Settings or Guide to jump directly to that page.")
-                    Text("The selected page button is highlighted in orange.")
+                Section("Seven page buttons") {
+                    Text("A fixed seven-button navigation bar is shown at the bottom of every page. Tap Prices, Solar, PV, Net, Save, Settings or Guide to jump directly to that page.")
+                    Text("Save opens Cost Savings. The selected page button is highlighted in orange.")
                     Text("Horizontal swipe navigation is intentionally disabled so touching or dragging a wheel sector cannot accidentally change the main page.")
-                    Text("The older Back/Next controls, page dots, page-number indicator and swipe-navigation footer instructions have been removed.")
                 }
 
                 Section("Navigation symbols") {
-                    Text("Prices uses a lightning bolt, Solar uses a sun, PV uses a sun/bolt symbol, Net uses a pound symbol, Settings uses sliders and Guide uses a book.")
+                    Text("Prices uses a lightning bolt, Solar a sun, PV a sun/bolt, Net a pound symbol, Save a banknote, Settings sliders and Guide a book.")
                 }
 
                 Section("Now button") {
-                    Text("Octopus Agile Prices, Solar Forecast, PV Forecast and Net Electricity Price each have a Now button.")
+                    Text("Octopus Agile Prices, Solar Forecast, PV Forecast, Net Electricity Price and Cost Savings each have a Now button.")
                     Text("Tapping Now returns the shared selected date to today, loads today's source data if required and selects the half-hour containing the current time using validFrom ≤ now < validTo.")
-                    Text("The Now button is placed in unused dark space above and to the right of the wheel, rather than over the wheel or metric cards. Its vertical position is adjusted slightly for the Octopus price page so it stays clear of the header controls.")
+                    Text("The Now button is placed in unused dark space above and to the right of the wheel rather than over data cards or wheel sectors.")
                 }
 
                 Section("Octopus Agile Prices") {
@@ -58,28 +69,35 @@ struct DocumentationView: View {
                     Text("If Solar PV panels installed is off, PV Forecast is greyed and disabled while saved settings are retained.")
                 }
 
+                Section("Net Electricity Price") {
+                    Text("The Net Electricity Price wheel estimates the effective p/kWh cost of running the configured load after forecast PV reduces expected grid import.")
+                    Text("Load energy = load kW × period hours; grid import = max(load energy − forecast PV, 0); slot cost = grid import × Agile price; net price = slot cost ÷ complete load energy.")
+                    Text("The selected wheel sector also shows PV saving in pence. The Selected half-hour breakdown repeats that saving and the PV energy used against the load.")
+                }
+
+                Section("Cost Savings") {
+                    Text("Cost Savings is a separate half-hour wheel showing the import-cost saving created by forecast PV generation.")
+                    Text("Avoided grid import = min(forecast PV energy, configured load energy). PV cost saving = avoided grid import × Agile price.")
+                    Text("The page shows each half-hour saving, forecast day saving, best half-hour, total avoided grid import and a selected-period breakdown.")
+                    Text("Surplus PV export income is not included. If the Agile price is negative, the saving can be negative because importing would have been financially beneficial. Negative saving sectors are red and positive sectors are green.")
+                }
+
                 Section("PV-array units") {
                     Text("PV numeric fields keep their engineering units visible beside the editable value.")
                     Text("Rated peak power: kWp. Panel rating: W. Panel tilt: °. Azimuth: °. Inverter maximum AC output: kW. Estimated system losses: %.")
                     Text("Number of panels is dimensionless. Unit labels are display-only and are not stored as part of the numeric value.")
                 }
 
-                Section("Net Electricity Price") {
-                    Text("The Net Electricity Price wheel estimates the effective p/kWh cost of running the configured load after forecast PV reduces expected grid import.")
-                    Text("Load energy = load kW × period hours; grid import = max(load energy − forecast PV, 0); slot cost = grid import × Agile price; net price = slot cost ÷ complete load energy.")
-                    Text("The default optimiser load is 3.0 kW. Household background demand and export income are not yet separately included.")
-                }
-
                 Section("App Settings") {
                     Text("App Settings centralises Agile tariff/day controls, source refresh, solar site, PV availability, Solar PV array settings and optimiser load.")
-                    Text("When Solar PV panels installed is off, PV-array and optimiser controls are disabled, PV Forecast and Net Electricity Price are greyed, Solar Forecast stays active, and saved values are retained.")
+                    Text("When Solar PV panels installed is off, PV-array and optimiser controls are disabled; PV Forecast, Net Electricity Price and Cost Savings are greyed; Solar Forecast stays active; saved values are retained.")
                     Text("Azimuth convention: 0° North, 90° East, 180° South, 270° West.")
                 }
 
                 Section("Server, cache and offline use") {
                     Text("Agile and solar source data are cached locally after successful downloads.")
-                    Text("PV Forecast and Net Electricity Price are local derived calculations and can be recalculated from cached source data when the required settings are present.")
-                    Text("This User Guide is bundled into the app and remains available offline.")
+                    Text("PV Forecast, Net Electricity Price and Cost Savings are local derived calculations and can be recalculated from cached source data when the required settings are present.")
+                    Text("This indexed User Guide is bundled into the app and remains available offline.")
                 }
 
                 Section("Privacy") {
@@ -88,13 +106,13 @@ struct DocumentationView: View {
                 }
 
                 Section("Technical architecture") {
-                    Text("SwipeDashboardView coordinates the six pages, direct bottom-button navigation, Now behaviour, Now-button placement and PV-disabled presentation state. Its historical name remains even though swipe page-changing is no longer used.")
-                    Text("The user-facing PV Forecast page is implemented by GenerationEstimateView.")
+                    Text("SwipeDashboardView coordinates seven pages, direct bottom-button navigation, Now behaviour, Now-button placement and PV-disabled presentation state. Its historical name remains even though swipe page-changing is no longer used.")
+                    Text("GenerationEstimateView implements PV Forecast. CostSavingsView implements Cost Savings. NetEffectivePriceView also calculates and displays the selected sector's PV saving.")
                     Text("The app is native Swift/SwiftUI with no third-party package dependencies.")
                 }
 
                 Section("Accuracy and disclaimer") {
-                    Text("Solar irradiance, PV Forecast and Net Electricity Price are forecasts/derived planning estimates and can differ from actual generation, energy flows and bills.")
+                    Text("Solar irradiance, PV Forecast, Net Electricity Price and Cost Savings are forecasts/derived planning estimates and can differ from actual generation, energy flows and bills.")
                     Text("Agile Price Wheel is independent and is not an official Octopus Energy or Open-Meteo application.")
                 }
             }
