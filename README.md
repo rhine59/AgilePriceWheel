@@ -4,7 +4,7 @@ Agile Price Wheel is a native SwiftUI iPhone/iPad application for viewing Octopu
 
 The first dashboard page is presented to the user as **Octopus Agile Prices**. The Xcode project and GitHub repository remain named `AgilePriceWheel`.
 
-The app uses Apple frameworks only (`SwiftUI`, `Foundation`, `Combine`, `CoreLocation`) and has no third-party package dependencies.
+The app uses Apple frameworks only (`SwiftUI`, `Foundation`, `Combine`, `CoreLocation`, `MapKit`) and has no third-party package dependencies.
 
 ## Documentation index
 
@@ -102,7 +102,7 @@ Solar Forecast displays global horizontal irradiance (GHI / shortwave radiation)
 
 The solar site can be set using Current Location, place/postcode search or manual latitude/longitude. Current-location access is opt-in and When-In-Use only.
 
-When **Use Current Location** is selected, the app reverse-geocodes the coordinates using Apple's geocoding service and saves a familiar locality/town name as the site label. If no suitable name is resolved, the label falls back to **Current location**. The user can edit the saved site name without changing latitude or longitude.
+When **Use Current Location** is selected, the app reverse-geocodes the coordinates using Apple geocoding APIs and saves a familiar locality/town name as the site label. On iOS 26 and later it uses MapKit `MKReverseGeocodingRequest`; older supported systems use the legacy Core Location geocoder only in the compatibility path. If no suitable name is resolved, the label falls back to **Current location**. The user can edit the saved site name without changing latitude or longitude.
 
 Solar Forecast remains available when PV is disabled.
 
@@ -232,7 +232,7 @@ SwipeDashboardView
 
 ## APIs and persistence
 
-Octopus public tariff/rate endpoints are used without account credentials or API key. Open-Meteo supplies forecast and place/postcode search data. Apple's reverse-geocoding service is used after **Use Current Location** to obtain a readable site name.
+Octopus public tariff/rate endpoints are used without account credentials or API key. Open-Meteo supplies forecast and place/postcode search data. Current-location coordinates come from Core Location after explicit user action. Reverse geocoding uses MapKit `MKReverseGeocodingRequest` on iOS 26 and later, with a legacy Core Location compatibility path for earlier supported systems. The app no longer calls the global Location Services availability check synchronously on the main thread; authorization changes are handled through `CLLocationManagerDelegate`.
 
 `AgileCacheStore` persists tariff/rate snapshots. `SolarForecastCache` persists site/date solar forecasts. PV Forecast, Net Electricity Price and Cost Savings are calculated locally.
 
@@ -265,6 +265,8 @@ PRODUCT_BUNDLE_IDENTIFIER = KRH.AgilePriceWheel
 Before release verify:
 
 - clean Xcode build;
+- no location-related deprecation warnings on the current Xcode/iOS 26 SDK path;
+- no Core Location main-thread responsiveness warning from the current-location button;
 - small iPhone, standard iPhone, Max-size iPhone and regular-width iPad layouts;
 - at least one larger Dynamic Type setting;
 - no header/title collisions;
