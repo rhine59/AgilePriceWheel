@@ -43,11 +43,13 @@ When **Solar PV panels installed** is on, all seven bottom buttons are shown:
 |---|---|
 | ⚡ Prices | Octopus Agile Prices |
 | ☀️ Solar | Solar Forecast |
-| ☀️⚡ PV | PV Forecast |
+| ⚡ PV | PV Forecast |
 | £ Net | Net Electricity Price |
 | banknote Save | Cost Savings |
 | sliders Settings | App Settings |
 | book Guide | User Guide |
+
+The PV button uses a simple filled lightning-bolt symbol so its visual weight matches the other bottom-navigation icons.
 
 When **Solar PV panels installed** is off, the PV-dependent **PV**, **Net** and **Save** buttons are hidden. The bottom bar then shows only **Prices**, **Solar**, **Settings** and **Guide**. Turning PV back on restores the three hidden pages immediately. Saved PV-array and optimiser values are retained while PV is off.
 
