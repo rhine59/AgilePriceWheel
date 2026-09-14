@@ -156,9 +156,12 @@ struct AppSettingsView: View {
             }
 
             Section("Navigation") {
-                Label("Swipe right to return to Net Electricity Price", systemImage: "arrow.right")
+                Label("Use Back at the bottom to return to Net Electricity Price", systemImage: "chevron.left")
                     .foregroundStyle(.secondary)
-                Label("Swipe left to open the User Guide", systemImage: "arrow.left")
+                Label("Use Next at the bottom to open the User Guide", systemImage: "chevron.right")
+                    .foregroundStyle(.secondary)
+                Text("Horizontal swipe navigation is disabled so touching or dragging a wheel cannot accidentally change pages.")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
