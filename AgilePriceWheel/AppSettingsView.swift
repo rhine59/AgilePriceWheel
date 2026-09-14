@@ -67,65 +67,88 @@ struct AppSettingsView: View {
                 }
                 .disabled(solarModel.site == nil || solarModel.isLoading)
             } footer: {
-                Text("The site coordinates are used for the half-hour irradiance forecast shown on the Solar Forecast page.")
+                Text("The site coordinates are used for the half-hour irradiance forecast shown on the Solar Forecast page. The irradiance page remains available even if no PV panels are installed.")
+            }
+
+            Section("Solar PV availability") {
+                Toggle("Solar PV panels installed", isOn: $settings.hasPVPanelsInstalled)
+            } footer: {
+                Text("Turn this off for a property without PV panels. PV-array settings and the net-price optimiser controls are then disabled, while saved values are retained in case PV is enabled again later.")
             }
 
             Section("Solar PV array") {
-                TextField("Array name", text: $settings.arrayName)
+                Group {
+                    TextField("Array name", text: $settings.arrayName)
 
-                TextField("Rated peak power (kWp)", text: $settings.peakPowerKWpText)
-                    .keyboardType(.decimalPad)
+                    TextField("Rated peak power (kWp)", text: $settings.peakPowerKWpText)
+                        .keyboardType(.decimalPad)
 
-                TextField("Number of panels", text: $settings.panelCountText)
-                    .keyboardType(.numberPad)
+                    TextField("Number of panels", text: $settings.panelCountText)
+                        .keyboardType(.numberPad)
 
-                TextField("Panel rating (W each)", text: $settings.panelPowerWattsText)
-                    .keyboardType(.decimalPad)
+                    TextField("Panel rating (W each)", text: $settings.panelPowerWattsText)
+                        .keyboardType(.decimalPad)
 
-                if let calculated = settings.calculatedPanelPeakKWp {
-                    LabeledContent("Panels imply", value: String(format: "%.2f kWp", calculated))
-                }
+                    if let calculated = settings.calculatedPanelPeakKWp {
+                        LabeledContent("Panels imply", value: String(format: "%.2f kWp", calculated))
+                    }
 
-                TextField("Panel tilt from horizontal (°)", text: $settings.tiltDegreesText)
-                    .keyboardType(.decimalPad)
+                    TextField("Panel tilt from horizontal (°)", text: $settings.tiltDegreesText)
+                        .keyboardType(.decimalPad)
 
-                TextField("Azimuth (°)", text: $settings.azimuthDegreesText)
-                    .keyboardType(.decimalPad)
+                    TextField("Azimuth (°)", text: $settings.azimuthDegreesText)
+                        .keyboardType(.decimalPad)
 
-                TextField("Inverter maximum AC output (kW)", text: $settings.inverterMaxKWText)
-                    .keyboardType(.decimalPad)
+                    TextField("Inverter maximum AC output (kW)", text: $settings.inverterMaxKWText)
+                        .keyboardType(.decimalPad)
 
-                TextField("Estimated system losses (%)", text: $settings.systemLossPercentText)
-                    .keyboardType(.decimalPad)
+                    TextField("Estimated system losses (%)", text: $settings.systemLossPercentText)
+                        .keyboardType(.decimalPad)
 
-                TextField("Notes", text: $settings.notes, axis: .vertical)
-                    .lineLimit(2...5)
+                    TextField("Notes", text: $settings.notes, axis: .vertical)
+                        .lineLimit(2...5)
 
-                if settings.hasArrayDetails {
-                    Button("Clear PV array details", role: .destructive) {
-                        settings.clearSolarArray()
+                    if settings.hasArrayDetails {
+                        Button("Clear PV array details", role: .destructive) {
+                            settings.clearSolarArray()
+                        }
                     }
                 }
+                .disabled(!settings.hasPVPanelsInstalled)
+                .opacity(settings.hasPVPanelsInstalled ? 1.0 : 0.38)
             } footer: {
-                Text("These details feed the PV Generation and Net Electricity Price pages. Azimuth uses 0° = North, 90° = East, 180° = South and 270° = West. Tilt and azimuth are stored but are not yet applied by the current GHI-based generation model.")
+                if settings.hasPVPanelsInstalled {
+                    Text("These details feed the PV Generation and Net Electricity Price pages. Azimuth uses 0° = North, 90° = East, 180° = South and 270° = West. Tilt and azimuth are stored but are not yet applied by the current GHI-based generation model.")
+                } else {
+                    Text("PV-array options are disabled because Solar PV panels installed is turned off.")
+                }
             }
 
             Section("Net price optimiser") {
-                TextField("Controllable load power (kW)", text: $settings.optimiserLoadKWText)
-                    .keyboardType(.decimalPad)
+                Group {
+                    TextField("Controllable load power (kW)", text: $settings.optimiserLoadKWText)
+                        .keyboardType(.decimalPad)
 
-                if let loadKW = settings.effectiveOptimiserLoadKW {
-                    LabeledContent("30-minute load energy", value: String(format: "%.3f kWh", loadKW * 0.5))
+                    if let loadKW = settings.effectiveOptimiserLoadKW {
+                        LabeledContent("30-minute load energy", value: String(format: "%.3f kWh", loadKW * 0.5))
+                    }
                 }
+                .disabled(!settings.hasPVPanelsInstalled)
+                .opacity(settings.hasPVPanelsInstalled ? 1.0 : 0.38)
             } footer: {
-                Text("This is the load used by the Net Electricity Price wheel. It defaults to 3.0 kW to match the established nightly email optimiser. Forecast PV is offset against this load before the remaining grid import is costed at the Agile rate.")
+                if settings.hasPVPanelsInstalled {
+                    Text("This is the load used by the Net Electricity Price wheel. It defaults to 3.0 kW to match the established nightly email optimiser. Forecast PV is offset against this load before the remaining grid import is costed at the Agile rate.")
+                } else {
+                    Text("The net-price optimiser is disabled when no PV panels are installed.")
+                }
             }
 
             Section("Stored data") {
+                LabeledContent("PV panels", value: settings.hasPVPanelsInstalled ? "Installed" : "Not installed")
                 LabeledContent("Agile source", value: agileModel.dataSourceLabel)
                 LabeledContent("Solar source", value: solarModel.dataSourceLabel)
 
-                Text("Tariff selection, site coordinates, PV-array settings and optimiser load are stored locally on this device. Previously downloaded electricity and solar data are cached for offline use.")
+                Text("Tariff selection, site coordinates, the PV-installed setting, PV-array settings and optimiser load are stored locally on this device. Previously downloaded electricity and solar data are cached for offline use.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
