@@ -48,14 +48,14 @@ struct SwipeDashboardView: View {
 
             if page.isMetricsPage {
                 VStack {
-                    Spacer()
                     HStack {
                         Spacer()
                         nowButton
                     }
+                    Spacer()
                 }
+                .padding(.top, nowButtonTopPadding)
                 .padding(.trailing, 18)
-                .padding(.bottom, 76)
             }
         }
         .animation(.easeInOut(duration: 0.18), value: page)
@@ -72,45 +72,44 @@ struct SwipeDashboardView: View {
     }
 
     private var bottomNavigation: some View {
-        HStack(spacing: 2) {
-            ForEach(DashboardPage.allCases, id: \.self) { target in
-                Button {
-                    withAnimation { page = target }
-                } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: target.symbolName)
-                            .font(.system(size: 19, weight: .semibold))
-                            .frame(height: 23)
-                        Text(target.shortTitle)
-                            .font(.system(size: 9, weight: page == target ? .semibold : .medium, design: .rounded))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.72)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(page == target ? Color.orange : Color.white.opacity(0.58))
-                .background {
-                    if page == target {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.orange.opacity(0.12))
-                    }
-                }
-                .accessibilityLabel(target.accessibilityLabel)
-                .accessibilityAddTraits(page == target ? .isSelected : [])
-            }
+        HStack(spacing: 4) {
+            navigationButton(.prices, title: "Prices", systemImage: "bolt.circle.fill")
+            navigationButton(.solar, title: "Solar", systemImage: "sun.max.fill")
+            navigationButton(.generation, title: "PV", systemImage: "bolt.sun.fill")
+            navigationButton(.netPrice, title: "Net", systemImage: "sterlingsign.circle.fill")
+            navigationButton(.settings, title: "Settings", systemImage: "slider.horizontal.3")
+            navigationButton(.guide, title: "Guide", systemImage: "book.closed.fill")
         }
         .padding(.horizontal, 6)
-        .padding(.top, 5)
-        .padding(.bottom, 5)
+        .padding(.top, 6)
+        .padding(.bottom, 6)
         .background(.ultraThinMaterial)
         .overlay(alignment: .top) {
             Rectangle()
                 .fill(Color.orange.opacity(0.22))
                 .frame(height: 1)
         }
+    }
+
+    private func navigationButton(_ target: DashboardPage, title: String, systemImage: String) -> some View {
+        Button {
+            withAnimation { page = target }
+        } label: {
+            VStack(spacing: 3) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 19, weight: .semibold))
+                Text(title)
+                    .font(.system(size: 9, weight: .semibold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 5)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(page == target ? Color.orange : Color.white.opacity(0.62))
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(page == target ? .isSelected : [])
     }
 
     private var nowButton: some View {
@@ -124,10 +123,21 @@ struct SwipeDashboardView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(.orange)
-        .background(.ultraThinMaterial, in: Capsule())
+        .background(Color.black.opacity(0.72), in: Capsule())
         .overlay(Capsule().stroke(Color.orange.opacity(0.65), lineWidth: 1))
         .shadow(radius: 4)
         .accessibilityLabel("Show values for the current time")
+    }
+
+    private var nowButtonTopPadding: CGFloat {
+        switch page {
+        case .prices:
+            return 92
+        case .solar, .generation, .netPrice:
+            return 86
+        case .settings, .guide:
+            return 0
+        }
     }
 
     @MainActor
@@ -361,7 +371,7 @@ struct SwipeDashboardView: View {
     }
 }
 
-private enum DashboardPage: CaseIterable, Hashable {
+private enum DashboardPage: Equatable {
     case prices
     case solar
     case generation
@@ -375,39 +385,6 @@ private enum DashboardPage: CaseIterable, Hashable {
             return true
         case .settings, .guide:
             return false
-        }
-    }
-
-    var shortTitle: String {
-        switch self {
-        case .prices: return "Prices"
-        case .solar: return "Solar"
-        case .generation: return "PV"
-        case .netPrice: return "Net"
-        case .settings: return "Settings"
-        case .guide: return "Guide"
-        }
-    }
-
-    var symbolName: String {
-        switch self {
-        case .prices: return "bolt.fill"
-        case .solar: return "sun.max.fill"
-        case .generation: return "bolt.sun.fill"
-        case .netPrice: return "sterlingsign.circle.fill"
-        case .settings: return "slider.horizontal.3"
-        case .guide: return "book.closed.fill"
-        }
-    }
-
-    var accessibilityLabel: String {
-        switch self {
-        case .prices: return "Octopus Agile Prices page"
-        case .solar: return "Solar Forecast page"
-        case .generation: return "PV Forecast page"
-        case .netPrice: return "Net Electricity Price page"
-        case .settings: return "App Settings page"
-        case .guide: return "User Guide page"
         }
     }
 }
