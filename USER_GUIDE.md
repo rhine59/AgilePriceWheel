@@ -2,13 +2,13 @@
 
 This guide explains how to use every current part of Agile Price Wheel. The first dashboard page is titled **Octopus Agile Prices**.
 
-The same essential guidance is built into the app as the sixth swipe page and can also be opened from the information buttons.
+The same essential guidance is built into the app as the sixth page and can also be opened from the information buttons.
 
 ---
 
-# 1. Page order
+# 1. Page order and navigation
 
-Swipe left through:
+The pages are arranged in this order:
 
 ```text
 Octopus Agile Prices
@@ -26,11 +26,15 @@ User Guide
 Octopus Agile Prices
 ```
 
-Swipe right to move back. A right swipe from the first page does not wrap.
+Use the fixed **Back** and **Next** buttons at the bottom of the screen to move between pages.
 
-Six page dots show the current page.
+Horizontal swipe navigation is intentionally disabled. This prevents a touch or drag on one of the interactive wheel sectors from being mistaken for a page-change gesture.
 
-The first four pages show a **Now** button because they display half-hour metrics.
+On the first page, **Back** is disabled. On the User Guide page, the right-hand button is labelled **Prices** and returns to Octopus Agile Prices.
+
+Six page dots plus a `1 of 6` style indicator show the current page.
+
+The first four pages also show a **Now** button because they display half-hour metrics.
 
 ---
 
@@ -66,7 +70,7 @@ This is the first page.
 
 Each wheel sector represents one Agile settlement period. A normal day has 48 half-hours; UK clock-change days can have 46 or 50.
 
-Touch or drag around the wheel to choose a period.
+Touch or drag around the wheel to choose a period. Page navigation will not respond to horizontal wheel dragging because swipe-to-change-page navigation has been removed.
 
 The page shows:
 
@@ -78,7 +82,7 @@ The page shows:
 - selected tariff information;
 - server/cache status.
 
-Bottom controls provide Prices, Chart and Details views.
+Bottom controls inside the page provide Prices, Chart and Details views. The separate fixed navigation bar below them moves between the six main pages.
 
 Negative prices are blue. Positive prices progress from green through yellow/orange to red relative to the selected day.
 
@@ -86,7 +90,7 @@ Negative prices are blue. Positive prices progress from green through yellow/ora
 
 # 4. Solar Forecast
 
-Swipe left from Octopus Agile Prices.
+Use **Next** from Octopus Agile Prices.
 
 This page shows forecast global horizontal irradiance (GHI / shortwave solar radiation) in W/m² for the same selected day.
 
@@ -135,7 +139,7 @@ The selected site is stored locally and is used to request solar irradiance fore
 
 The page previously named **PV Generation** is now named **PV Forecast**.
 
-Swipe left from Solar Forecast.
+Use **Next** from Solar Forecast.
 
 Each wheel sector represents forecast PV electrical energy for that half-hour in kWh.
 
@@ -187,7 +191,7 @@ Treat PV Forecast as a planning estimate rather than guaranteed generation.
 
 # 8. Net Electricity Price
 
-Swipe left from PV Forecast.
+Use **Next** from PV Forecast.
 
 This page estimates the effective p/kWh cost of running a configured load after forecast PV has reduced expected grid import.
 
@@ -243,6 +247,8 @@ below 0 p/kWh   dark green
 App Settings is page 5 of 6.
 
 It contains Agile tariff/day controls, solar site, solar refresh, PV availability, PV-array details and optimiser load.
+
+Use **Back** to return to Net Electricity Price and **Next** to open the User Guide.
 
 ## Solar PV availability
 
@@ -321,7 +327,7 @@ This section is disabled when Solar PV panels installed is off.
 
 The User Guide is page 6 of 6.
 
-Swipe right to return to App Settings. Swipe left to wrap back to Octopus Agile Prices.
+Use **Back** to return to App Settings. Use **Prices** on the right to return to Octopus Agile Prices and begin the sequence again.
 
 The guide is compiled into the app, so it remains available offline.
 
@@ -406,6 +412,10 @@ Check **Solar PV panels installed**. The solar-adjusted net price is deliberatel
 
 Confirm source data for today has loaded. The app selects the half-hour for which `validFrom <= now < validTo`.
 
+## The page changes while using a wheel
+
+It should not. Horizontal swipe navigation between main pages has been removed. Use the fixed Back/Next controls at the bottom. If wheel dragging still causes a page change, treat that as a defect.
+
 ## Units disappear while editing
 
 They should not. The Solar PV array fields display persistent suffixes for kWp, W, °, kW and %. If a unit is missing, treat that as a UI defect.
@@ -431,6 +441,8 @@ SwipeDashboardView
         └─ User Guide
              └─ DocumentationView
 ```
+
+`SwipeDashboardView` keeps its historical type name but now uses explicit bottom buttons rather than swipe gestures for page changes.
 
 The internal Swift type `GenerationEstimateView` keeps its existing name even though the user-facing page is now called PV Forecast.
 
