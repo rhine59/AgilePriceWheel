@@ -69,7 +69,7 @@ Tapping Now returns the selected date to today, loads today's source data if req
 validFrom <= now < validTo
 ```
 
-The button is placed in unused dark space above and to the right of the wheel so it should not cover wheel sectors, cards or page controls.
+Now is part of the adaptive page layout rather than a floating overlay, so SwiftUI reserves space for it instead of allowing it to cover descriptions, wheels or metric cards.
 
 ---
 
@@ -102,6 +102,10 @@ You can use:
 1. **Use Current Location** — asks iOS for When-In-Use permission only when tapped;
 2. place/postcode search;
 3. manual latitude/longitude.
+
+When **Use Current Location** succeeds, the app reverse-geocodes the coordinates using Apple's geocoding service and tries to use a familiar locality or town name for the solar-site label. If no suitable common name is returned, the label falls back to **Current location**.
+
+The saved site name is editable in the **Current solar site** section. Editing the name changes only the label shown in the app; it does not change the saved latitude or longitude or move the forecast site.
 
 The app does not continuously track location. Search and manual coordinates remain available if permission is denied.
 
@@ -137,7 +141,7 @@ slot cost = grid import × Agile price
 net price = slot cost / complete load energy
 ```
 
-The selected sector now also displays **PV saving** in pence inside the wheel. The Selected half-hour breakdown repeats this value and shows the PV energy used against the load.
+The selected sector also displays **PV saving** in pence inside the wheel. The Selected half-hour breakdown repeats this value and shows the PV energy used against the load.
 
 The saving is calculated as:
 
@@ -184,6 +188,8 @@ When **Solar PV panels installed** is off, Cost Savings is greyed and disabled.
 # 9. App Settings
 
 Settings contains Agile tariff/region, selected day, refresh controls, solar site, PV availability, PV-array details and optimiser load.
+
+The **Current solar site** section includes an editable site-name field plus the saved latitude and longitude.
 
 When **Solar PV panels installed** is switched off:
 
@@ -237,7 +243,7 @@ The in-app User Guide is bundled with the app and remains available offline.
 
 The public Octopus tariff/rate functions do not require Octopus account login details, API key, MPAN, meter serial number or payment details.
 
-Location permission is requested only when **Use Current Location** is tapped. Selected coordinates are stored locally and sent to Open-Meteo when needed for forecasts/geocoding.
+Location permission is requested only when **Use Current Location** is tapped. The returned coordinates are stored locally, used with Apple's reverse-geocoding service to obtain a readable site name, and sent to Open-Meteo when needed for solar forecast requests.
 
 PV settings, optimiser load and derived calculations remain local.
 
@@ -260,6 +266,10 @@ autumn clock change 50 half-hours
 If no Agile prices appear, check tariff/date/network and try **Refresh Agile prices**.
 
 If no solar forecast appears, check the solar site/date and try **Refresh solar forecast**.
+
+If **Use Current Location** shows **Current location** instead of a place name, reverse geocoding did not return a suitable locality. The coordinates are still valid and the name can be edited manually.
+
+If editing the solar-site name changes the coordinates, treat that as a defect: renaming is intended to change only the display label.
 
 If PV Forecast, Net Electricity Price or Cost Savings is greyed, check **Solar PV panels installed**.
 
