@@ -30,6 +30,7 @@ struct DocumentationView: View {
                 Section("Now button") {
                     Text("Octopus Agile Prices, Solar Forecast, PV Forecast and Net Electricity Price each have a Now button.")
                     Text("Tapping Now returns the shared selected date to today, loads today's source data if required and selects the half-hour containing the current time using validFrom ≤ now < validTo.")
+                    Text("The Now button is placed in unused dark space above and to the right of the wheel, rather than over the wheel or metric cards. Its vertical position is adjusted slightly for the Octopus price page so it stays clear of the header controls.")
                 }
 
                 Section("Octopus Agile Prices") {
@@ -87,7 +88,7 @@ struct DocumentationView: View {
                 }
 
                 Section("Technical architecture") {
-                    Text("SwipeDashboardView coordinates the six pages, direct bottom-button navigation, Now behaviour and PV-disabled presentation state. Its historical name remains even though swipe page-changing is no longer used.")
+                    Text("SwipeDashboardView coordinates the six pages, direct bottom-button navigation, Now behaviour, Now-button placement and PV-disabled presentation state. Its historical name remains even though swipe page-changing is no longer used.")
                     Text("The user-facing PV Forecast page is implemented by GenerationEstimateView.")
                     Text("The app is native Swift/SwiftUI with no third-party package dependencies.")
                 }
