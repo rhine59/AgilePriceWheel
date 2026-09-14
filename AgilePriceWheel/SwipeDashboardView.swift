@@ -136,9 +136,9 @@ struct SwipeDashboardView: View {
     private var nowButtonTopPadding: CGFloat {
         switch page {
         case .prices:
-            return 92
+            return 155
         case .solar, .generation, .netPrice, .savings:
-            return 86
+            return 175
         case .settings, .guide:
             return 0
         }
