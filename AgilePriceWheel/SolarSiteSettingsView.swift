@@ -237,53 +237,21 @@ struct SolarSiteSettingsView: View {
     private func commonName(latitude: Double, longitude: Double) async -> String {
         let location = CLLocation(latitude: latitude, longitude: longitude)
 
-        if #available(iOS 26.0, *) {
-            guard let request = MKReverseGeocodingRequest(location: location) else {
-                return "Current location"
-            }
-            request.preferredLocale = Locale(identifier: "en_GB")
-
-            do {
-                let mapItems = try await request.mapItems
-                guard let mapItem = mapItems.first else {
-                    return "Current location"
-                }
-
-                let candidates = [
-                    mapItem.addressRepresentations?.cityName,
-                    mapItem.addressRepresentations?.cityWithContext,
-                    mapItem.name
-                ]
-
-                if let name = candidates
-                    .compactMap({ $0?.trimmingCharacters(in: .whitespacesAndNewlines) })
-                    .first(where: { !$0.isEmpty }) {
-                    return name
-                }
-            } catch {
-                return "Current location"
-            }
-
+        guard let request = MKReverseGeocodingRequest(location: location) else {
             return "Current location"
-        } else {
-            return await legacyCommonName(for: location)
         }
-    }
-
-    @available(iOS, introduced: 5.0, obsoleted: 26.0)
-    private func legacyCommonName(for location: CLLocation) async -> String {
-        let geocoder = CLGeocoder()
+        request.preferredLocale = Locale(identifier: "en_GB")
 
         do {
-            let placemarks = try await geocoder.reverseGeocodeLocation(location)
-            guard let placemark = placemarks.first else { return "Current location" }
+            let mapItems = try await request.mapItems
+            guard let mapItem = mapItems.first else {
+                return "Current location"
+            }
 
             let candidates = [
-                placemark.locality,
-                placemark.subLocality,
-                placemark.subAdministrativeArea,
-                placemark.administrativeArea,
-                placemark.name
+                mapItem.addressRepresentations?.cityName,
+                mapItem.addressRepresentations?.cityWithContext,
+                mapItem.name
             ]
 
             if let name = candidates
