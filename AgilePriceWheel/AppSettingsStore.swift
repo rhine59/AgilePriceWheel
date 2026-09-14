@@ -7,6 +7,7 @@ import Combine
 /// optimiser load is used by the net/effective electricity-price screen.
 @MainActor
 final class AppSettingsStore: ObservableObject {
+    @Published var hasPVPanelsInstalled: Bool { didSet { defaults.set(hasPVPanelsInstalled, forKey: Keys.hasPVPanelsInstalled) } }
     @Published var arrayName: String { didSet { defaults.set(arrayName, forKey: Keys.arrayName) } }
     @Published var peakPowerKWpText: String { didSet { defaults.set(peakPowerKWpText, forKey: Keys.peakPowerKWp) } }
     @Published var panelCountText: String { didSet { defaults.set(panelCountText, forKey: Keys.panelCount) } }
@@ -22,6 +23,11 @@ final class AppSettingsStore: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        if defaults.object(forKey: Keys.hasPVPanelsInstalled) == nil {
+            hasPVPanelsInstalled = true
+        } else {
+            hasPVPanelsInstalled = defaults.bool(forKey: Keys.hasPVPanelsInstalled)
+        }
         arrayName = defaults.string(forKey: Keys.arrayName) ?? ""
         peakPowerKWpText = defaults.string(forKey: Keys.peakPowerKWp) ?? ""
         panelCountText = defaults.string(forKey: Keys.panelCount) ?? ""
@@ -103,6 +109,7 @@ final class AppSettingsStore: ObservableObject {
     }
 
     private enum Keys {
+        static let hasPVPanelsInstalled = "solarArray.installed"
         static let arrayName = "solarArray.name"
         static let peakPowerKWp = "solarArray.peakPowerKWp"
         static let panelCount = "solarArray.panelCount"
