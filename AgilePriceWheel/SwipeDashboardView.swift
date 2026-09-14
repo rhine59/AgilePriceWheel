@@ -28,7 +28,6 @@ struct SwipeDashboardView: View {
             }
 
             if page == .prices {
-                // Cover the legacy centre title without disturbing the gear/info buttons.
                 Text("Octopus Agile Prices")
                     .font(.system(size: 27, weight: .semibold, design: .rounded))
                     .foregroundStyle(.orange)
@@ -100,7 +99,6 @@ struct SwipeDashboardView: View {
         solarModel.selectedSolarID = solarModel.forecast.first(where: { $0.validFrom <= now && now < $0.validTo })?.id
             ?? solarModel.forecast.first?.id
 
-        // Recreate the derived views so their private selection state also jumps to now.
         nowRefreshID = UUID()
     }
 
@@ -124,14 +122,14 @@ struct SwipeDashboardView: View {
             dashboardBackground
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
-                    pageHeader(title: "PV Generation", subtitle: dayLabel, icon: "gearshape") { withAnimation { page = .settings } }
+                    pageHeader(title: "PV Forecast", subtitle: dayLabel, icon: "gearshape") { withAnimation { page = .settings } }
                     ZStack {
                         GenerationEstimateView(solarModel: solarModel, settings: appSettings, selectedDate: model.selectedDate, openSettings: { withAnimation { page = .settings } })
                             .id(nowRefreshID)
                             .disabled(!appSettings.hasPVPanelsInstalled)
                             .opacity(appSettings.hasPVPanelsInstalled ? 1.0 : 0.24)
                         if !appSettings.hasPVPanelsInstalled {
-                            pvDisabledOverlay(title: "PV generation disabled", message: "Solar PV panels installed is turned off in App Settings.")
+                            pvDisabledOverlay(title: "PV forecast disabled", message: "Solar PV panels installed is turned off in App Settings.")
                         }
                     }
                     pageDots
