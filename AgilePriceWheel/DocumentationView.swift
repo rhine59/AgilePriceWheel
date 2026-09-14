@@ -16,10 +16,11 @@ struct DocumentationView: View {
                     Text("The first dashboard page is titled Octopus Agile Prices. The project and repository remain named AgilePriceWheel.")
                 }
 
-                Section("Six swipe pages") {
+                Section("Six pages and navigation") {
                     Text("The page order is: 1. Octopus Agile Prices, 2. Solar Forecast, 3. PV Forecast, 4. Net Electricity Price, 5. App Settings, 6. User Guide.")
-                    Text("Swipe left to move forward. Swiping left from User Guide wraps back to Octopus Agile Prices. Swipe right to move back; the first page does not wrap backwards.")
-                    Text("Six page dots show your current page.")
+                    Text("Use the Back and Next buttons fixed at the bottom of the screen to move between pages. Horizontal swipe navigation is intentionally disabled so touching or dragging a wheel sector cannot accidentally change pages.")
+                    Text("Back is disabled on Octopus Agile Prices. Next moves through the pages in order. On User Guide the right-hand button is labelled Prices and returns to Octopus Agile Prices.")
+                    Text("The six dots and the 1-of-6 indicator in the bottom navigation bar show the current page.")
                 }
 
                 Section("Now button") {
@@ -102,7 +103,7 @@ struct DocumentationView: View {
                 Section("Technical architecture") {
                     Text("AgileViewModel coordinates OctopusAPI and AgileCacheStore. SolarForecastModel coordinates SolarForecastAPI and SolarForecastCache. AppSettingsStore persists PV settings and optimiser settings.")
                     Text("The user-facing PV Forecast page is implemented by GenerationEstimateView. The internal Swift type keeps its existing name even though the page title changed.")
-                    Text("SwipeDashboardView coordinates the six pages, Now behaviour and PV-disabled presentation state.")
+                    Text("SwipeDashboardView coordinates the six pages, bottom-button navigation, Now behaviour and PV-disabled presentation state. The historical type name remains even though swipe page-changing is no longer used.")
                     Text("The app is native Swift/SwiftUI with no third-party package dependencies.")
                 }
 
