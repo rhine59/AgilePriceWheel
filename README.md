@@ -78,6 +78,8 @@ The page shows an interactive solar wheel, selected irradiance, peak irradiance/
 
 The solar site can be set using Current Location, place/postcode search or manual latitude/longitude. Current-location access is opt-in and When-In-Use only.
 
+When **Use Current Location** is selected, the app reverse-geocodes the returned coordinates using Apple's geocoding service and saves a familiar locality/town name as the solar-site label. If no suitable place name can be resolved, the label falls back to **Current location**. The saved site name can then be edited by the user without changing the latitude or longitude used for the forecast.
+
 Solar Forecast remains available even when the property is configured as having no PV panels installed.
 
 ---
@@ -172,6 +174,8 @@ Cost Savings is disabled/greyed when **Solar PV panels installed** is off.
 
 App Settings contains Agile tariff/region, selected day, source refresh, solar site, PV availability, Solar PV array settings and optimiser load.
 
+The Current solar site section includes an editable site-name field. Editing the site name changes only the display label; the saved forecast coordinates remain unchanged.
+
 When **Solar PV panels installed** is off:
 
 - PV-array fields and optimiser controls are disabled;
@@ -210,7 +214,7 @@ The Now button appears on all five metric pages:
 
 Tapping it changes the shared selected date to today, loads today's Agile/solar source data if needed, selects the period satisfying `validFrom <= now < validTo`, and refreshes derived metric views.
 
-The button is positioned in unused dark space above and to the right of the wheels to avoid obscuring data or controls.
+The button is part of the adaptive page layout rather than a floating overlay, so SwiftUI reserves space for it and it should not cover descriptions, wheels or metric cards on supported iPhone sizes.
 
 ---
 
@@ -237,7 +241,7 @@ SwipeDashboardView
 
 ## APIs and persistence
 
-Octopus public tariff/rate endpoints are used without account credentials or API key. Open-Meteo supplies forecast and geocoding data.
+Octopus public tariff/rate endpoints are used without account credentials or API key. Open-Meteo supplies forecast and place/postcode search data. Apple's reverse-geocoding service is used only after the user taps **Use Current Location**, to turn the returned coordinates into a readable solar-site name.
 
 `AgileCacheStore` persists tariff/rate snapshots. `SolarForecastCache` persists site/date solar forecasts. PV Forecast, Net Electricity Price and Cost Savings are calculated locally from source data and settings.
 
@@ -276,6 +280,9 @@ Before release verify:
 - horizontal dragging never changes pages;
 - wheel dragging selects sectors without navigating;
 - Now works on all five metric pages and does not cover data;
+- Use Current Location resolves a familiar place name when reverse geocoding succeeds;
+- unresolved current-location names fall back to `Current location`;
+- editing the solar-site name changes only the label and preserves the saved coordinates;
 - Cost Savings wheel has one sector per matched half-hour;
 - selected Cost Savings value matches `min(PV, load) × Agile price`;
 - selected Net Electricity Price sector shows the same PV saving value;
