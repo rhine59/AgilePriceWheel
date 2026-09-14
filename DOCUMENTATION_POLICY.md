@@ -11,7 +11,7 @@ Agile Price Wheel maintains these primary documentation surfaces:
 
 Any change that alters application behaviour must update the relevant documentation in the same implementation cycle.
 
-This includes changes to page navigation, page names, Now/current-time selection, PV configuration, wheel behaviour, tariff/API integration, solar-site/location behaviour, PV-array fields and units, calculations, caching, privacy, build requirements, architecture, testing and troubleshooting.
+This includes changes to page navigation, page names, Now/current-time selection, Now-button placement, PV configuration, wheel behaviour, tariff/API integration, solar-site/location behaviour, PV-array fields and units, calculations, caching, privacy, build requirements, architecture, testing and troubleshooting.
 
 Before release verify that README, USER_GUIDE and DocumentationView describe the implementation as it actually exists.
 
@@ -74,6 +74,8 @@ The four metric pages are:
 
 Each must expose a Now control that returns the shared selected date to today and selects the half-hour containing the current time. App Settings and User Guide must not show the Now control.
 
+The Now control must be positioned in unused dark space above and to the right of the wheel. It must not obscure wheel sectors, metric cards, headings, settings/info controls or other useful content on supported iPhone screen sizes. Page-specific vertical offsets are acceptable where needed to keep the control clear of each page's header.
+
 See `docs/NOW_BUTTON_AND_CURRENT_TIME.md` for the focused behaviour/testing note.
 
 ## Main-navigation requirement
@@ -94,7 +96,7 @@ Main page changes must be performed with the fixed six-button bottom navigation 
 Required bottom buttons and symbols are:
 
 ```text
-Prices    bolt.fill
+Prices    bolt.circle.fill
 Solar     sun.max.fill
 PV        bolt.sun.fill
 Net       sterlingsign.circle.fill
