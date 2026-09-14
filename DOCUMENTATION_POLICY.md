@@ -14,6 +14,7 @@ This includes changes to:
 
 - swipe-page order, wrap behaviour or navigation;
 - user-visible features or controls;
+- feature-enable/disable configuration such as the PV-installed switch;
 - price-wheel, solar-wheel, generation-wheel or net-price-wheel behaviour;
 - tariff discovery or Octopus API integration;
 - Open-Meteo forecast/geocoding integration;
@@ -44,6 +45,21 @@ Documentation-only wording changes do not require a corresponding code change.
 The implementation is authoritative for actual behaviour. Documentation must describe the implementation as it exists; documentation must not promise unfinished features.
 
 If implementation and documentation disagree, treat that as a defect and update the documentation and/or implementation together.
+
+## PV-installed feature-state requirement
+
+The current app includes a persistent `Solar PV panels installed` configuration in `AppSettingsStore`.
+
+When this setting is off, documentation must continue to state that:
+
+- PV-array controls are disabled/greyed;
+- Net price optimiser controls are disabled/greyed;
+- the PV Generation page is disabled/greyed;
+- the Net Electricity Price page and wheel are disabled/greyed;
+- Solar Forecast remains available;
+- stored PV/optimiser values are retained rather than deleted.
+
+Any future change to which features remain available when PV is disabled must update the implementation and all three documentation surfaces together.
 
 ## Page-order requirement
 
