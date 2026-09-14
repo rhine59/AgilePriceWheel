@@ -56,6 +56,8 @@ The current-period test is:
 validFrom <= now < validTo
 ```
 
+The Now button is deliberately placed in the unused dark area above and to the right of the wheel. It should not cover wheel sectors, metric cards or page controls. The app uses a slightly different vertical offset on the Octopus price page to keep the button clear of its header.
+
 ---
 
 # 3. Octopus Agile Prices
@@ -227,6 +229,8 @@ If PV Forecast or Net Electricity Price is greyed, check **Solar PV panels insta
 
 If Now selects an unexpected period, confirm today's source data has loaded.
 
+If the Now button covers data or controls on a supported iPhone size, treat that as a layout defect. It should remain in the unused dark area above/right of the wheel.
+
 If dragging a wheel changes pages, that is a defect: main page changes should occur only by tapping one of the six bottom buttons.
 
 If a PV engineering unit disappears while editing, treat that as a UI defect.
@@ -247,7 +251,7 @@ SwipeDashboardView
         └─ User Guide
 ```
 
-`SwipeDashboardView` retains its historical name, but swipe-based page changing has been removed. It now owns the fixed six-button direct navigation bar.
+`SwipeDashboardView` retains its historical name, but swipe-based page changing has been removed. It now owns the fixed six-button direct navigation bar and the Now-button overlay placement.
 
 The internal Swift type `GenerationEstimateView` implements the user-facing PV Forecast page.
 
