@@ -30,7 +30,7 @@ struct SolarSiteSettingsView: View {
                     }
                 }
 
-                Section("Find site") {
+                Section {
                     TextField("Place or postcode", text: $searchText)
                         .textInputAutocapitalization(.words)
                         .autocorrectionDisabled()
@@ -64,11 +64,13 @@ struct SolarSiteSettingsView: View {
                             }
                         }
                     }
+                } header: {
+                    Text("Find site")
                 } footer: {
                     Text("Search is provided by Open-Meteo geocoding. Choose the result that best represents the solar installation site.")
                 }
 
-                Section("Manual coordinates") {
+                Section {
                     TextField("Latitude", text: $latitudeText)
                         .keyboardType(.numbersAndPunctuation)
                     TextField("Longitude", text: $longitudeText)
@@ -85,6 +87,8 @@ struct SolarSiteSettingsView: View {
                     } label: {
                         Label("Set latitude & longitude", systemImage: "mappin.and.ellipse")
                     }
+                } header: {
+                    Text("Manual coordinates")
                 } footer: {
                     Text("Latitude must be between −90 and 90. Longitude must be between −180 and 180. The coordinates are stored on this device and used only to request the solar irradiance forecast.")
                 }
