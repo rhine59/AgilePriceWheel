@@ -39,7 +39,7 @@ struct SolarForecastView: View {
                     Text("Set the solar site")
                         .font(.title3.bold())
                         .foregroundStyle(accent)
-                    Text("Choose the site in Settings by searching for a place or postcode, or enter latitude and longitude manually.")
+                    Text("Choose the site in Settings using Current Location, place/postcode search, or manual latitude and longitude.")
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.7))
                         .multilineTextAlignment(.center)
@@ -85,7 +85,7 @@ struct SolarForecastView: View {
 
             HStack(spacing: 8) {
                 Image(systemName: "arrow.left.and.right")
-                Text("Swipe right for prices · swipe left for PV generation")
+                Text("Swipe right for prices · swipe left for PV Forecast")
             }
             .font(.caption)
             .foregroundStyle(.white.opacity(0.5))
