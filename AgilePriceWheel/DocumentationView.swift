@@ -16,17 +16,20 @@ struct DocumentationView: View {
                     Text("The first dashboard page is titled Octopus Agile Prices. The project and repository remain named AgilePriceWheel.")
                 }
 
-                Section("Six pages and navigation") {
-                    Text("The page order is: 1. Octopus Agile Prices, 2. Solar Forecast, 3. PV Forecast, 4. Net Electricity Price, 5. App Settings, 6. User Guide.")
-                    Text("Use the Back and Next buttons fixed at the bottom of the screen to move between pages. Horizontal swipe navigation is intentionally disabled so touching or dragging a wheel sector cannot accidentally change pages.")
-                    Text("Back is disabled on Octopus Agile Prices. Next moves through the pages in order. On User Guide the right-hand button is labelled Prices and returns to Octopus Agile Prices.")
-                    Text("The six dots and the 1-of-6 indicator in the bottom navigation bar show the current page.")
+                Section("Six page buttons") {
+                    Text("A fixed six-button navigation bar is shown at the bottom of every page. Tap Prices, Solar, PV, Net, Settings or Guide to jump directly to that page.")
+                    Text("The selected page button is highlighted in orange.")
+                    Text("Horizontal swipe navigation is intentionally disabled so touching or dragging a wheel sector cannot accidentally change the main page.")
+                    Text("The older Back/Next controls, page dots, page-number indicator and swipe-navigation footer instructions have been removed.")
+                }
+
+                Section("Navigation symbols") {
+                    Text("Prices uses a lightning bolt, Solar uses a sun, PV uses a sun/bolt symbol, Net uses a pound symbol, Settings uses sliders and Guide uses a book.")
                 }
 
                 Section("Now button") {
                     Text("Octopus Agile Prices, Solar Forecast, PV Forecast and Net Electricity Price each have a Now button.")
                     Text("Tapping Now returns the shared selected date to today, loads today's source data if required and selects the half-hour containing the current time using validFrom ≤ now < validTo.")
-                    Text("PV Forecast and Net Electricity Price are refreshed so their selected metrics also move to the current half-hour.")
                 }
 
                 Section("Octopus Agile Prices") {
@@ -36,55 +39,39 @@ struct DocumentationView: View {
                 }
 
                 Section("Solar Forecast") {
-                    Text("The second wheel shows forecast global horizontal irradiance (GHI / shortwave solar radiation) in W/m² for the same selected day.")
+                    Text("The Solar Forecast wheel shows forecast global horizontal irradiance (GHI / shortwave radiation) in W/m².")
                     Text("Open-Meteo 15-minute shortwave-radiation samples are combined into half-hour values.")
-                    Text("Solar Forecast stays available even when Solar PV panels installed is turned off.")
+                    Text("Solar Forecast remains available when Solar PV panels installed is turned off.")
                 }
 
                 Section("Solar site") {
                     Text("Set or change the forecast site from App Settings.")
-                    Text("Use Current Location requests iOS When-In-Use location permission only when tapped and uses the device position as the solar forecast site. The app does not continuously track location.")
-                    Text("You can alternatively search by place/postcode using Open-Meteo geocoding or enter latitude and longitude manually. Those methods remain available if location permission is denied.")
+                    Text("Use Current Location requests iOS When-In-Use permission only when tapped. The app does not continuously track location.")
+                    Text("Place/postcode search and manual coordinates remain available if location permission is denied.")
                 }
 
                 Section("PV Forecast") {
-                    Text("The page previously named PV Generation is now named PV Forecast.")
-                    Text("It estimates PV electrical output for each half-hour from the solar forecast plus the configured array capacity, losses and inverter limit.")
-                    Text("The page shows estimated day total, peak output/time, selected half-hour energy/power and the effective array capacity used.")
-                    Text("If Solar PV panels installed is off, PV Forecast is greyed and disabled while stored PV settings are retained.")
-                }
-
-                Section("PV Forecast calculation") {
-                    Text("Estimated power = array kWp × (GHI ÷ 1000) × (1 − system-loss percentage). If an inverter maximum is configured, estimated power is clipped to that value. Energy = estimated power × actual period duration.")
-                    Text("Rated kWp takes priority. If it is blank, panel count × panel watts ÷ 1000 is used when available.")
-                    Text("Tilt and azimuth are stored but are not yet applied because the current weather input is horizontal GHI, not plane-of-array irradiance.")
+                    Text("PV Forecast estimates half-hour PV electrical output from the solar forecast plus configured array capacity, losses and inverter limit.")
+                    Text("Estimated power = array kWp × (GHI ÷ 1000) × (1 − system-loss percentage), clipped to the configured inverter maximum when one is set. Energy = power × actual period duration.")
+                    Text("Rated kWp takes priority; otherwise panel count × panel watts ÷ 1000 can provide array capacity.")
+                    Text("If Solar PV panels installed is off, PV Forecast is greyed and disabled while saved settings are retained.")
                 }
 
                 Section("PV-array units") {
-                    Text("Solar PV array fields keep their engineering units visible beside the editable numeric value. The suffix does not disappear after a value is entered.")
+                    Text("PV numeric fields keep their engineering units visible beside the editable value.")
                     Text("Rated peak power: kWp. Panel rating: W. Panel tilt: °. Azimuth: °. Inverter maximum AC output: kW. Estimated system losses: %.")
-                    Text("Number of panels is dimensionless. Enter only the numeric value; the unit label is display-only and is not stored as part of the number.")
-                }
-
-                Section("PV availability") {
-                    Text("App Settings includes Solar PV panels installed. Turn it off for a property without PV.")
-                    Text("When off, PV-array controls, optimiser controls, PV Forecast and Net Electricity Price are greyed and disabled. Solar Forecast remains active.")
-                    Text("Turning PV off does not erase saved PV details or optimiser load. Turning it back on restores them.")
+                    Text("Number of panels is dimensionless. Unit labels are display-only and are not stored as part of the numeric value.")
                 }
 
                 Section("Net Electricity Price") {
-                    Text("The fourth wheel estimates the effective p/kWh cost of running the configured load after forecast PV reduces expected grid import.")
-                    Text("For each period: load energy = load kW × period hours; grid import = max(load energy − forecast PV, 0); slot cost = grid import × Agile price; net price = slot cost ÷ complete load energy.")
-                    Text("The default optimiser load is 3.0 kW, matching the established nightly email model.")
-                    Text("The model does not yet subtract ordinary household background demand first and does not credit export income.")
-                }
-
-                Section("Net-price colours") {
-                    Text("Fixed bands are used: below 0 dark green; 0–5 green; 5–10 lime; 10–20 light green; 20–30 yellow; 30–40 orange; 40–50 red; 50+ dark red.")
+                    Text("The Net Electricity Price wheel estimates the effective p/kWh cost of running the configured load after forecast PV reduces expected grid import.")
+                    Text("Load energy = load kW × period hours; grid import = max(load energy − forecast PV, 0); slot cost = grid import × Agile price; net price = slot cost ÷ complete load energy.")
+                    Text("The default optimiser load is 3.0 kW. Household background demand and export income are not yet separately included.")
                 }
 
                 Section("App Settings") {
                     Text("App Settings centralises Agile tariff/day controls, source refresh, solar site, PV availability, Solar PV array settings and optimiser load.")
+                    Text("When Solar PV panels installed is off, PV-array and optimiser controls are disabled, PV Forecast and Net Electricity Price are greyed, Solar Forecast stays active, and saved values are retained.")
                     Text("Azimuth convention: 0° North, 90° East, 180° South, 270° West.")
                 }
 
@@ -96,19 +83,13 @@ struct DocumentationView: View {
 
                 Section("Privacy") {
                     Text("The public tariff/rate features do not require Octopus login credentials, API key, MPAN, meter serial number or payment information.")
-                    Text("Location permission is requested only when Use Current Location is tapped. The selected site coordinates are stored locally and sent to Open-Meteo when forecast/geocoding requests require them.")
-                    Text("PV settings, optimiser load and derived calculations remain local.")
+                    Text("Location permission is requested only when Use Current Location is tapped. Selected coordinates are stored locally and sent to Open-Meteo when needed for forecast/geocoding requests.")
                 }
 
                 Section("Technical architecture") {
-                    Text("AgileViewModel coordinates OctopusAPI and AgileCacheStore. SolarForecastModel coordinates SolarForecastAPI and SolarForecastCache. AppSettingsStore persists PV settings and optimiser settings.")
-                    Text("The user-facing PV Forecast page is implemented by GenerationEstimateView. The internal Swift type keeps its existing name even though the page title changed.")
-                    Text("SwipeDashboardView coordinates the six pages, bottom-button navigation, Now behaviour and PV-disabled presentation state. The historical type name remains even though swipe page-changing is no longer used.")
+                    Text("SwipeDashboardView coordinates the six pages, direct bottom-button navigation, Now behaviour and PV-disabled presentation state. Its historical name remains even though swipe page-changing is no longer used.")
+                    Text("The user-facing PV Forecast page is implemented by GenerationEstimateView.")
                     Text("The app is native Swift/SwiftUI with no third-party package dependencies.")
-                }
-
-                Section("Documentation maintenance") {
-                    Text("README.md is the technical/developer reference, USER_GUIDE.md is the complete operating guide and this view is the in-app offline guide. Functional changes must keep them synchronized with the implementation.")
                 }
 
                 Section("Accuracy and disclaimer") {
