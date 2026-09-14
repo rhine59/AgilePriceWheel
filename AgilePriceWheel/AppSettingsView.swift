@@ -154,16 +154,6 @@ struct AppSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-
-            Section("Navigation") {
-                Label("Use Back at the bottom to return to Net Electricity Price", systemImage: "chevron.left")
-                    .foregroundStyle(.secondary)
-                Label("Use Next at the bottom to open the User Guide", systemImage: "chevron.right")
-                    .foregroundStyle(.secondary)
-                Text("Horizontal swipe navigation is disabled so touching or dragging a wheel cannot accidentally change pages.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
         .scrollContentBackground(.hidden)
         .tint(accent)
