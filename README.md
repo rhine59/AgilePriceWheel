@@ -27,7 +27,7 @@ A fixed six-button navigation bar is shown at the bottom of every page. Any page
 
 | Button | SF Symbol | Page |
 |---|---|---|
-| Prices | `bolt.fill` | Octopus Agile Prices |
+| Prices | `bolt.circle.fill` | Octopus Agile Prices |
 | Solar | `sun.max.fill` | Solar Forecast |
 | PV | `bolt.sun.fill` | PV Forecast |
 | Net | `sterlingsign.circle.fill` | Net Electricity Price |
@@ -154,6 +154,8 @@ The Now button appears on Octopus Agile Prices, Solar Forecast, PV Forecast and 
 
 Tapping it changes the shared selected date to today, loads today's Agile/solar source data if needed, selects the period satisfying `validFrom <= now < validTo`, and refreshes the derived PV Forecast and Net Electricity Price selections.
 
+The button is positioned in the unused dark area above and to the right of the wheel rather than floating over cards or wheel data. Its top offset is adjusted slightly for the Octopus price page versus the three other metric pages so it remains clear of the page header and information/settings controls.
+
 ---
 
 ## Architecture
@@ -172,7 +174,7 @@ SwipeDashboardView
         +--> DocumentationView
 ```
 
-`SwipeDashboardView` keeps its historical type name but no longer installs a horizontal page-swipe gesture. It owns the fixed six-button bottom navigation bar and direct page selection.
+`SwipeDashboardView` keeps its historical type name but no longer installs a horizontal page-swipe gesture. It owns the fixed six-button bottom navigation bar, direct page selection and the top-right Now-button placement.
 
 The user-facing page is named **PV Forecast**, while the implementation type remains `GenerationEstimateView`.
 
@@ -226,6 +228,7 @@ Before release verify:
 - wheel dragging selects sectors without navigating;
 - no obsolete swipe or Back/Next instructions remain in page footers;
 - Now works on all four metric pages;
+- Now sits in unused dark space above/right of the wheel and does not obscure wheel sectors, metric cards, page headers or other controls on supported iPhone sizes;
 - tariff discovery and 46/48/50-period days;
 - solar site by current location, search and manual coordinates;
 - PV-installed state and greyed dependent features;
