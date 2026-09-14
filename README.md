@@ -10,9 +10,9 @@ For user operation see `USER_GUIDE.md`. The same core guidance is built into the
 
 ---
 
-## Swipe navigation
+## Main page navigation
 
-The app has six horizontal pages:
+The app has six pages:
 
 ```text
 1. Octopus Agile Prices
@@ -23,7 +23,11 @@ The app has six horizontal pages:
 6. User Guide
 ```
 
-Swiping left advances through the sequence. Swiping left from User Guide wraps to Octopus Agile Prices. Swiping right moves back one page; the first page does not wrap backwards.
+Page changes are made only with the fixed **Back** and **Next** controls at the bottom of the screen. Horizontal swipe navigation has been deliberately removed because wheel-sector touching and dragging could otherwise be misinterpreted as a page swipe.
+
+The first page has Back disabled. Next advances through the sequence. On the User Guide page the right-hand button is labelled **Prices** and returns to Octopus Agile Prices.
+
+The bottom navigation bar also shows six page dots plus the current page number (`1 of 6`, etc.).
 
 The first four pages are metric pages and show a **Now** button. Tapping Now returns the shared selected date to today and highlights the half-hour containing the current time.
 
@@ -215,7 +219,7 @@ When PV is switched off:
 
 ### Solar PV array units
 
-PV-array numeric fields now keep their engineering units visibly displayed beside the editable value, rather than relying on placeholder text that disappears after entry.
+PV-array numeric fields keep their engineering units visibly displayed beside the editable value, rather than relying on placeholder text that disappears after entry.
 
 The persistent unit presentation is:
 
@@ -301,6 +305,8 @@ SwipeDashboardView
         |
         +--> DocumentationView
 ```
+
+`SwipeDashboardView` retains its historical type name but no longer installs a horizontal page-swipe gesture. It owns the fixed bottom navigation bar and changes the `DashboardPage` only from explicit buttons (or direct jumps such as the settings gear).
 
 The user-facing page is named **PV Forecast**, while the existing implementation type remains `GenerationEstimateView` to avoid an unnecessary source-file/type rename.
 
@@ -412,10 +418,13 @@ Before release verify:
 
 - clean Xcode build;
 - page order: Octopus Agile Prices → Solar Forecast → PV Forecast → Net Electricity Price → App Settings → User Guide;
-- left wrap from User Guide to Octopus Agile Prices;
-- no backward wrap from the first page;
-- six page dots;
-- Now button on all four metric pages and nowhere else;
+- Back is disabled on Octopus Agile Prices;
+- Next advances through the page sequence;
+- User Guide right-hand button is Prices and returns to Octopus Agile Prices;
+- horizontal swipes on the page background do not change pages;
+- dragging around each wheel cannot change pages;
+- six page dots and the page-number indicator update correctly;
+- Now button appears on all four metric pages and nowhere else;
 - Now returns a non-today selection to today and selects the current half-hour;
 - tariff discovery and selection;
 - 46/48/50-period days;
