@@ -27,7 +27,7 @@ The repository documentation index is in [`docs/INDEX.md`](docs/INDEX.md).
 
 # 1. Main navigation
 
-The app has seven pages:
+The app defines seven pages:
 
 1. Octopus Agile Prices
 2. Solar Forecast
@@ -37,7 +37,7 @@ The app has seven pages:
 6. App Settings
 7. User Guide
 
-A fixed navigation bar is shown at the bottom of every page:
+When **Solar PV panels installed** is on, all seven bottom buttons are shown:
 
 | Button | Opens |
 |---|---|
@@ -49,19 +49,21 @@ A fixed navigation bar is shown at the bottom of every page:
 | sliders Settings | App Settings |
 | book Guide | User Guide |
 
+When **Solar PV panels installed** is off, the PV-dependent **PV**, **Net** and **Save** buttons are hidden. The bottom bar then shows only **Prices**, **Solar**, **Settings** and **Guide**. Turning PV back on restores the three hidden pages immediately. Saved PV-array and optimiser values are retained while PV is off.
+
 The selected page button is highlighted in orange. Horizontal swipe navigation is disabled so wheel dragging cannot accidentally change pages.
 
 ---
 
 # 2. Now button
 
-The **Now** button appears on the five metric pages:
+The **Now** button appears on the metric pages that are currently available:
 
 - Octopus Agile Prices;
 - Solar Forecast;
-- PV Forecast;
-- Net Electricity Price;
-- Cost Savings.
+- PV Forecast when PV is enabled;
+- Net Electricity Price when PV is enabled;
+- Cost Savings when PV is enabled.
 
 Tapping Now returns the selected date to today, loads today's source data if required and selects the half-hour satisfying:
 
@@ -125,7 +127,7 @@ estimated energy = estimated power × actual period duration
 
 Rated kWp takes priority. If blank, capacity can be derived from panel count × panel watts / 1000.
 
-If **Solar PV panels installed** is off, PV Forecast is greyed and disabled while saved PV settings remain stored.
+If **Solar PV panels installed** is off, the PV Forecast page and its bottom navigation button are hidden. Turning PV back on restores the page using the retained PV settings.
 
 ---
 
@@ -151,6 +153,8 @@ PV cost saving = avoided grid import × Agile price
 ```
 
 The optimiser load defaults to **3.0 kW**. Export income is not included.
+
+If **Solar PV panels installed** is off, Net Electricity Price and its bottom navigation button are hidden. They return when PV is enabled again.
 
 ---
 
@@ -181,7 +185,7 @@ Only PV that offsets the configured load is counted as an import-cost saving. Su
 
 A negative Agile price can produce a **negative saving**. This means importing during that half-hour would have been financially beneficial, so PV generation reduces that benefit. Negative saving sectors are red; positive saving sectors are green.
 
-When **Solar PV panels installed** is off, Cost Savings is greyed and disabled.
+When **Solar PV panels installed** is off, Cost Savings and its bottom navigation button are hidden. They return when PV is enabled again.
 
 ---
 
@@ -193,13 +197,14 @@ The **Current solar site** section includes an editable site-name field plus the
 
 When **Solar PV panels installed** is switched off:
 
+- PV Forecast, Net Electricity Price and Cost Savings disappear from bottom navigation;
+- the bottom bar changes from seven buttons to four;
 - PV-array fields are greyed and disabled;
 - optimiser controls are greyed and disabled;
-- PV Forecast is greyed and disabled;
-- Net Electricity Price is greyed and disabled;
-- Cost Savings is greyed and disabled;
 - Solar Forecast remains active;
 - saved PV and optimiser values are retained.
+
+Turning **Solar PV panels installed** back on restores PV, Net and Save immediately and reuses the saved settings.
 
 ---
 
@@ -271,7 +276,9 @@ If **Use Current Location** shows **Current location** instead of a place name, 
 
 If editing the solar-site name changes the coordinates, treat that as a defect: renaming is intended to change only the display label.
 
-If PV Forecast, Net Electricity Price or Cost Savings is greyed, check **Solar PV panels installed**.
+If PV Forecast, Net Electricity Price and Cost Savings are missing from the bottom bar, check **Solar PV panels installed**. If it is off, that is expected. Turn it on to restore those pages.
+
+If the PV pages do not return after turning **Solar PV panels installed** on, treat that as a defect.
 
 If Cost Savings shows a negative value, check the Agile price for that sector. Negative Agile prices can legitimately produce negative savings.
 
@@ -281,7 +288,7 @@ If Now selects an unexpected period, confirm today's source data has loaded.
 
 If the Now button covers data or controls on a supported iPhone size, treat that as a layout defect.
 
-If dragging a wheel changes pages, that is a defect: main page changes should occur only by tapping one of the seven bottom buttons.
+If dragging a wheel changes pages, that is a defect: main page changes should occur only by tapping a visible bottom button.
 
 ---
 
@@ -300,7 +307,7 @@ SwipeDashboardView
         └─ User Guide
 ```
 
-`SwipeDashboardView` retains its historical name, but swipe-based page changing has been removed. It owns the seven-button navigation bar and shared Now control.
+`SwipeDashboardView` retains its historical name, but swipe-based page changing has been removed. It owns conditional bottom navigation and the shared Now control.
 
 `GenerationEstimateView` implements PV Forecast. `CostSavingsView` implements Cost Savings.
 
