@@ -30,9 +30,7 @@ struct SwipeDashboardView: View {
                 savingsScreen
                     .transition(.opacity)
             case .heating:
-                standardMetricScreen(title: "Heating Controller") {
-                    HeatingControllerView(agileModel: model, solarModel: solarModel, settings: appSettings)
-                }
+                heatingScreen
             case .settings:
                 settingsScreen
                     .transition(.opacity)
@@ -262,6 +260,24 @@ struct SwipeDashboardView: View {
                 }
             }
         }
+    }
+
+    private var heatingScreen: some View {
+        ZStack {
+            dashboardBackground
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 18) {
+                    pageHeader(title: "Heating Controller", subtitle: "Synology · current status", icon: "gearshape") {
+                        withAnimation { page = .settings }
+                    }
+                    HeatingControllerView(agileModel: model, solarModel: solarModel, settings: appSettings)
+                }
+                .frame(maxWidth: contentMaxWidth)
+                .padding(.horizontal, contentHorizontalPadding)
+                .padding(.bottom, 20)
+                .frame(maxWidth: .infinity)
+            }
+        }.preferredColorScheme(.dark)
     }
 
     private var savingsScreen: some View {
