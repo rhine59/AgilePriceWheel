@@ -11,6 +11,13 @@ struct DocumentationView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("Heating controller — iOS") {
+                    Text("Heating connects to an always-running Synology controller using a private HTTPS address and a key stored in Keychain. It remains available when PV display pages are hidden.")
+                    Text("Load policy, set the effective-price on/off points and room target/limit, and explicitly confirm saving. Copy this app's tariff, site and PV settings into the draft only when you choose. Off must be at least on; heating price permission starts at or below on and stops above off.")
+                    Text("The controller calculates Agile plus forecast-PV effective prices independently of the phone and keeps running when the app closes. Status refreshes every 30 seconds while Heating is open. A price decision is not a measurement of heating state.")
+                    Text("Live heating is disabled. There is no verified Homely write adapter or room-temperature sensor; limits are policy settings only. Android does not yet have the Heating page.")
+                }
+
                 Section("Index") {
                     Text("1. Conditional page buttons")
                     Text("2. Screen sizes and adaptive layout")
@@ -30,8 +37,8 @@ struct DocumentationView: View {
                 }
 
                 Section("Conditional page buttons") {
-                    Text("When Solar PV panels installed is on, the bottom navigation shows Prices, Solar, PV, Net, Save, Settings and Guide.")
-                    Text("When Solar PV panels installed is off, PV, Net and Save are hidden, leaving Prices, Solar, Settings and Guide. Turning PV back on restores the three hidden pages immediately and keeps the saved PV-array and optimiser values.")
+                    Text("When Solar PV panels installed is on, the bottom navigation shows Prices, Solar, PV, Net, Save, Heating, Settings and Guide.")
+                    Text("When Solar PV panels installed is off, PV, Net and Save are hidden, leaving Prices, Solar, Heating, Settings and Guide. Turning PV back on restores the three hidden pages immediately and keeps the saved PV-array and optimiser values.")
                     Text("Horizontal swipe navigation is intentionally disabled so dragging a wheel cannot accidentally change the main page.")
                 }
 

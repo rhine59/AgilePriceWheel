@@ -19,3 +19,7 @@ Any iOS change to calculations, page visibility, navigation, settings, location 
 ## Known implementation scope
 
 The Android project now contains the complete parity path for the current core feature set. Platform packaging, Play Store signing/release metadata and device-specific polish remain separate release tasks and must not be described as completed until tested.
+
+## Heating controller parity
+
+The Apple app now includes a Heating page for an authenticated, plan-only Synology controller. Android does not include this feature yet; existing Android pages are unchanged.

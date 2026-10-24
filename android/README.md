@@ -65,3 +65,7 @@ Current Location requests fine/coarse location permission only when the user ask
 Before release, build and test at least a compact phone, normal phone, large phone and tablet; portrait and landscape where practical; PV on/off navigation; current-location permission allowed/denied; common-name editing; Now selection; 46/48/50 period days; negative Agile prices; and agreement between Net selected-sector saving and Cost Savings.
 
 The Android implementation should be kept in parity whenever the iOS implementation changes.
+
+## Heating controller parity
+
+The Apple app now includes a Heating page for an authenticated, plan-only Synology controller. Android does not include this feature yet; existing Android pages are unchanged.

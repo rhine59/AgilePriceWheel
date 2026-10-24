@@ -29,6 +29,10 @@ struct SwipeDashboardView: View {
             case .savings:
                 savingsScreen
                     .transition(.opacity)
+            case .heating:
+                standardMetricScreen(title: "Heating Controller") {
+                    HeatingControllerView(agileModel: model, solarModel: solarModel, settings: appSettings)
+                }
             case .settings:
                 settingsScreen
                     .transition(.opacity)
@@ -108,6 +112,7 @@ struct SwipeDashboardView: View {
                 navigationButton(.savings, title: "Save", systemImage: "banknote.fill", showLabel: showLabels, compact: compact)
             }
 
+            navigationButton(.heating, title: "Heating", systemImage: "thermometer.medium", showLabel: showLabels, compact: compact)
             navigationButton(.settings, title: "Settings", systemImage: "slider.horizontal.3", showLabel: showLabels, compact: compact)
             navigationButton(.guide, title: "Guide", systemImage: "book.closed.fill", showLabel: showLabels, compact: compact)
         }
@@ -487,6 +492,7 @@ private enum DashboardPage: Equatable {
     case generation
     case netPrice
     case savings
+    case heating
     case settings
     case guide
 
@@ -494,7 +500,7 @@ private enum DashboardPage: Equatable {
         switch self {
         case .generation, .netPrice, .savings:
             return true
-        case .prices, .solar, .settings, .guide:
+        case .prices, .solar, .heating, .settings, .guide:
             return false
         }
     }
