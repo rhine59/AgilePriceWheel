@@ -33,4 +33,4 @@ Net Electricity Price must surface the same selected-period PV saving.
 
 ## iOS Heating controller
 
-See [Heating controller](HEATING_CONTROLLER.md) for the Synology service contract and iOS-only feature status.
+See [Heating controller](HEATING_CONTROLLER.md) for the Synology service contract, recovery/freshness display, secure reconnection and iOS-only feature status.

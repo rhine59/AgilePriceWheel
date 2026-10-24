@@ -22,13 +22,26 @@ conflict or an uncertain network response before saving again.
 
 Status refreshes every 30 seconds while the page is open and labels its last
 check. Source failure/staleness clears price permission at the controller. The
-app displays a **price decision**, never an actual heating/room-temperature
-measurement. Live heating is disabled; temperature settings are stored but no
-room sensor or Homely control adapter is connected. Closing the app does not
-stop the controller's worker. NAS HTTPS routing and on-device acceptance remain
-separate deployment work; do not treat a simulator build as a phone-to-NAS test.
+app distinguishes the **price decision** from the supervisor status. It shows
+saved-recovery warnings and flags heating checks older than 45 seconds or dated
+in the future. If the controller supplies optional Homely observations, the app
+labels reported temperature and heating state separately and warns that the
+sensor is not yet verified for automatic safety checks. Without an observer it
+explicitly reports that live Homely readings are not connected.
+
+After the first successful connection, returning to Heating reconnects using the
+saved HTTPS address and Keychain key. Editing either connection field clears the
+old connection and draft; requests completing for a previous connection are not
+applied to the new one. Saving policy still requires confirmation. Live heating
+remains disabled; the app has no activation switch or direct Homely commands.
+Closing the app does not stop the NAS worker. Simulator tests and an app install
+do not by themselves establish a physical phone-to-NAS acceptance test.
 
 This feature is implemented for iOS only. Android navigation and functionality
 are unchanged; no Android Heating screen or controller client is included.
 
-Build verified in Xcode 27 with the iOS 26.5 simulator. No physical-device or deployed HTTPS connection claim is made.
+Build and six focused tests verified in Xcode 27 with the iOS 26.5 simulator
+(five API/model tests and one navigation test). The signed development app was
+installed over the existing app and launched on a paired iPhone 13 Pro Max.
+The original bundle identity was retained; the app was not uninstalled. A
+physical phone-to-NAS authenticated connection is a separate acceptance step.

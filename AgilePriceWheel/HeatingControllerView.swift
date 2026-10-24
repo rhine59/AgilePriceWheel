@@ -27,6 +27,46 @@ struct ControllerStatus: Decodable {
     let current: ControllerSlot?
     let error: String?
     let message: String
+    let heating_control: HeatingControlStatus?
+}
+struct HeatingControlStatus: Decodable {
+    let phase: String
+    let control_enabled: Bool
+    let recovery_pending: Bool
+    let last_checked_at: String?
+    let observation: HeatingObservation?
+    let error: String?
+    let blockers: [String]
+
+    var summary: String {
+        if recovery_pending { return "Heating recovery needs attention" }
+        switch phase {
+        case "disabled": return "Automatic heating is disabled"
+        case "blocked": return "Automatic heating needs further verification"
+        case "unavailable": return "Heating checks are unavailable"
+        case "recovery_required": return "Heating recovery needs attention"
+        default: return "Check heating status on the controller"
+        }
+    }
+    func checkedDate() -> Date? {
+        guard let last_checked_at else { return nil }
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: last_checked_at) ?? ISO8601DateFormatter().date(from: last_checked_at)
+    }
+    func isFresh(at now: Date = Date()) -> Bool {
+        guard let date = checkedDate() else { return false }
+        return (0...45).contains(now.timeIntervalSince(date))
+    }
+}
+struct HeatingObservation: Decodable {
+    let disabled: Bool
+    let reported_heating_on: Bool
+    let room_c: Double
+    let observed_at: String
+    let sensor_age_s: Double
+    let sensor_candidate_fresh: Bool
+    let sensor_contract_verified: Bool
 }
 struct ControllerSlot: Decodable {
     let agile_price_p: Double
@@ -140,7 +180,7 @@ struct HeatingControllerView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Label("Live heating disabled", systemImage: "lock.shield")
                         .font(.headline).foregroundStyle(.orange)
-                    Text("This connection displays price decisions and saves policy only. Homely control commands and room-temperature safety checks still need verification.")
+                    Text("Review effective prices and save your heating policy here. Automatic heating remains blocked until its safety timeout, restoration and temperature checks are verified.")
                         .font(.subheadline)
                     if let checkedAt {
                         Text("Last checked \(checkedAt.formatted(date: .omitted, time: .standard))").font(.caption).foregroundStyle(.secondary)
@@ -155,6 +195,36 @@ struct HeatingControllerView: View {
                             LabeledContent("Forecast PV", value: String(format: "%.3f kWh", current.pv_kwh))
                         }
                         if let error = status.error { Text(error).foregroundStyle(.orange) }
+                        if let control = status.heating_control {
+                            Divider()
+                            Text(control.summary).font(.headline)
+                                .accessibilityIdentifier("heating-supervisor-summary")
+                            if let checked = control.checkedDate() {
+                                Text("Heating checks: \(checked.formatted(date: .omitted, time: .standard))")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            if !control.isFresh() {
+                                Text("Heating checks have not reported recently. This is not a live heating reading.")
+                                    .font(.caption).foregroundStyle(.orange)
+                            }
+                            if let observation = control.observation {
+                                LabeledContent("Reported room temperature", value: String(format: "%.1f°C", observation.room_c))
+                                LabeledContent("Space heating disabled", value: observation.disabled ? "Yes" : "No")
+                                LabeledContent("Homely reports heating", value: observation.reported_heating_on ? "On" : "Off")
+                                if !observation.sensor_contract_verified || !observation.sensor_candidate_fresh {
+                                    Text("Temperature reading is not verified for automatic heating safety checks.")
+                                        .font(.caption).foregroundStyle(.orange)
+                                }
+                            } else {
+                                Text("Room temperature and live Homely state are not connected.")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            if let error = control.error { Text(error).foregroundStyle(.orange) }
+                            if !control.blockers.isEmpty {
+                                Text("Further supervised checks are required before automatic heating can start.")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -162,8 +232,10 @@ struct HeatingControllerView: View {
                 VStack(spacing: 12) {
                     TextField("https://heating.example.com", text: $address)
                         .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
+                        .accessibilityIdentifier("heating-controller-address").disabled(busy)
                     SecureField("Controller key", text: $token)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .accessibilityIdentifier("heating-controller-key").disabled(busy)
                     Button("Connect / reload controller policy") { Task { await load() } }
                         .buttonStyle(.borderedProminent).disabled(busy)
                 }.textFieldStyle(.roundedBorder)
@@ -215,10 +287,16 @@ struct HeatingControllerView: View {
                 }
             }
         }
-        .onAppear { if token.isEmpty { token = ControllerKeychain.read(address) } }
+        .task {
+            if token.isEmpty { token = ControllerKeychain.read(address) }
+            if !address.isEmpty, token.count >= 32, document == nil { await load() }
+        }
         .onChange(of: address) { _, value in
             document = nil; status = nil; connectedAddress = nil
             token = ControllerKeychain.read(value); message = nil
+        }
+        .onChange(of: token) { _, _ in
+            document = nil; status = nil; connectedAddress = nil; checkedAt = nil
         }
         .confirmationDialog("Save this heating policy to the controller?", isPresented: $confirmSave, titleVisibility: .visible) {
             Button("Save policy (live heating stays disabled)") { Task { await save() } }
@@ -244,11 +322,12 @@ struct HeatingControllerView: View {
         busy = true; message = nil; document = nil; status = nil
         defer { busy = false }
         let original = address
+        let originalToken = token
         do {
             let api = try api()
             let loaded: PolicyDocument = try await api.request("policy")
             let current: ControllerStatus = try await api.request("status")
-            guard original == address else { return }
+            guard original == address, originalToken == token else { return }
             guard !current.control_enabled, current.mode == "plan_only" else {
                 throw ControllerFailure.message("This app version only connects to controllers with live heating disabled.")
             }
@@ -267,6 +346,8 @@ struct HeatingControllerView: View {
     @MainActor private func save() async {
         busy = true; message = nil
         defer { busy = false }
+        let original = address
+        let originalToken = token
         do {
             guard var draft = document, connectedAddress == address else { return }
             draft.policy.on_price_p = try numeric(onPrice); draft.policy.off_price_p = try numeric(offPrice)
@@ -277,6 +358,7 @@ struct HeatingControllerView: View {
             }
             let api = try api()
             let result: PolicyDocument = try await api.request("policy", body: draft)
+            guard original == address, originalToken == token else { return }
             document = result; status = nil
             message = "Policy saved to controller. Live heating remains disabled. Reload shortly for refreshed prices."
         } catch { message = error.localizedDescription }

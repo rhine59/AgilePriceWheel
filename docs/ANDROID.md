@@ -23,3 +23,7 @@ The Android project now contains the complete parity path for the current core f
 ## Heating controller parity
 
 The Apple app now includes a Heating page for an authenticated, plan-only Synology controller. Android does not include this feature yet; existing Android pages are unchanged.
+
+The latest iOS update adds supervisor recovery/freshness and optional reported
+Homely observations, plus reconnecting with its saved Keychain key. These remain
+iOS-only; no equivalent Android screen or controller client is implemented.
