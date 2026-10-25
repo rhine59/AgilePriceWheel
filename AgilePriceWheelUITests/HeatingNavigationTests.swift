@@ -7,8 +7,11 @@ final class HeatingNavigationTests: XCTestCase {
         let heating = app.buttons["Heating"]
         XCTAssertTrue(heating.waitForExistence(timeout: 15))
         heating.tap()
-        XCTAssertTrue(app.staticTexts["Always-running controller"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Live heating disabled"].exists)
+        XCTAssertTrue(app.staticTexts["Agile heating"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Always-running controller"].exists)
+        XCTAssertTrue(app.staticTexts["Heating policy: unavailable"].exists)
+        XCTAssertTrue(app.staticTexts["Heating state: unavailable"].exists)
+        XCTAssertTrue(app.staticTexts["Automatic control disabled"].exists)
         XCTAssertTrue(app.buttons["Connect / reload controller policy"].exists)
         XCTAssertTrue(app.textFields["heating-controller-address"].exists)
         XCTAssertTrue(app.secureTextFields["heating-controller-key"].exists)

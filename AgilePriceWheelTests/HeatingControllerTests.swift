@@ -71,4 +71,23 @@ struct HeatingControllerTests {
         #expect(control.checkedDate() != nil)
     }
 
+    @Test func reportedStateRequiresFreshHomelyObservation() throws {
+        let checked = "2026-10-25T12:00:00+00:00"
+        let now = try #require(ISO8601DateFormatter().date(from: checked))
+        func status(heating: Bool, fresh: Bool) -> ControllerStatus {
+            let observation = HeatingObservation(disabled: false, reported_heating_on: heating,
+                room_c: 19, observed_at: checked, sensor_age_s: fresh ? 0 : 180,
+                sensor_candidate_fresh: fresh, sensor_contract_verified: false)
+            let control = HeatingControlStatus(phase: "disabled", control_enabled: false,
+                recovery_pending: false, last_checked_at: checked, observation: observation,
+                error: nil, blockers: [])
+            return ControllerStatus(control_enabled: false, mode: "plan_only", stale: false,
+                price_requests_heat: false, current: nil, error: nil, message: "", heating_control: control)
+        }
+        #expect(status(heating: true, fresh: true).reportedHeatingState(at: now) == true)
+        #expect(status(heating: false, fresh: true).reportedHeatingState(at: now) == false)
+        #expect(status(heating: false, fresh: false).reportedHeatingState(at: now) == nil)
+        #expect(status(heating: true, fresh: true).reportedHeatingState(at: now.addingTimeInterval(46)) == nil)
+    }
+
 }

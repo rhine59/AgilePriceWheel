@@ -267,7 +267,7 @@ struct SwipeDashboardView: View {
             dashboardBackground
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 18) {
-                    pageHeader(title: "Heating Controller", subtitle: "Synology · current status", icon: "gearshape") {
+                    pageHeader(title: "Agile heating", subtitle: "Synology · current status", icon: "gearshape") {
                         withAnimation { page = .settings }
                     }
                     HeatingControllerView(agileModel: model, solarModel: solarModel, settings: appSettings)

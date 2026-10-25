@@ -11,7 +11,8 @@ struct DocumentationView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Heating controller — iOS") {
+                Section("Agile heating — iOS") {
+                    Text("Agile heating shows separate Heating policy and Heating state lines: ON in red, OFF in green, and unavailable when data is missing or stale. Policy is price permission; state is Homely’s reported flag. Automatic control remains disabled.")
                     Text("Heating connects to an always-running Synology controller using a private HTTPS address and a key stored in Keychain. It remains available when PV display pages are hidden.")
                     Text("Policy lists are labelled Heating on, Heating off, Target temp and Temp ceiling. Prices run from 1 to 20 p/kWh and temperatures from 10 to 25°C in whole-number steps. Existing values outside these lists stay visible as Current until replaced. Information messages are blue; errors and safety warnings are red.")
                     Text("Load policy, set the effective-price on/off points and room target/limit, and explicitly confirm saving. Copy this app's tariff, site and PV settings into the draft only when you choose. Off must be at least on; heating price permission starts at or below on and stops above off.")

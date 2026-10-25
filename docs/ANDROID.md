@@ -32,3 +32,5 @@ The iOS Heating policy now uses whole-number dropdowns (1–20 p/kWh and
 10–25°C) while preserving existing out-of-range values. This remains iOS-only.
 
 Short policy labels and blue informational/red error messages apply only to the iOS Heating page.
+
+The Agile heating heading and separate red/green policy and reported-state lines are iOS-only.

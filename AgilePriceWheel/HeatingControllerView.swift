@@ -28,6 +28,12 @@ struct ControllerStatus: Decodable {
     let error: String?
     let message: String
     let heating_control: HeatingControlStatus?
+
+    func reportedHeatingState(at now: Date) -> Bool? {
+        guard let control = heating_control, control.isFresh(at: now),
+              let observation = control.observation, observation.sensor_candidate_fresh else { return nil }
+        return observation.reported_heating_on
+    }
 }
 struct HeatingControlStatus: Decodable {
     let phase: String
@@ -173,13 +179,24 @@ struct HeatingControllerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Label("Always-running controller", systemImage: "server.rack")
-                .font(.title2.bold()).foregroundStyle(.orange)
+            TimelineView(.periodic(from: .now, by: 5)) { context in
+                let recent = checkedAt.map { (0...45).contains(context.date.timeIntervalSince($0)) } ?? false
+                let currentStatus = recent ? status : nil
+                VStack(alignment: .leading, spacing: 8) {
+                    heatingStateLine("Heating policy", isOn: currentStatus.map {
+                        !$0.stale && $0.current != nil && $0.price_requests_heat
+                    }, identifier: "heating-policy-decision")
+                    heatingStateLine("Heating state", isOn: currentStatus?.reportedHeatingState(at: context.date),
+                                     identifier: "heating-reported-state")
+                    Text("Policy is price permission. State is Homely’s report. Automatic control is disabled.")
+                        .font(.caption).foregroundStyle(.blue)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+            }
             Text("Agile + forecast PV determine the effective heating price. The controller keeps the policy running when this app is closed.")
                 .foregroundStyle(.blue)
             GroupBox {
                 VStack(alignment: .leading, spacing: 10) {
-                    Label("Live heating disabled", systemImage: "lock.shield")
+                    Label("Automatic control disabled", systemImage: "lock.shield")
                         .font(.headline).foregroundStyle(.orange)
                     Text("Review effective prices and save your heating policy here. Automatic heating remains blocked until its safety timeout, restoration and temperature checks are verified.")
                         .font(.subheadline).foregroundStyle(.blue)
@@ -187,9 +204,6 @@ struct HeatingControllerView: View {
                         Text("Last checked \(checkedAt.formatted(date: .omitted, time: .standard))").font(.caption).foregroundStyle(.secondary)
                     }
                     if let status {
-                        Text(status.stale ? "Price data unavailable or stale" : (status.price_requests_heat ? "Price policy requests heating" : "Price policy does not request heating"))
-                            .font(.headline)
-                        Text("Price decision only — not the actual heating state.").font(.caption).foregroundStyle(.blue)
                         if let current = status.current {
                             LabeledContent("Effective price", value: String(format: "%.2f p/kWh", current.effective_price_p))
                             LabeledContent("Agile grid price", value: String(format: "%.2f p/kWh", current.agile_price_p))
@@ -306,10 +320,17 @@ struct HeatingControllerView: View {
             document = nil; status = nil; connectedAddress = nil; checkedAt = nil
         }
         .confirmationDialog("Save this heating policy to the controller?", isPresented: $confirmSave, titleVisibility: .visible) {
-            Button("Save policy (live heating stays disabled)") { Task { await save() } }
+            Button("Save policy (automatic control stays disabled)") { Task { await save() } }
         } message: {
             Text("On at or below \(onPrice)p; off above \(offPrice)p. Target \(target)°C; limit \(limit)°C. This does not enable heating controls.")
         }
+    }
+    private func heatingStateLine(_ title: String, isOn: Bool?, identifier: String) -> some View {
+        let value = isOn.map { $0 ? "ON" : "OFF" } ?? "unavailable"
+        let colour: Color = isOn == true ? .red : (isOn == false ? .green : .secondary)
+        return Text("\(title): \(value)")
+            .font(.title3.bold()).foregroundStyle(colour)
+            .accessibilityIdentifier(identifier)
     }
     private func pickerValue(_ text: String, range: ClosedRange<Int>) -> String {
         guard let number = Double(text), number.isFinite,
@@ -385,7 +406,7 @@ struct HeatingControllerView: View {
             let result: PolicyDocument = try await api.request("policy", body: draft)
             guard original == address, originalToken == token else { return }
             document = result; status = nil
-            message = "Policy saved to controller. Live heating remains disabled. Reload shortly for refreshed prices."
+            message = "Policy saved to controller. Automatic control remains disabled. Reload shortly for refreshed prices."
         } catch { message = error.localizedDescription; messageIsError = true }
     }
     private func copyAppSettings() {

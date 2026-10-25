@@ -160,3 +160,14 @@ The iOS policy dropdown labels are **Heating on**, **Heating off**, **Target tem
 **Temp ceiling**. Informational/help and saved/copied messages use blue; errors and
 safety warnings use red. Action messages include an information or warning icon
 so their meaning does not rely on colour alone. Ranges and save behaviour are unchanged.
+
+
+### Agile heating: separate policy and reported state
+
+The iOS page is titled **Agile heating** and has two coloured lines at the top:
+**Heating policy** shows price permission; **Heating state** shows the fresh
+Homely-reported flag from the controller's optional read-only observer. ON is
+red and OFF is green. Missing/stale connection or observation data is shown as
+unavailable, never as a guessed OFF. The old Always-running controller line is
+removed. Automatic control remains separately labelled disabled; an ON policy
+is not proof of physical heating. The observer does not issue control commands.

@@ -39,3 +39,5 @@ The iOS Heating guide also documents the price/temperature dropdown choices
 and preservation of existing saved values outside those choices.
 
 The Heating guide includes short selector labels and the information/error colour meanings.
+
+Agile heating documents separate policy permission and fresh Homely-reported heating state.
