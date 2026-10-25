@@ -2,6 +2,7 @@ import SwiftUI
 import Security
 
 struct ControllerPolicy: Codable {
+    static let priceChoices = -20...20
     var on_price_p: Double
     var off_price_p: Double
     var target_c: Double
@@ -19,6 +20,14 @@ struct PolicyDocument: Codable {
     var revision: Int
     var policy: ControllerPolicy
 }
+struct AutomationState: Decodable {
+    let revision: Int
+    let enabled: Bool
+    let can_enable: Bool
+    let shutdown_pending: Bool
+    let phase: String
+    let error: String?
+}
 struct ControllerStatus: Decodable {
     let control_enabled: Bool
     let mode: String
@@ -28,6 +37,10 @@ struct ControllerStatus: Decodable {
     let error: String?
     let message: String
     let heating_control: HeatingControlStatus?
+
+    var supportedControlMode: Bool {
+        (mode == "plan_only" && !control_enabled) || (mode == "automatic" && control_enabled)
+    }
 
     func reportedHeatingState(at now: Date) -> Bool? {
         guard let control = heating_control, control.isFresh(at: now), control.error == nil,
@@ -48,7 +61,12 @@ struct HeatingControlStatus: Decodable {
         if recovery_pending { return "Heating recovery needs attention" }
         switch phase {
         case "disabled": return "Automatic heating is disabled"
-        case "blocked": return "Automatic heating needs further verification"
+        case "blocked": return "Automatic heating is not ready"
+        case "boost_active": return "Price policy boost is active"
+        case "heating_off": return "Price policy heating is off"
+        case "automation_off": return "Automation is off"
+        case "waiting_for_boundary": return "Waiting for the next half-hour"
+        case "manual_change_hold": return "Paused after a manual change"
         case "unavailable": return "Heating checks are unavailable"
         case "recovery_required": return "Heating recovery needs attention"
         default: return "Check heating status on the controller"
@@ -133,13 +151,17 @@ struct ControllerAPI {
         }
         return url
     }
-    func request<T: Decodable>(_ path: String, body: PolicyDocument? = nil) async throws -> T {
+    func request<T: Decodable>(_ path: String, body: PolicyDocument? = nil, automationEnabled: Bool? = nil) async throws -> T {
         var request = URLRequest(url: base.appendingPathComponent("v1").appendingPathComponent(path))
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         if let body {
             request.httpMethod = "PUT"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONEncoder().encode(body)
+        } else if let automationEnabled {
+            request.httpMethod = "PUT"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONEncoder().encode(["enabled": automationEnabled])
         }
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 20
@@ -150,8 +172,8 @@ struct ControllerAPI {
         guard let http = response as? HTTPURLResponse else { throw ControllerFailure.message("No controller response.") }
         guard http.statusCode == 200 else {
             if http.statusCode == 401 { throw ControllerFailure.message("The controller key was not accepted.") }
-            if http.statusCode == 409 { throw ControllerFailure.message("The policy changed elsewhere. Reload before saving.") }
-            if http.statusCode == 400 { throw ControllerFailure.message("The controller rejected the policy. Check prices, temperatures and PV settings.") }
+            if http.statusCode == 409 { throw ControllerFailure.message(path == "automation" ? "Automatic heating has not been activated on this controller." : "The policy changed elsewhere. Reload before saving.") }
+            if http.statusCode == 400 { throw ControllerFailure.message("The controller rejected the policy. Check signed prices and PV settings.") }
             throw ControllerFailure.message("The controller is unavailable (\(http.statusCode)).")
         }
         return try JSONDecoder().decode(T.self, from: data)
@@ -167,6 +189,8 @@ struct HeatingControllerView: View {
     @State private var token = ""
     @State private var document: PolicyDocument?
     @State private var status: ControllerStatus?
+    @State private var automation: AutomationState?
+    @State private var confirmAutomationOn = false
     @State private var connectedAddress: String?
     @State private var onPrice = "0"
     @State private var offPrice = "0"
@@ -188,17 +212,41 @@ struct HeatingControllerView: View {
                     heatingStateLine("Heating state", isOn: currentStatus?.reportedHeatingState(at: context.date),
                                      identifier: "heating-reported-state",
                                      lastReported: currentStatus?.heating_control?.observation?.sensor_candidate_fresh == false)
-                    Text("Policy is price permission. State is Homely’s report. Automatic control is disabled.")
+                    Text("Policy is price permission. State is Homely’s report. Automatic control is \(status?.control_enabled == true ? "enabled" : "disabled").")
                         .font(.caption).foregroundStyle(.blue)
                 }.frame(maxWidth: .infinity, alignment: .leading)
+            }
+            GroupBox {
+                VStack(alignment: .leading, spacing: 8) {
+                    Toggle("Automation", isOn: Binding(
+                        get: { automation?.enabled ?? false },
+                        set: { enabled in
+                            if enabled { confirmAutomationOn = true }
+                            else { Task { await setAutomation(false) } }
+                        }
+                    ))
+                    .accessibilityIdentifier("heating-automation-switch")
+                    .disabled(busy || automation == nil || (automation?.enabled == false && automation?.can_enable == false))
+                    if automation == nil {
+                        Text("Connect to the controller to check automation state.").foregroundStyle(.blue)
+                    } else if automation?.shutdown_pending == true {
+                        Text("Automation is OFF. Heating shutdown is pending; check Heating state.").foregroundStyle(.red)
+                    } else {
+                        Text("OFF stops policy heating and keeps automation off after restarts. You can then use Homely manually.").foregroundStyle(.blue)
+                    }
+                    if let error = automation?.error { Text(error).foregroundStyle(.red) }
+                    if automation?.shutdown_pending == true || automation?.error != nil {
+                        Button("Retry switching off") { Task { await setAutomation(false) } }.disabled(busy)
+                    }
+                }.font(.subheadline)
             }
             Text("Agile + forecast PV determine the effective heating price. The controller keeps the policy running when this app is closed.")
                 .foregroundStyle(.blue)
             GroupBox {
                 VStack(alignment: .leading, spacing: 10) {
-                    Label("Automatic control disabled", systemImage: "lock.shield")
+                    Label(status?.control_enabled == true ? "Automatic control enabled" : "Automatic control disabled", systemImage: "lock.shield")
                         .font(.headline).foregroundStyle(.orange)
-                    Text("Review effective prices and save your heating policy here. Automatic control remains disabled while timed boost expiry and restoration are being verified.")
+                    Text(status?.control_enabled == true ? "The controller applies this policy at :00 and :30, using Homely’s existing temperature targets. Saving a policy also releases a manual-change pause." : "Review effective prices and save your heating policy here. Saving a policy does not activate automatic heating.")
                         .font(.subheadline).foregroundStyle(.blue)
                     if let checkedAt {
                         Text("Last checked \(checkedAt.formatted(date: .omitted, time: .standard))").font(.caption).foregroundStyle(.secondary)
@@ -225,7 +273,7 @@ struct HeatingControllerView: View {
                             }
                             if let error = control.error { Text(error).foregroundStyle(.red) }
                             if !control.blockers.isEmpty {
-                                Text("Further supervised checks are required before automatic heating can start.")
+                                Text(control.blockers.joined(separator: " "))
                                     .font(.caption).foregroundStyle(.blue)
                             }
                         }
@@ -237,9 +285,9 @@ struct HeatingControllerView: View {
             if let document {
                 GroupBox("Heating price policy") {
                     VStack(spacing: 12) {
-                        policyPicker("Heating on", text: $onPrice, range: 1...20, unit: "p/kWh")
-                        policyPicker("Heating off", text: $offPrice, range: 1...20, unit: "p/kWh")
-                        Text("On at or below; off above. Hold the decision between prices. Homely keeps its existing temperature targets.")
+                        policyPicker("Heating on", text: $onPrice, range: ControllerPolicy.priceChoices, unit: "p/kWh")
+                        policyPicker("Heating off", text: $offPrice, range: ControllerPolicy.priceChoices, unit: "p/kWh")
+                        Text("On at or below; off above. Hold the decision between prices. Negative prices mean payment for grid import. Homely keeps its existing temperature targets.")
                             .font(.caption).foregroundStyle(.blue)
                         LabeledContent("Policy revision", value: String(document.revision))
                         Text("Controller tariff: \(document.policy.tariff.isEmpty ? "Not configured" : document.policy.tariff)")
@@ -273,11 +321,14 @@ struct HeatingControllerView: View {
                 do {
                     try await Task.sleep(for: .seconds(30))
                     guard address == connectedAddress else { return }
+                    let currentToken = token
                     let current: ControllerStatus = try await api().request("status")
-                    guard !current.control_enabled, current.mode == "plan_only" else {
-                        status = nil; message = "Controller is outside plan-only mode."; messageIsError = true; return
+                    guard current.supportedControlMode else {
+                        status = nil; message = "Controller returned an unsupported control mode."; messageIsError = true; return
                     }
-                    status = current; checkedAt = Date()
+                    let switchState: AutomationState = try await api().request("automation")
+                    guard address == connectedAddress, token == currentToken else { return }
+                    status = current; automation = switchState; checkedAt = Date()
                 } catch {
                     if Task.isCancelled { return }
                     status = nil; message = "Controller status could not be refreshed. Last display is not a live heating state."; messageIsError = true
@@ -286,20 +337,25 @@ struct HeatingControllerView: View {
         }
         .task(id: connectionRevision) {
             token = ControllerKeychain.read(address)
-            document = nil; status = nil; connectedAddress = nil
+            document = nil; status = nil; automation = nil; connectedAddress = nil
             if !address.isEmpty, token.count >= 32 { await load() }
         }
         .onChange(of: address) { _, value in
-            document = nil; status = nil; connectedAddress = nil
+            document = nil; status = nil; automation = nil; connectedAddress = nil
             token = ControllerKeychain.read(value); message = nil
         }
         .onChange(of: token) { _, _ in
-            document = nil; status = nil; connectedAddress = nil; checkedAt = nil
+            document = nil; status = nil; automation = nil; connectedAddress = nil; checkedAt = nil
+        }
+        .confirmationDialog("Enable automated heating?", isPresented: $confirmAutomationOn, titleVisibility: .visible) {
+            Button("Enable automation") { Task { await setAutomation(true) } }
+        } message: {
+            Text("The controller will use the saved price policy from the next half-hour, with Homely’s existing temperature targets. Switching OFF will stop heating.")
         }
         .confirmationDialog("Save this heating policy to the controller?", isPresented: $confirmSave, titleVisibility: .visible) {
-            Button("Save policy (automatic control stays disabled)") { Task { await save() } }
+            Button("Save policy") { Task { await save() } }
         } message: {
-            Text("On at or below \(onPrice)p; off above \(offPrice)p. Homely keeps its existing temperature targets. This does not enable heating controls.")
+            Text("On at or below \(onPrice)p; off above \(offPrice)p. Homely keeps its existing temperature targets. Saving does not change automatic activation. If already active, it stops the current boost, releases a manual pause and applies the policy from the next half-hour.")
         }
     }
     private func heatingStateLine(_ title: String, isOn: Bool?, identifier: String, lastReported: Bool = false) -> some View {
@@ -343,7 +399,7 @@ struct HeatingControllerView: View {
         return ControllerAPI(base: try ControllerAPI.endpoint(address), token: token)
     }
     @MainActor private func load() async {
-        busy = true; message = nil; messageIsError = false; document = nil; status = nil
+        busy = true; message = nil; messageIsError = false; document = nil; status = nil; automation = nil
         defer { busy = false }
         let original = address
         let originalToken = token
@@ -351,14 +407,37 @@ struct HeatingControllerView: View {
             let api = try api()
             let loaded: PolicyDocument = try await api.request("policy")
             let current: ControllerStatus = try await api.request("status")
+            let switchState: AutomationState = try await api.request("automation")
             guard original == address, originalToken == token else { return }
-            guard !current.control_enabled, current.mode == "plan_only" else {
-                throw ControllerFailure.message("This app version only connects to controllers with live heating disabled.")
+            guard current.supportedControlMode else {
+                throw ControllerFailure.message("Controller returned an unsupported control mode.")
             }
             try ControllerKeychain.save(token, host: address)
-            document = loaded; status = current; checkedAt = Date(); connectedAddress = address
+            document = loaded; status = current; automation = switchState; checkedAt = Date(); connectedAddress = address
             onPrice = String(loaded.policy.on_price_p); offPrice = String(loaded.policy.off_price_p)
         } catch { message = error.localizedDescription; messageIsError = true }
+    }
+    @MainActor private func setAutomation(_ enabled: Bool) async {
+        busy = true; message = nil; messageIsError = false
+        defer { busy = false }
+        let original = address
+        let originalToken = token
+        do {
+            let api = try api()
+            let result: AutomationState = try await api.request("automation", automationEnabled: enabled)
+            guard address == original, token == originalToken else { return }
+            let refreshed: ControllerStatus = try await api.request("status")
+            guard address == original, token == originalToken else { return }
+            automation = result; status = refreshed; checkedAt = Date()
+            message = enabled ? "Automation enabled. Waiting for the next half-hour policy decision." : "Automation switched OFF. Heating state will refresh as shutdown is confirmed."
+        } catch {
+            guard address == original, token == originalToken else { return }
+            // A lost PUT response is reconciled with GET; never blindly replay it.
+            if let api = try? api() { automation = try? await api.request("automation") }
+            status = nil
+            message = "Could not confirm the automation change. Reload to check its saved state. " + error.localizedDescription
+            messageIsError = true
+        }
     }
     private func numeric(_ text: String) throws -> Double {
         guard let value = Double(text.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: ",", with: ".")), value.isFinite else {
@@ -381,7 +460,7 @@ struct HeatingControllerView: View {
             let result: PolicyDocument = try await api.request("policy", body: draft)
             guard original == address, originalToken == token else { return }
             document = result; status = nil
-            message = "Policy saved to controller. Automatic control remains disabled. Reload shortly for refreshed prices."
+            message = "Policy saved to controller. Automatic activation is unchanged. Reload shortly for refreshed prices."
         } catch { message = error.localizedDescription; messageIsError = true }
     }
     private func copyAppSettings() {

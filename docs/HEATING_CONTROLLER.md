@@ -1,99 +1,53 @@
 # Heating controller
 
-## Heating controller (iOS only)
+## Agile heating (iOS only)
 
-The iOS **Heating** page connects to the separate always-running Synology
-controller in `rhine59/Homely` ([service documentation](https://github.com/rhine59/Homely/blob/main/controller/README.md)).
-In **App Settings → Agile heating connection**, enter its private HTTPS origin
-and controller key, then tap **Save connection**. Return to Agile heating and
-tap **Test connection / reload controller policy**. The key is kept
-in iOS Keychain; redirects and insecure HTTP are refused. This page remains
-available whether PV display pages are shown or hidden.
+The **Heating** tab opens **Agile heating**. Connection details live in
+**App Settings → Agile heating connection**: save the HTTPS address and key,
+then use **Test connection / reload controller policy** on Heating. The key stays
+in Keychain. Updating the app preserves existing settings and connection.
 
-Load the controller policy, set **Switch on at or below** and **Switch off above**
-(in effective p/kWh). Off must be >= on. Existing temperature targets remain
-managed in Homely. The **Use this app's tariff, solar site and PV
-settings** button copies the app's existing selected tariff, site coordinates,
-capacity, losses, inverter limit and optimiser electrical load into the draft.
-Review the draft and explicitly confirm saving to the controller. Configure the
-load to represent heat-pump electrical consumption. On/off prices use the same
-Agile + forecast-PV cost model as the Net Electricity Price page, calculated by
-the controller independently of the phone. There is no automatic upload just
-from opening the page. Policy updates are revision-checked; reload after a
-conflict or an uncertain network response before saving again.
+Two separate coloured lines show **Heating policy** (price permission) and
+**Heating state** (Homely's report): ON red, OFF green, unavailable when data is
+missing or stale. Older sensor data is marked last reported. Neither line proves
+physical compressor operation. Activation and recovery/manual-hold status are
+shown separately. The app accepts both plan-only and automatic controller modes.
 
-Status refreshes every 30 seconds while the page is open and labels its last
-check. Source failure/staleness clears price permission at the controller. The
-app distinguishes the **price decision** from the supervisor status. It shows
-saved-recovery warnings and flags heating checks older than 45 seconds or dated
-in the future. If the controller supplies optional Homely observations, the app
-labels reported temperature and heating state separately and warns that the
-sensor is not yet verified for automatic safety checks. Without an observer it
-explicitly reports that live Homely readings are not connected.
+**Heating on** and **Heating off** offer −20 through +20 p/kWh, including zero.
+Existing values outside the menu remain Current. Both values can be negative;
+negative rates mean payment for grid-imported electricity. Off must be >= on.
+For example, on=−5p/off=−1p starts at −5p or below, holds through −1p once
+permitted, and stops above −1p. Homely retains its own temperature targets; the
+app has no target/ceiling controls. Information is blue and errors are red.
 
-After the first successful connection, returning to Heating reconnects using the
-saved HTTPS address and Keychain key. Editing either connection field clears the
-old connection and draft; requests completing for a previous connection are not
-applied to the new one. Saving policy still requires confirmation. Live heating
-remains disabled; the app has no activation switch or direct Homely commands.
-Closing the app does not stop the NAS worker. Simulator tests and an app install
-do not by themselves establish a physical phone-to-NAS acceptance test.
+The **Automation** switch is the persistent policy on/off control. OFF requests
+boost cancellation and heating disable, then leaves later manual Homely use alone.
+The app shows **shutdown pending** until confirmed. ON requires prior controller
+activation and confirmation in the app, then waits for a new half-hour decision.
+Switch state survives app/NAS restarts. A failed request is reloaded, not blindly
+repeated. The switch never changes your saved price thresholds.
 
-This feature is implemented for iOS only. Android navigation and functionality
-are unchanged; no Android Heating screen or controller client is included.
+The NAS evaluates effective Agile-plus-forecast-PV prices at :00 and :30. Each
+boost ends at the next slot boundary. It explicitly disables normal heating when
+permission ends; native boost expiry alone is not an off command. A forecast
+refresh inside the slot cannot renew a boost. A mid-slot restart or recovered
+failure waits for the next boundary. API outages can delay an off command.
 
-Build and six focused tests verified in Xcode 27 with the iOS 26.5 simulator
-(five API/model tests and one navigation test). The signed development app was
-installed over the existing app and launched on a paired iPhone 13 Pro Max.
-The original bundle identity was retained; the app was not uninstalled. A
-physical phone-to-NAS authenticated connection is a separate acceptance step.
+Copy this app's tariff/site/PV settings into the draft only when desired, then
+review and confirm Save policy. Saving never changes activation. If already
+active, it stops the current owned boost, releases a manual-change hold and
+applies the policy from the next half-hour. A hold preserves external Homely
+changes; there is no observed atomic ownership token, so simultaneous app writes
+cannot be fully excluded. Temperature and sensor freshness do not gate the policy.
 
+The controller runs without the iPhone app. Status polls every 30 seconds while
+Heating is open. **Automatic heating remains disabled on the deployed NAS until
+separately approved**. The app cannot grant the controller its initial administrative activation.
+Android does not yet implement this Heating page.
 
-### Policy number selectors (iOS)
-
-The Heating policy uses dropdown lists instead of a numeric keyboard: both
-price points offer **1–20 p/kWh** in 1p steps. A saved price outside those
-choices, including a zero/negative or fractional price, remains visible as **Current**
-until explicitly replaced. Values are not rounded or clamped on load. Choosing
-a number edits the draft only; saving still requires confirmation and validates
-off price >= on price. Android has no Heating page.
-
-
-The iOS policy dropdown labels are **Heating on** and **Heating off**. Informational/help and saved/copied messages use blue; errors and
-safety warnings use red. Action messages include an information or warning icon
-so their meaning does not rely on colour alone. Ranges and save behaviour are unchanged.
-
-
-### Agile heating: separate policy and reported state
-
-The iOS page is titled **Agile heating** and has two coloured lines at the top:
-**Heating policy** shows price permission; **Heating state** shows the
-Homely-reported flag from the controller's optional read-only observer. ON is
-red and OFF is green. An older sensor sample is marked **last reported**;
-missing observations or stale/failed API checks show unavailable, never a guessed OFF. The old Always-running controller line is
-removed. Automatic control remains separately labelled disabled; an ON policy
-is not proof of physical heating. The observer does not issue control commands.
-
-
-Connection address/key fields are located only in App Settings. Agile heating
-retains the Test connection / reload controller policy button. Existing saved
-addresses and Keychain keys are reused; saving connection details does not write
-policy or issue heating commands. A saved key change on the same address is
-reloaded on return to the Heating page.
-
-
-### Price-window boost strategy (current direction)
-
-Temperature controls have been removed from the iOS Heating page. Only Heating
-on and Heating off price selectors remain; Homely retains its existing targets
-and schedules. The temperature fields remain in the wire document for API
-compatibility and are preserved unchanged by the price editor.
-
-The agreed active-control strategy is evaluation at :00 and :30, with a timed
-boost for each permitted half-hour and renewal only for a permitted next slot.
-On-policy requires enabling heating if disabled; an off-policy boundary requires
-cancelling boost and disabling normal heating, because boost expiry alone is
-not proof that normal heating stops. Starting mid-slot must not create a boost
-that spills into an unapproved next slot; wait for the next boundary unless a
-shorter duration has been verified. This strategy is not yet activated. The
-natural-expiry test has not started, and automatic control remains disabled.
+Verification: nine iOS model checks and one navigation check passed; the signed
+build was installed on the paired iPhone. The native driver passed 129 backend
+tests and is deployed with activation off. One earlier half-hour pilot verified
+native API-record expiry; an unattended live cycle of the new driver has not
+been authorised. See the backend service catalogue for the full recovery and
+outage limits.

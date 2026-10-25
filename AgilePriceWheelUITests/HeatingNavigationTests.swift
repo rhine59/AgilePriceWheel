@@ -13,6 +13,8 @@ final class HeatingNavigationTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Heating state: unavailable"].exists)
         XCTAssertTrue(app.staticTexts["Automatic control disabled"].exists)
         XCTAssertTrue(app.buttons["Test connection / reload controller policy"].exists)
+        XCTAssertTrue(app.switches["heating-automation-switch"].exists)
+        XCTAssertFalse(app.switches["heating-automation-switch"].isEnabled)
         XCTAssertFalse(app.textFields["heating-controller-address"].exists)
         XCTAssertFalse(app.secureTextFields["heating-controller-key"].exists)
         XCTAssertFalse(app.buttons["Save policy to controller"].exists)

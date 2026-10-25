@@ -38,3 +38,7 @@ The Agile heating heading and separate red/green policy and reported-state lines
 The controller address/key settings and test/reload action relocation are iOS-only.
 
 The iOS Heating page is now price-only; its removed temperature selectors do not affect Android.
+
+The iOS heating controls now support signed −20…20p values, zero, and both controller modes. This heating-client update is iOS-only; Android parity is not claimed.
+
+The iOS Heating page also has a persistent Automation switch with OFF/shutdown-pending display. ON requires prior controller activation. This is not implemented on Android.

@@ -90,4 +90,34 @@ struct HeatingControllerTests {
         #expect(status(heating: true, fresh: true).reportedHeatingState(at: now.addingTimeInterval(46)) == nil)
     }
 
+    @Test func negativePolicyPricesAndZeroAreSelectableAndPreserved() throws {
+        #expect(ControllerPolicy.priceChoices.contains(-5))
+        #expect(ControllerPolicy.priceChoices.contains(0))
+        #expect(ControllerPolicy.priceChoices.contains(20))
+        let policy = ControllerPolicy(on_price_p: -5, off_price_p: -1, target_c: 21, limit_c: 22,
+            product: "", tariff: "", latitude: 54, longitude: -2, array_kwp: 5,
+            loss_percent: 15, inverter_kw: 4, load_kw: 3)
+        let restored = try JSONDecoder().decode(ControllerPolicy.self, from: JSONEncoder().encode(policy))
+        #expect(restored.on_price_p == -5)
+        #expect(restored.off_price_p == -1)
+    }
+    @Test func acceptsConsistentAutomaticAndPlanOnlyModes() throws {
+        func decoded(_ enabled: Bool, _ mode: String) throws -> ControllerStatus {
+            let data = Data("{\"control_enabled\":\(enabled),\"mode\":\"\(mode)\",\"stale\":false,\"price_requests_heat\":false,\"current\":null,\"error\":null,\"message\":\"\"}".utf8)
+            return try JSONDecoder().decode(ControllerStatus.self, from: data)
+        }
+        #expect(try decoded(true, "automatic").supportedControlMode)
+        #expect(try decoded(false, "plan_only").supportedControlMode)
+        #expect(try !decoded(false, "automatic").supportedControlMode)
+        #expect(try !decoded(true, "plan_only").supportedControlMode)
+    }
+
+    @Test func automationOffPendingIsDistinctFromConfirmedHeatingOff() throws {
+        let data = Data("{\"revision\":2,\"enabled\":false,\"can_enable\":false,\"shutdown_pending\":true,\"phase\":\"recovery_required\",\"error\":null}".utf8)
+        let value = try JSONDecoder().decode(AutomationState.self, from: data)
+        #expect(!value.enabled)
+        #expect(value.shutdown_pending)
+        #expect(!value.can_enable)
+    }
+
 }

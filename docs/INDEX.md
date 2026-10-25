@@ -45,3 +45,7 @@ Agile heating documents separate policy permission and fresh Homely-reported hea
 Heating connection details are configured in App Settings; policy test/reload stays on Agile heating.
 
 The Heating guide records the price-window boost strategy and removed temperature controls.
+
+The iOS heating controls now support signed −20…20p values, zero, and both controller modes. This heating-client update is iOS-only; Android parity is not claimed.
+
+The iOS Heating page also has a persistent Automation switch with OFF/shutdown-pending display. ON requires prior controller activation. This is not implemented on Android.
