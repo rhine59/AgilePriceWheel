@@ -43,3 +43,5 @@ The Heating guide includes short selector labels and the information/error colou
 Agile heating documents separate policy permission and fresh Homely-reported heating state.
 
 Heating connection details are configured in App Settings; policy test/reload stays on Agile heating.
+
+The Heating guide records the price-window boost strategy and removed temperature controls.

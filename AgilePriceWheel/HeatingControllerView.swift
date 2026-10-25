@@ -170,8 +170,6 @@ struct HeatingControllerView: View {
     @State private var connectedAddress: String?
     @State private var onPrice = "0"
     @State private var offPrice = "0"
-    @State private var target = "21"
-    @State private var limit = "22"
     @State private var busy = false
     @State private var message: String?
     @State private var messageIsError = false
@@ -200,7 +198,7 @@ struct HeatingControllerView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Label("Automatic control disabled", systemImage: "lock.shield")
                         .font(.headline).foregroundStyle(.orange)
-                    Text("Review effective prices and save your heating policy here. Automatic heating remains blocked until its safety timeout, restoration and temperature checks are verified.")
+                    Text("Review effective prices and save your heating policy here. Automatic control remains disabled while timed boost expiry and restoration are being verified.")
                         .font(.subheadline).foregroundStyle(.blue)
                     if let checkedAt {
                         Text("Last checked \(checkedAt.formatted(date: .omitted, time: .standard))").font(.caption).foregroundStyle(.secondary)
@@ -225,18 +223,6 @@ struct HeatingControllerView: View {
                                 Text("Heating checks have not reported recently. This is not a live heating reading.")
                                     .font(.caption).foregroundStyle(.red)
                             }
-                            if let observation = control.observation {
-                                LabeledContent("Reported room temperature", value: String(format: "%.1f°C", observation.room_c))
-                                LabeledContent("Space heating disabled", value: observation.disabled ? "Yes" : "No")
-                                LabeledContent("Homely reports heating", value: observation.reported_heating_on ? "On" : "Off")
-                                if !observation.sensor_contract_verified || !observation.sensor_candidate_fresh {
-                                    Text("Temperature reading is not verified for automatic heating safety checks.")
-                                        .font(.caption).foregroundStyle(.red)
-                                }
-                            } else {
-                                Text("Room temperature and live Homely state are not connected.")
-                                    .font(.caption).foregroundStyle(.blue)
-                            }
                             if let error = control.error { Text(error).foregroundStyle(.red) }
                             if !control.blockers.isEmpty {
                                 Text("Further supervised checks are required before automatic heating can start.")
@@ -253,9 +239,7 @@ struct HeatingControllerView: View {
                     VStack(spacing: 12) {
                         policyPicker("Heating on", text: $onPrice, range: 1...20, unit: "p/kWh")
                         policyPicker("Heating off", text: $offPrice, range: 1...20, unit: "p/kWh")
-                        policyPicker("Target temp", text: $target, range: 10...25, unit: "°C")
-                        policyPicker("Temp ceiling", text: $limit, range: 10...25, unit: "°C")
-                        Text("On at or below; off above. Hold the decision between prices.")
+                        Text("On at or below; off above. Hold the decision between prices. Homely keeps its existing temperature targets.")
                             .font(.caption).foregroundStyle(.blue)
                         LabeledContent("Policy revision", value: String(document.revision))
                         Text("Controller tariff: \(document.policy.tariff.isEmpty ? "Not configured" : document.policy.tariff)")
@@ -315,7 +299,7 @@ struct HeatingControllerView: View {
         .confirmationDialog("Save this heating policy to the controller?", isPresented: $confirmSave, titleVisibility: .visible) {
             Button("Save policy (automatic control stays disabled)") { Task { await save() } }
         } message: {
-            Text("On at or below \(onPrice)p; off above \(offPrice)p. Target \(target)°C; limit \(limit)°C. This does not enable heating controls.")
+            Text("On at or below \(onPrice)p; off above \(offPrice)p. Homely keeps its existing temperature targets. This does not enable heating controls.")
         }
     }
     private func heatingStateLine(_ title: String, isOn: Bool?, identifier: String, lastReported: Bool = false) -> some View {
@@ -374,12 +358,11 @@ struct HeatingControllerView: View {
             try ControllerKeychain.save(token, host: address)
             document = loaded; status = current; checkedAt = Date(); connectedAddress = address
             onPrice = String(loaded.policy.on_price_p); offPrice = String(loaded.policy.off_price_p)
-            target = String(loaded.policy.target_c); limit = String(loaded.policy.limit_c)
         } catch { message = error.localizedDescription; messageIsError = true }
     }
     private func numeric(_ text: String) throws -> Double {
         guard let value = Double(text.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: ",", with: ".")), value.isFinite else {
-            throw ControllerFailure.message("Enter finite numbers for prices and temperatures.")
+            throw ControllerFailure.message("Enter finite numbers for prices.")
         }
         return value
     }
@@ -391,10 +374,8 @@ struct HeatingControllerView: View {
         do {
             guard var draft = document, connectedAddress == address else { return }
             draft.policy.on_price_p = try numeric(onPrice); draft.policy.off_price_p = try numeric(offPrice)
-            draft.policy.target_c = try numeric(target); draft.policy.limit_c = try numeric(limit)
-            guard draft.policy.off_price_p >= draft.policy.on_price_p,
-                  5 <= draft.policy.target_c, draft.policy.target_c <= draft.policy.limit_c, draft.policy.limit_c <= 25 else {
-                throw ControllerFailure.message("Off price must be at least on price. Require 5 ≤ target ≤ limit ≤ 25°C.")
+            guard draft.policy.off_price_p >= draft.policy.on_price_p else {
+                throw ControllerFailure.message("Off price must be at least on price.")
             }
             let api = try api()
             let result: PolicyDocument = try await api.request("policy", body: draft)

@@ -36,3 +36,5 @@ Short policy labels and blue informational/red error messages apply only to the 
 The Agile heating heading and separate red/green policy and reported-state lines are iOS-only.
 
 The controller address/key settings and test/reload action relocation are iOS-only.
+
+The iOS Heating page is now price-only; its removed temperature selectors do not affect Android.

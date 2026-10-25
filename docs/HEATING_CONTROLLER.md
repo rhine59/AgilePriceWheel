@@ -11,8 +11,8 @@ in iOS Keychain; redirects and insecure HTTP are refused. This page remains
 available whether PV display pages are shown or hidden.
 
 Load the controller policy, set **Switch on at or below** and **Switch off above**
-(in effective p/kWh), plus room target and safety limit. Off must be >= on;
-require 5 <= target <= limit <=25°C. The **Use this app's tariff, solar site and PV
+(in effective p/kWh). Off must be >= on. Existing temperature targets remain
+managed in Homely. The **Use this app's tariff, solar site and PV
 settings** button copies the app's existing selected tariff, site coordinates,
 capacity, losses, inverter limit and optimiser electrical load into the draft.
 Review the draft and explicitly confirm saving to the controller. Configure the
@@ -52,16 +52,14 @@ physical phone-to-NAS authenticated connection is a separate acceptance step.
 ### Policy number selectors (iOS)
 
 The Heating policy uses dropdown lists instead of a numeric keyboard: both
-price points offer **1–20 p/kWh** in 1p steps; target and safety limit offer
-**10–25°C** in 1°C steps. A saved value outside those choices, including a
-zero/negative price or fractional temperature, remains visible as **Current**
+price points offer **1–20 p/kWh** in 1p steps. A saved price outside those
+choices, including a zero/negative or fractional price, remains visible as **Current**
 until explicitly replaced. Values are not rounded or clamped on load. Choosing
 a number edits the draft only; saving still requires confirmation and validates
-off price >= on price and target <= safety limit. Android has no Heating page.
+off price >= on price. Android has no Heating page.
 
 
-The iOS policy dropdown labels are **Heating on**, **Heating off**, **Target temp** and
-**Temp ceiling**. Informational/help and saved/copied messages use blue; errors and
+The iOS policy dropdown labels are **Heating on** and **Heating off**. Informational/help and saved/copied messages use blue; errors and
 safety warnings use red. Action messages include an information or warning icon
 so their meaning does not rely on colour alone. Ranges and save behaviour are unchanged.
 
@@ -82,3 +80,20 @@ retains the Test connection / reload controller policy button. Existing saved
 addresses and Keychain keys are reused; saving connection details does not write
 policy or issue heating commands. A saved key change on the same address is
 reloaded on return to the Heating page.
+
+
+### Price-window boost strategy (current direction)
+
+Temperature controls have been removed from the iOS Heating page. Only Heating
+on and Heating off price selectors remain; Homely retains its existing targets
+and schedules. The temperature fields remain in the wire document for API
+compatibility and are preserved unchanged by the price editor.
+
+The agreed active-control strategy is evaluation at :00 and :30, with a timed
+boost for each permitted half-hour and renewal only for a permitted next slot.
+On-policy requires enabling heating if disabled; an off-policy boundary requires
+cancelling boost and disabling normal heating, because boost expiry alone is
+not proof that normal heating stops. Starting mid-slot must not create a boost
+that spills into an unapproved next slot; wait for the next boundary unless a
+shorter duration has been verified. This strategy is not yet activated. The
+natural-expiry test has not started, and automatic control remains disabled.
