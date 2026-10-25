@@ -30,8 +30,8 @@ struct ControllerStatus: Decodable {
     let heating_control: HeatingControlStatus?
 
     func reportedHeatingState(at now: Date) -> Bool? {
-        guard let control = heating_control, control.isFresh(at: now),
-              let observation = control.observation, observation.sensor_candidate_fresh else { return nil }
+        guard let control = heating_control, control.isFresh(at: now), control.error == nil,
+              let observation = control.observation else { return nil }
         return observation.reported_heating_on
     }
 }
@@ -163,6 +163,7 @@ struct HeatingControllerView: View {
     @ObservedObject var solarModel: SolarForecastModel
     @ObservedObject var settings: AppSettingsStore
     @AppStorage("heating.controller.address") private var address = ""
+    @AppStorage("heating.controller.connectionRevision") private var connectionRevision = 0
     @State private var token = ""
     @State private var document: PolicyDocument?
     @State private var status: ControllerStatus?
@@ -187,7 +188,8 @@ struct HeatingControllerView: View {
                         !$0.stale && $0.current != nil && $0.price_requests_heat
                     }, identifier: "heating-policy-decision")
                     heatingStateLine("Heating state", isOn: currentStatus?.reportedHeatingState(at: context.date),
-                                     identifier: "heating-reported-state")
+                                     identifier: "heating-reported-state",
+                                     lastReported: currentStatus?.heating_control?.observation?.sensor_candidate_fresh == false)
                     Text("Policy is price permission. State is Homely’s report. Automatic control is disabled.")
                         .font(.caption).foregroundStyle(.blue)
                 }.frame(maxWidth: .infinity, alignment: .leading)
@@ -244,18 +246,8 @@ struct HeatingControllerView: View {
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }
-            GroupBox("Connection") {
-                VStack(spacing: 12) {
-                    TextField("https://heating.example.com", text: $address)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
-                        .accessibilityIdentifier("heating-controller-address").disabled(busy)
-                    SecureField("Controller key", text: $token)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled()
-                        .accessibilityIdentifier("heating-controller-key").disabled(busy)
-                    Button("Connect / reload controller policy") { Task { await load() } }
-                        .buttonStyle(.borderedProminent).disabled(busy)
-                }.textFieldStyle(.roundedBorder)
-            }
+            Button("Test connection / reload controller policy") { Task { await load() } }
+                .buttonStyle(.borderedProminent).disabled(busy)
             if let document {
                 GroupBox("Heating price policy") {
                     VStack(spacing: 12) {
@@ -308,9 +300,10 @@ struct HeatingControllerView: View {
                 }
             }
         }
-        .task {
-            if token.isEmpty { token = ControllerKeychain.read(address) }
-            if !address.isEmpty, token.count >= 32, document == nil { await load() }
+        .task(id: connectionRevision) {
+            token = ControllerKeychain.read(address)
+            document = nil; status = nil; connectedAddress = nil
+            if !address.isEmpty, token.count >= 32 { await load() }
         }
         .onChange(of: address) { _, value in
             document = nil; status = nil; connectedAddress = nil
@@ -325,8 +318,9 @@ struct HeatingControllerView: View {
             Text("On at or below \(onPrice)p; off above \(offPrice)p. Target \(target)°C; limit \(limit)°C. This does not enable heating controls.")
         }
     }
-    private func heatingStateLine(_ title: String, isOn: Bool?, identifier: String) -> some View {
-        let value = isOn.map { $0 ? "ON" : "OFF" } ?? "unavailable"
+    private func heatingStateLine(_ title: String, isOn: Bool?, identifier: String, lastReported: Bool = false) -> some View {
+        let state = isOn.map { $0 ? "ON" : "OFF" } ?? "unavailable"
+        let value = state + (isOn != nil && lastReported ? " (last reported)" : "")
         let colour: Color = isOn == true ? .red : (isOn == false ? .green : .secondary)
         return Text("\(title): \(value)")
             .font(.title3.bold()).foregroundStyle(colour)
@@ -361,7 +355,7 @@ struct HeatingControllerView: View {
     }
 
     private func api() throws -> ControllerAPI {
-        guard token.count >= 32 else { throw ControllerFailure.message("Enter your controller key (at least 32 characters).") }
+        guard !address.isEmpty, token.count >= 32 else { throw ControllerFailure.message("Set the controller address and key in App Settings first.") }
         return ControllerAPI(base: try ControllerAPI.endpoint(address), token: token)
     }
     @MainActor private func load() async {
@@ -424,5 +418,58 @@ struct HeatingControllerView: View {
         draft.policy.load_kw = load
         document = draft
         message = "App tariff and PV settings copied into the draft. Save to apply to the controller."
+    }
+}
+
+
+struct HeatingConnectionSettingsView: View {
+    @AppStorage("heating.controller.address") private var savedAddress = ""
+    @AppStorage("heating.controller.connectionRevision") private var connectionRevision = 0
+    @State private var draftAddress = ""
+    @State private var draftKey = ""
+    @State private var message: String?
+    @State private var isError = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            TextField("Controller HTTPS address", text: $draftAddress)
+                .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
+                .accessibilityIdentifier("heating-controller-address")
+            SecureField("Controller key", text: $draftKey)
+                .textInputAutocapitalization(.never).autocorrectionDisabled()
+                .accessibilityIdentifier("heating-controller-key")
+            Button("Save connection") { saveConnection() }
+                .buttonStyle(.borderedProminent)
+            if let message {
+                Label(message, systemImage: isError ? "exclamationmark.triangle" : "info.circle")
+                    .font(.caption).foregroundStyle(isError ? Color.red : Color.blue)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text("The key is stored in Keychain. Test the connection on Agile heating; saving here does not change its policy.")
+                .font(.caption).foregroundStyle(.blue)
+        }
+        .textFieldStyle(.roundedBorder)
+        .onAppear {
+            draftAddress = savedAddress
+            draftKey = ControllerKeychain.read(savedAddress)
+        }
+    }
+
+    private func saveConnection() {
+        do {
+            let endpoint = try ControllerAPI.endpoint(draftAddress)
+            let origin = endpoint.absoluteString.hasSuffix("/") ? String(endpoint.absoluteString.dropLast()) : endpoint.absoluteString
+            let key = draftKey.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard key.count >= 32, !key.contains("\n"), !key.contains("\r") else {
+                throw ControllerFailure.message("Enter the controller key (at least 32 characters, on one line).")
+            }
+            try ControllerKeychain.save(key, host: origin)
+            savedAddress = origin; draftAddress = origin; draftKey = key
+            connectionRevision += 1
+            isError = false
+            message = "Connection saved. Use Test connection / reload controller policy on Agile heating."
+        } catch {
+            isError = true; message = error.localizedDescription
+        }
     }
 }

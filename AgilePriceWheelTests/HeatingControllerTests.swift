@@ -71,7 +71,7 @@ struct HeatingControllerTests {
         #expect(control.checkedDate() != nil)
     }
 
-    @Test func reportedStateRequiresFreshHomelyObservation() throws {
+    @Test func reportedStateRequiresRecentSuccessfulHomelyPoll() throws {
         let checked = "2026-10-25T12:00:00+00:00"
         let now = try #require(ISO8601DateFormatter().date(from: checked))
         func status(heating: Bool, fresh: Bool) -> ControllerStatus {
@@ -86,7 +86,7 @@ struct HeatingControllerTests {
         }
         #expect(status(heating: true, fresh: true).reportedHeatingState(at: now) == true)
         #expect(status(heating: false, fresh: true).reportedHeatingState(at: now) == false)
-        #expect(status(heating: false, fresh: false).reportedHeatingState(at: now) == nil)
+        #expect(status(heating: false, fresh: false).reportedHeatingState(at: now) == false)
         #expect(status(heating: true, fresh: true).reportedHeatingState(at: now.addingTimeInterval(46)) == nil)
     }
 

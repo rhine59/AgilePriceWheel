@@ -34,3 +34,5 @@ The iOS Heating policy now uses whole-number dropdowns (1–20 p/kWh and
 Short policy labels and blue informational/red error messages apply only to the iOS Heating page.
 
 The Agile heating heading and separate red/green policy and reported-state lines are iOS-only.
+
+The controller address/key settings and test/reload action relocation are iOS-only.

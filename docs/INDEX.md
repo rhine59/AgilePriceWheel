@@ -41,3 +41,5 @@ and preservation of existing saved values outside those choices.
 The Heating guide includes short selector labels and the information/error colour meanings.
 
 Agile heating documents separate policy permission and fresh Homely-reported heating state.
+
+Heating connection details are configured in App Settings; policy test/reload stays on Agile heating.

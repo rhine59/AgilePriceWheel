@@ -12,13 +12,17 @@ final class HeatingNavigationTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Heating policy: unavailable"].exists)
         XCTAssertTrue(app.staticTexts["Heating state: unavailable"].exists)
         XCTAssertTrue(app.staticTexts["Automatic control disabled"].exists)
-        XCTAssertTrue(app.buttons["Connect / reload controller policy"].exists)
-        XCTAssertTrue(app.textFields["heating-controller-address"].exists)
-        XCTAssertTrue(app.secureTextFields["heating-controller-key"].exists)
+        XCTAssertTrue(app.buttons["Test connection / reload controller policy"].exists)
+        XCTAssertFalse(app.textFields["heating-controller-address"].exists)
+        XCTAssertFalse(app.secureTextFields["heating-controller-key"].exists)
         XCTAssertFalse(app.buttons["Save policy to controller"].exists)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Heating controller connection"
         screenshot.lifetime = .keepAlways
         add(screenshot)
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.textFields["heating-controller-address"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.secureTextFields["heating-controller-key"].exists)
+        XCTAssertTrue(app.buttons["Save connection"].exists)
     }
 }

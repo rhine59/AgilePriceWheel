@@ -4,7 +4,9 @@
 
 The iOS **Heating** page connects to the separate always-running Synology
 controller in `rhine59/Homely` ([service documentation](https://github.com/rhine59/Homely/blob/main/controller/README.md)).
-Enter its private HTTPS origin and controller key, then connect. The key is kept
+In **App Settings → Agile heating connection**, enter its private HTTPS origin
+and controller key, then tap **Save connection**. Return to Agile heating and
+tap **Test connection / reload controller policy**. The key is kept
 in iOS Keychain; redirects and insecure HTTP are refused. This page remains
 available whether PV display pages are shown or hidden.
 
@@ -67,9 +69,16 @@ so their meaning does not rely on colour alone. Ranges and save behaviour are un
 ### Agile heating: separate policy and reported state
 
 The iOS page is titled **Agile heating** and has two coloured lines at the top:
-**Heating policy** shows price permission; **Heating state** shows the fresh
+**Heating policy** shows price permission; **Heating state** shows the
 Homely-reported flag from the controller's optional read-only observer. ON is
-red and OFF is green. Missing/stale connection or observation data is shown as
-unavailable, never as a guessed OFF. The old Always-running controller line is
+red and OFF is green. An older sensor sample is marked **last reported**;
+missing observations or stale/failed API checks show unavailable, never a guessed OFF. The old Always-running controller line is
 removed. Automatic control remains separately labelled disabled; an ON policy
 is not proof of physical heating. The observer does not issue control commands.
+
+
+Connection address/key fields are located only in App Settings. Agile heating
+retains the Test connection / reload controller policy button. Existing saved
+addresses and Keychain keys are reused; saving connection details does not write
+policy or issue heating commands. A saved key change on the same address is
+reloaded on return to the Heating page.

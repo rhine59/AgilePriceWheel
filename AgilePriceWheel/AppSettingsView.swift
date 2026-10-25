@@ -12,6 +12,10 @@ struct AppSettingsView: View {
 
     var body: some View {
         Form {
+            Section("Agile heating connection") {
+                HeatingConnectionSettingsView()
+            }
+
             Section("Agile electricity") {
                 Button {
                     showingTariffs = true
