@@ -243,10 +243,10 @@ struct HeatingControllerView: View {
             if let document {
                 GroupBox("Heating price policy") {
                     VStack(spacing: 12) {
-                        field("Switch on at or below", text: $onPrice, unit: "p/kWh")
-                        field("Switch off above", text: $offPrice, unit: "p/kWh")
-                        field("Room target", text: $target, unit: "°C")
-                        field("Room safety limit", text: $limit, unit: "°C")
+                        policyPicker("Switch on at or below", text: $onPrice, range: 1...20, unit: "p/kWh")
+                        policyPicker("Switch off above", text: $offPrice, range: 1...20, unit: "p/kWh")
+                        policyPicker("Room target", text: $target, range: 10...25, unit: "°C")
+                        policyPicker("Room safety limit", text: $limit, range: 10...25, unit: "°C")
                         Text("Between the two prices, keep the current decision. Temperature limits and missing data take priority.")
                             .font(.caption).foregroundStyle(.secondary)
                         LabeledContent("Policy revision", value: String(document.revision))
@@ -304,15 +304,29 @@ struct HeatingControllerView: View {
             Text("On at or below \(onPrice)p; off above \(offPrice)p. Target \(target)°C; limit \(limit)°C. This does not enable heating controls.")
         }
     }
-    private func field(_ title: String, text: Binding<String>, unit: String) -> some View {
-        HStack {
-            Text(title)
-            Spacer()
-            TextField(title, text: text).keyboardType(.numbersAndPunctuation)
-                .multilineTextAlignment(.trailing).frame(maxWidth: 90)
-                .textFieldStyle(.roundedBorder)
-            Text(unit).foregroundStyle(.secondary)
+    private func pickerValue(_ text: String, range: ClosedRange<Int>) -> String {
+        guard let number = Double(text), number.isFinite,
+              number >= Double(range.lowerBound), number <= Double(range.upperBound),
+              number.rounded() == number else { return text }
+        return String(Int(number))
+    }
+    private func policyPicker(_ title: String, text: Binding<String>, range: ClosedRange<Int>, unit: String) -> some View {
+        let selected = pickerValue(text.wrappedValue, range: range)
+        let choices = range.map { String($0) }
+        return Picker(title, selection: Binding(
+            get: { pickerValue(text.wrappedValue, range: range) },
+            set: { text.wrappedValue = $0 }
+        )) {
+            if !choices.contains(selected) {
+                Text("Current: \(text.wrappedValue) \(unit)").tag(selected)
+            }
+            ForEach(choices, id: \.self) { value in
+                Text("\(value) \(unit)").tag(value)
+            }
         }
+        .pickerStyle(.menu)
+        .disabled(busy)
+        .accessibilityIdentifier("heating-policy-" + title)
     }
     private func api() throws -> ControllerAPI {
         guard token.count >= 32 else { throw ControllerFailure.message("Enter your controller key (at least 32 characters).") }

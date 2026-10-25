@@ -27,3 +27,6 @@ The Apple app now includes a Heating page for an authenticated, plan-only Synolo
 The latest iOS update adds supervisor recovery/freshness and optional reported
 Homely observations, plus reconnecting with its saved Keychain key. These remain
 iOS-only; no equivalent Android screen or controller client is implemented.
+
+The iOS Heating policy now uses whole-number dropdowns (1–20 p/kWh and
+10–25°C) while preserving existing out-of-range values. This remains iOS-only.

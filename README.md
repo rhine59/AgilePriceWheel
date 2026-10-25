@@ -143,3 +143,14 @@ do not by themselves establish a physical phone-to-NAS acceptance test.
 
 This feature is implemented for iOS only. Android navigation and functionality
 are unchanged; no Android Heating screen or controller client is included.
+
+
+### Policy number selectors (iOS)
+
+The Heating policy uses dropdown lists instead of a numeric keyboard: both
+price points offer **1–20 p/kWh** in 1p steps; target and safety limit offer
+**10–25°C** in 1°C steps. A saved value outside those choices, including a
+zero/negative price or fractional temperature, remains visible as **Current**
+until explicitly replaced. Values are not rounded or clamped on load. Choosing
+a number edits the draft only; saving still requires confirmation and validates
+off price >= on price and target <= safety limit. Android has no Heating page.

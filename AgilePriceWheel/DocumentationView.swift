@@ -13,6 +13,7 @@ struct DocumentationView: View {
             List {
                 Section("Heating controller — iOS") {
                     Text("Heating connects to an always-running Synology controller using a private HTTPS address and a key stored in Keychain. It remains available when PV display pages are hidden.")
+                    Text("Policy dropdowns offer prices from 1 to 20 p/kWh and temperatures from 10 to 25°C in whole-number steps. Existing values outside these lists stay visible as Current until replaced.")
                     Text("Load policy, set the effective-price on/off points and room target/limit, and explicitly confirm saving. Copy this app's tariff, site and PV settings into the draft only when you choose. Off must be at least on; heating price permission starts at or below on and stops above off.")
                     Text("The controller calculates Agile plus forecast-PV effective prices independently of the phone and keeps running when the app closes. Status refreshes every 30 seconds while Heating is open. A price decision is not a measurement of heating state.")
                     Text("The Heating page shows controller-check freshness and warns if saved recovery needs attention. Optional reported room temperature and heating state are labelled separately; an unverified sensor is not a safety guarantee. With no observer connected, live Homely readings remain unavailable.")

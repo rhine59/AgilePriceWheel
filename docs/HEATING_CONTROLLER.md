@@ -45,3 +45,14 @@ Build and six focused tests verified in Xcode 27 with the iOS 26.5 simulator
 installed over the existing app and launched on a paired iPhone 13 Pro Max.
 The original bundle identity was retained; the app was not uninstalled. A
 physical phone-to-NAS authenticated connection is a separate acceptance step.
+
+
+### Policy number selectors (iOS)
+
+The Heating policy uses dropdown lists instead of a numeric keyboard: both
+price points offer **1–20 p/kWh** in 1p steps; target and safety limit offer
+**10–25°C** in 1°C steps. A saved value outside those choices, including a
+zero/negative price or fractional temperature, remains visible as **Current**
+until explicitly replaced. Values are not rounded or clamped on load. Choosing
+a number edits the draft only; saving still requires confirmation and validates
+off price >= on price and target <= safety limit. Android has no Heating page.
