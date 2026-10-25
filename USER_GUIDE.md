@@ -161,3 +161,9 @@ zero/negative price or fractional temperature, remains visible as **Current**
 until explicitly replaced. Values are not rounded or clamped on load. Choosing
 a number edits the draft only; saving still requires confirmation and validates
 off price >= on price and target <= safety limit. Android has no Heating page.
+
+
+The iOS policy dropdown labels are **On price**, **Off price**, **Target** and
+**Limit**. Informational/help and saved/copied messages use blue; errors and
+safety warnings use red. Action messages include an information or warning icon
+so their meaning does not rely on colour alone. Ranges and save behaviour are unchanged.

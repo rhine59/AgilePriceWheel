@@ -167,6 +167,7 @@ struct HeatingControllerView: View {
     @State private var limit = "22"
     @State private var busy = false
     @State private var message: String?
+    @State private var messageIsError = false
     @State private var confirmSave = false
     @State private var checkedAt: Date?
 
@@ -175,29 +176,30 @@ struct HeatingControllerView: View {
             Label("Always-running controller", systemImage: "server.rack")
                 .font(.title2.bold()).foregroundStyle(.orange)
             Text("Agile + forecast PV determine the effective heating price. The controller keeps the policy running when this app is closed.")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.blue)
             GroupBox {
                 VStack(alignment: .leading, spacing: 10) {
                     Label("Live heating disabled", systemImage: "lock.shield")
                         .font(.headline).foregroundStyle(.orange)
                     Text("Review effective prices and save your heating policy here. Automatic heating remains blocked until its safety timeout, restoration and temperature checks are verified.")
-                        .font(.subheadline)
+                        .font(.subheadline).foregroundStyle(.blue)
                     if let checkedAt {
                         Text("Last checked \(checkedAt.formatted(date: .omitted, time: .standard))").font(.caption).foregroundStyle(.secondary)
                     }
                     if let status {
                         Text(status.stale ? "Price data unavailable or stale" : (status.price_requests_heat ? "Price policy requests heating" : "Price policy does not request heating"))
                             .font(.headline)
-                        Text("Price decision only — not the actual heating state.").font(.caption)
+                        Text("Price decision only — not the actual heating state.").font(.caption).foregroundStyle(.blue)
                         if let current = status.current {
                             LabeledContent("Effective price", value: String(format: "%.2f p/kWh", current.effective_price_p))
                             LabeledContent("Agile grid price", value: String(format: "%.2f p/kWh", current.agile_price_p))
                             LabeledContent("Forecast PV", value: String(format: "%.3f kWh", current.pv_kwh))
                         }
-                        if let error = status.error { Text(error).foregroundStyle(.orange) }
+                        if let error = status.error { Text(error).foregroundStyle(.red) }
                         if let control = status.heating_control {
                             Divider()
                             Text(control.summary).font(.headline)
+                                .foregroundStyle(control.recovery_pending || control.error != nil ? Color.red : Color.blue)
                                 .accessibilityIdentifier("heating-supervisor-summary")
                             if let checked = control.checkedDate() {
                                 Text("Heating checks: \(checked.formatted(date: .omitted, time: .standard))")
@@ -205,7 +207,7 @@ struct HeatingControllerView: View {
                             }
                             if !control.isFresh() {
                                 Text("Heating checks have not reported recently. This is not a live heating reading.")
-                                    .font(.caption).foregroundStyle(.orange)
+                                    .font(.caption).foregroundStyle(.red)
                             }
                             if let observation = control.observation {
                                 LabeledContent("Reported room temperature", value: String(format: "%.1f°C", observation.room_c))
@@ -213,16 +215,16 @@ struct HeatingControllerView: View {
                                 LabeledContent("Homely reports heating", value: observation.reported_heating_on ? "On" : "Off")
                                 if !observation.sensor_contract_verified || !observation.sensor_candidate_fresh {
                                     Text("Temperature reading is not verified for automatic heating safety checks.")
-                                        .font(.caption).foregroundStyle(.orange)
+                                        .font(.caption).foregroundStyle(.red)
                                 }
                             } else {
                                 Text("Room temperature and live Homely state are not connected.")
-                                    .font(.caption).foregroundStyle(.secondary)
+                                    .font(.caption).foregroundStyle(.blue)
                             }
-                            if let error = control.error { Text(error).foregroundStyle(.orange) }
+                            if let error = control.error { Text(error).foregroundStyle(.red) }
                             if !control.blockers.isEmpty {
                                 Text("Further supervised checks are required before automatic heating can start.")
-                                    .font(.caption).foregroundStyle(.secondary)
+                                    .font(.caption).foregroundStyle(.blue)
                             }
                         }
                     }
@@ -243,12 +245,12 @@ struct HeatingControllerView: View {
             if let document {
                 GroupBox("Heating price policy") {
                     VStack(spacing: 12) {
-                        policyPicker("Switch on at or below", text: $onPrice, range: 1...20, unit: "p/kWh")
-                        policyPicker("Switch off above", text: $offPrice, range: 1...20, unit: "p/kWh")
-                        policyPicker("Room target", text: $target, range: 10...25, unit: "°C")
-                        policyPicker("Room safety limit", text: $limit, range: 10...25, unit: "°C")
-                        Text("Between the two prices, keep the current decision. Temperature limits and missing data take priority.")
-                            .font(.caption).foregroundStyle(.secondary)
+                        policyPicker("On price", text: $onPrice, range: 1...20, unit: "p/kWh")
+                        policyPicker("Off price", text: $offPrice, range: 1...20, unit: "p/kWh")
+                        policyPicker("Target", text: $target, range: 10...25, unit: "°C")
+                        policyPicker("Limit", text: $limit, range: 10...25, unit: "°C")
+                        Text("On at or below; off above. Hold the decision between prices.")
+                            .font(.caption).foregroundStyle(.blue)
                         LabeledContent("Policy revision", value: String(document.revision))
                         Text("Controller tariff: \(document.policy.tariff.isEmpty ? "Not configured" : document.policy.tariff)")
                             .font(.caption).textSelection(.enabled)
@@ -259,16 +261,21 @@ struct HeatingControllerView: View {
                         Button("Use this app's tariff, solar site and PV settings") { copyAppSettings() }
                             .disabled(busy)
                         Text("Copies the configured optimiser load, capacity, losses and inverter limit into this draft. Saving applies it to the controller.")
-                            .font(.caption).foregroundStyle(.secondary)
+                            .font(.caption).foregroundStyle(.blue)
                         Button("Save policy to controller") { confirmSave = true }
                             .buttonStyle(.borderedProminent).disabled(busy || connectedAddress != address)
                     }
                 }
             }
             if busy { ProgressView("Contacting controller…") }
-            if let message { Text(message).foregroundStyle(.orange).accessibilityIdentifier("controller-message") }
+            if let message {
+                Label(message, systemImage: messageIsError ? "exclamationmark.triangle" : "info.circle")
+                    .foregroundStyle(messageIsError ? Color.red : Color.blue)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("controller-message")
+            }
             Text("Effective price = expected grid cost ÷ heating-load energy, after forecast PV. Forecasts do not guarantee free electricity. The configured load should represent the heat pump's electrical demand.")
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.caption).foregroundStyle(.blue)
         }
         .task(id: connectedAddress) {
             guard let connectedAddress else { return }
@@ -278,12 +285,12 @@ struct HeatingControllerView: View {
                     guard address == connectedAddress else { return }
                     let current: ControllerStatus = try await api().request("status")
                     guard !current.control_enabled, current.mode == "plan_only" else {
-                        status = nil; message = "Controller is outside plan-only mode."; return
+                        status = nil; message = "Controller is outside plan-only mode."; messageIsError = true; return
                     }
                     status = current; checkedAt = Date()
                 } catch {
                     if Task.isCancelled { return }
-                    status = nil; message = "Controller status could not be refreshed. Last display is not a live heating state."
+                    status = nil; message = "Controller status could not be refreshed. Last display is not a live heating state."; messageIsError = true
                 }
             }
         }
@@ -333,7 +340,7 @@ struct HeatingControllerView: View {
         return ControllerAPI(base: try ControllerAPI.endpoint(address), token: token)
     }
     @MainActor private func load() async {
-        busy = true; message = nil; document = nil; status = nil
+        busy = true; message = nil; messageIsError = false; document = nil; status = nil
         defer { busy = false }
         let original = address
         let originalToken = token
@@ -349,7 +356,7 @@ struct HeatingControllerView: View {
             document = loaded; status = current; checkedAt = Date(); connectedAddress = address
             onPrice = String(loaded.policy.on_price_p); offPrice = String(loaded.policy.off_price_p)
             target = String(loaded.policy.target_c); limit = String(loaded.policy.limit_c)
-        } catch { message = error.localizedDescription }
+        } catch { message = error.localizedDescription; messageIsError = true }
     }
     private func numeric(_ text: String) throws -> Double {
         guard let value = Double(text.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: ",", with: ".")), value.isFinite else {
@@ -358,7 +365,7 @@ struct HeatingControllerView: View {
         return value
     }
     @MainActor private func save() async {
-        busy = true; message = nil
+        busy = true; message = nil; messageIsError = false
         defer { busy = false }
         let original = address
         let originalToken = token
@@ -375,13 +382,14 @@ struct HeatingControllerView: View {
             guard original == address, originalToken == token else { return }
             document = result; status = nil
             message = "Policy saved to controller. Live heating remains disabled. Reload shortly for refreshed prices."
-        } catch { message = error.localizedDescription }
+        } catch { message = error.localizedDescription; messageIsError = true }
     }
     private func copyAppSettings() {
+        messageIsError = false
         guard var draft = document, let tariff = agileModel.selectedTariff, let site = solarModel.site,
               settings.hasPVPanelsInstalled, let capacity = settings.effectivePeakPowerKWp,
               let load = settings.effectiveOptimiserLoadKW else {
-            message = "Choose a tariff, solar site, PV capacity and heating-load power in App Settings first."; return
+            message = "Choose a tariff, solar site, PV capacity and heating-load power in App Settings first."; messageIsError = true; return
         }
         draft.policy.tariff = tariff.tariffCode
         draft.policy.product = tariff.productCode
