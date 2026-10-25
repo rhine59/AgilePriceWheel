@@ -150,8 +150,16 @@ separately approved**. The app cannot grant the controller its initial administr
 Android does not yet implement this Heating page.
 
 Verification: nine iOS model checks and one navigation check passed; the signed
-build was installed on the paired iPhone. The native driver passed 129 backend
+build was installed on the paired iPhone. The native driver passed 135 backend
 tests and is deployed with activation off. One earlier half-hour pilot verified
 native API-record expiry; an unattended live cycle of the new driver has not
 been authorised. See the backend service catalogue for the full recovery and
 outage limits.
+
+
+The bounded 25 October live controller cycle verified real start and policy-driven
+stop, with the original prices restored and Automation OFF surviving restart.
+Its initial short-wait harness timed out; reviewed responses confirm the completed
+stop. Backend fixes now persist OFF immediately and mask stale policy permission
+while native shutdown is pending. Administrative activation for ongoing app use
+remains a separate approval, and is currently disabled.
