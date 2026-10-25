@@ -245,10 +245,10 @@ struct HeatingControllerView: View {
             if let document {
                 GroupBox("Heating price policy") {
                     VStack(spacing: 12) {
-                        policyPicker("On price", text: $onPrice, range: 1...20, unit: "p/kWh")
-                        policyPicker("Off price", text: $offPrice, range: 1...20, unit: "p/kWh")
-                        policyPicker("Target", text: $target, range: 10...25, unit: "°C")
-                        policyPicker("Limit", text: $limit, range: 10...25, unit: "°C")
+                        policyPicker("Heating on", text: $onPrice, range: 1...20, unit: "p/kWh")
+                        policyPicker("Heating off", text: $offPrice, range: 1...20, unit: "p/kWh")
+                        policyPicker("Target temp", text: $target, range: 10...25, unit: "°C")
+                        policyPicker("Temp ceiling", text: $limit, range: 10...25, unit: "°C")
                         Text("On at or below; off above. Hold the decision between prices.")
                             .font(.caption).foregroundStyle(.blue)
                         LabeledContent("Policy revision", value: String(document.revision))
@@ -320,21 +320,25 @@ struct HeatingControllerView: View {
     private func policyPicker(_ title: String, text: Binding<String>, range: ClosedRange<Int>, unit: String) -> some View {
         let selected = pickerValue(text.wrappedValue, range: range)
         let choices = range.map { String($0) }
-        return Picker(title, selection: Binding(
-            get: { pickerValue(text.wrappedValue, range: range) },
-            set: { text.wrappedValue = $0 }
-        )) {
-            if !choices.contains(selected) {
-                Text("Current: \(text.wrappedValue) \(unit)").tag(selected)
+        return LabeledContent(title + " -") {
+            Picker(title, selection: Binding(
+                get: { pickerValue(text.wrappedValue, range: range) },
+                set: { text.wrappedValue = $0 }
+            )) {
+                if !choices.contains(selected) {
+                    Text("Current: \(text.wrappedValue) \(unit)").tag(selected)
+                }
+                ForEach(choices, id: \.self) { value in
+                    Text("\(value) \(unit)").tag(value)
+                }
             }
-            ForEach(choices, id: \.self) { value in
-                Text("\(value) \(unit)").tag(value)
-            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .accessibilityIdentifier("heating-policy-" + title)
         }
-        .pickerStyle(.menu)
         .disabled(busy)
-        .accessibilityIdentifier("heating-policy-" + title)
     }
+
     private func api() throws -> ControllerAPI {
         guard token.count >= 32 else { throw ControllerFailure.message("Enter your controller key (at least 32 characters).") }
         return ControllerAPI(base: try ControllerAPI.endpoint(address), token: token)
