@@ -149,4 +149,18 @@ struct HeatingControllerTests {
         #expect(throws: (any Error).self) { try JSONDecoder().decode(HeatingHistoryEvent.self, from: data) }
     }
 
+    @Test func sessionEstimatesShowPaymentAndMissingCostHonestly() throws {
+        let data = Data("""
+        {"id":"session","on_at":"2026-10-25T22:00:00Z","off_at":"2026-10-25T22:30:00Z","duration_seconds":1800,"on_price_p":-5,"off_price_p":2,"off_reason":"price_above_off","estimated_cost_gbp":-0.075,"estimated_energy_kwh":1.5,"cost_status":"estimated","intervals":[{"start":"2026-10-25T22:00:00Z","end":"2026-10-25T22:30:00Z","agile_price_p":-5,"effective_price_p":-5,"load_kw":3}]}
+        """.utf8)
+        let session = try JSONDecoder().decode(HeatingSession.self, from: data)
+        #expect(session.costLabel == "Estimated payment: £0.0750")
+        #expect(session.durationLabel == "Duration: 0h 30m 0s")
+        #expect(session.intervals[0].agile_price_p == -5)
+        let missing = HeatingSession(id: "old", on_at: "2026-10-25T22:00:00Z", off_at: nil,
+            duration_seconds: nil, on_price_p: 0, off_price_p: nil, off_reason: nil,
+            estimated_cost_gbp: nil, estimated_energy_kwh: nil, cost_status: "end_unconfirmed", intervals: [])
+        #expect(missing.costLabel.contains("end unconfirmed"))
+    }
+
 }

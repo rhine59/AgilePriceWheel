@@ -576,6 +576,64 @@ struct HeatingHistoryEvent: Decodable, Identifiable {
         }
     }
 }
+struct HeatingSessionInterval: Decodable {
+    let start: String
+    let end: String
+    let agile_price_p: Double?
+    let effective_price_p: Double?
+    let load_kw: Double?
+}
+struct HeatingSession: Decodable, Identifiable {
+    let id: String
+    let on_at: String
+    let off_at: String?
+    let duration_seconds: Double?
+    let on_price_p: Double?
+    let off_price_p: Double?
+    let off_reason: String?
+    let estimated_cost_gbp: Double?
+    let estimated_energy_kwh: Double?
+    let cost_status: String
+    let intervals: [HeatingSessionInterval]
+    var costLabel: String {
+        guard let value = estimated_cost_gbp else { return off_at == nil ? "Estimated cost: end unconfirmed" : "Estimated cost: unavailable (missing rate/load data)" }
+        return String(format: value < 0 ? "Estimated payment: £%.4f" : "Estimated cost: £%.4f", abs(value))
+    }
+    var durationLabel: String {
+        guard let seconds = duration_seconds else { return "End unconfirmed" }
+        let total = Int(seconds.rounded())
+        return "Duration: \(total / 3600)h \((total % 3600) / 60)m \(total % 60)s"
+    }
+}
+struct HeatingSessionRow: View {
+    let session: HeatingSession
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Heating session").font(.headline)
+            Text("ON  " + HeatingHistoryDates.eventText(session.on_at)).foregroundStyle(.red)
+            if let off = session.off_at {
+                Text("OFF " + HeatingHistoryDates.eventText(off)).foregroundStyle(.green)
+            } else { Text("OFF not confirmed").foregroundStyle(.blue) }
+            Text(session.durationLabel).font(.caption)
+            Text(session.costLabel).font(.subheadline).foregroundStyle(.blue)
+            if let kwh = session.estimated_energy_kwh {
+                Text(String(format: "Estimated electricity: %.4f kWh", kwh)).font(.caption)
+            }
+            if let on = session.on_price_p { Text(String(format: "Effective rate at ON: %.2f p/kWh", on)).font(.caption) }
+            if let off = session.off_price_p { Text(String(format: "Effective rate at OFF: %.2f p/kWh", off)).font(.caption) }
+            ForEach(Array(session.intervals.enumerated()), id: \.offset) { _, interval in
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(HeatingHistoryDates.eventText(interval.start)).font(.caption)
+                    if let rate = interval.agile_price_p { Text(String(format: "Agile unit rate: %.2f p/kWh", rate)).font(.caption) }
+                    if let rate = interval.effective_price_p, let load = interval.load_kw {
+                        Text(String(format: "Effective: %.2f p/kWh · Assumed load: %.2f kW", rate, load)).font(.caption)
+                    }
+                }.foregroundStyle(.secondary)
+            }
+            if let reason = session.off_reason { Text("Stop: " + reason.replacingOccurrences(of: "_", with: " ")).font(.caption).foregroundStyle(.secondary) }
+        }.padding(.vertical, 4)
+    }
+}
 struct HeatingHistoryDocument: Decodable {
     let week_start: String
     let week_end: String
@@ -586,6 +644,7 @@ struct HeatingHistoryDocument: Decodable {
     let retention_days: Int
     let truncated: Bool
     let events: [HeatingHistoryEvent]
+    let sessions: [HeatingSession]?
     let pending_events: Int
     let warning: String?
     var canGoBack: Bool { week_start > oldest_week }
@@ -665,7 +724,13 @@ struct HeatingHistoryView: View {
                 }
             }
             if let document {
-                Section("Heating changes") {
+                if let sessions = document.sessions, !sessions.isEmpty {
+                    Section("Heating sessions") {
+                        ForEach(sessions) { session in HeatingSessionRow(session: session) }
+                        Text("Costs use configured electrical load and forecast solar, not metered consumption. A session crossing weeks appears in each overlapping week; do not add those duplicates.").font(.caption).foregroundStyle(.blue)
+                    }
+                }
+                Section("Individual actions") {
                     if document.events.isEmpty {
                         Text("No recorded heating changes this week.").foregroundStyle(.blue)
                     }

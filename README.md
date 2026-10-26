@@ -148,7 +148,7 @@ The controller runs without the iPhone app. Status polls every 30 seconds while
 Heating is open. Ongoing controller activation and Automation have been approved
 and enabled. The app cannot grant initial administrative activation.
 
-Verification includes 159 backend tests, 13 focused iOS checks and 62 offline
+Verification includes 172 backend tests, 14 focused iOS checks and 62 offline
 walkthrough checks. Real overnight ON/OFF entries are retained. The weekly log
 exposed a short setup timeout; boundary attempts now have up to 60 seconds to
 finish setup while keeping the original half-hour end. See the backend service
@@ -173,3 +173,19 @@ Android does not yet provide Heating or this log.
 The owner has approved ongoing operation and enabled Automation. New installs
 still default OFF; use the app switch to pause/resume this installation without
 changing its saved price policy. Heating depends on each half-hour decision.
+
+## Heating sessions and estimated cost
+
+**Heating → Weekly heating log** now groups each ON with its matching OFF in a
+Heating sessions section. It shows elapsed duration, effective rate at each action,
+raw Agile and effective unit rates for each half-hour, configured electrical load,
+estimated kWh and estimated cost. Negative totals are labelled **Estimated payment**.
+Individual actions remain below for investigation. Existing records pair by action
+order; cost stays unavailable where historical load/rates were not saved.
+
+Costs assume the configured electrical load throughout the confirmed enabled
+interval and use effective prices after forecast solar. They are not metered
+consumption or a supplier bill. Missing intervals or an unconfirmed OFF leave the
+total unavailable. Sessions crossing weeks appear with the same ID in both weeks;
+do not add duplicate appearances. Manual changes do not fabricate an OFF.
+This feature is iOS only; Android still has no Heating page.
