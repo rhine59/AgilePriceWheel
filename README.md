@@ -195,3 +195,6 @@ Android heating parity is a required next deliverable. See [requirements](docs/A
 
 
 [26 October heating checkpoint](docs/CHECKPOINT-2026-10-26.md) records the deployed baseline, verification and outstanding Android delivery.
+
+
+[26 October bug audit](docs/BUG-AUDIT-2026-10-26.md) records corrected price-display and history edge cases, regression evidence and remaining limits.

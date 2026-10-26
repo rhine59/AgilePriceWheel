@@ -42,6 +42,11 @@ struct ControllerStatus: Decodable {
         (mode == "plan_only" && !control_enabled) || (mode == "automatic" && control_enabled)
     }
 
+    var pricePolicyState: Bool? {
+        guard !stale, current != nil else { return nil }
+        return price_requests_heat
+    }
+
     func reportedHeatingState(at now: Date) -> Bool? {
         guard let control = heating_control, control.isFresh(at: now), control.error == nil,
               let observation = control.observation else { return nil }
@@ -212,9 +217,7 @@ struct HeatingControllerView: View {
                 let recent = checkedAt.map { (0...45).contains(context.date.timeIntervalSince($0)) } ?? false
                 let currentStatus = recent ? status : nil
                 VStack(alignment: .leading, spacing: 8) {
-                    heatingStateLine("Heating policy", isOn: currentStatus.map {
-                        !$0.stale && $0.current != nil && $0.price_requests_heat
-                    }, identifier: "heating-policy-decision")
+                    heatingStateLine("Heating policy", isOn: currentStatus?.pricePolicyState, identifier: "heating-policy-decision")
                     heatingStateLine("Heating state", isOn: currentStatus?.reportedHeatingState(at: context.date),
                                      identifier: "heating-reported-state",
                                      lastReported: currentStatus?.heating_control?.observation?.sensor_candidate_fresh == false)

@@ -163,4 +163,14 @@ struct HeatingControllerTests {
         #expect(missing.costLabel.contains("end unconfirmed"))
     }
 
+    @Test func staleOrMissingPriceIsUnavailableRatherThanOff() throws {
+        func status(stale: Bool, current: String) throws -> ControllerStatus {
+            try JSONDecoder().decode(ControllerStatus.self, from: Data("{\"control_enabled\":false,\"mode\":\"plan_only\",\"stale\":\(stale),\"price_requests_heat\":false,\"current\":\(current),\"error\":null,\"message\":\"\"}".utf8))
+        }
+        #expect(try status(stale: true, current: "null").pricePolicyState == nil)
+        let current = "{\"agile_price_p\":5,\"effective_price_p\":5,\"pv_kwh\":0,\"grid_kwh\":1}"
+        #expect(try status(stale: false, current: current).pricePolicyState == false)
+        #expect(try status(stale: true, current: current).pricePolicyState == nil)
+    }
+
 }

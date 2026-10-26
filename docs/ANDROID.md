@@ -80,3 +80,5 @@ consumption or a supplier bill. Missing intervals or an unconfirmed OFF leave th
 total unavailable. Sessions crossing weeks appear with the same ID in both weeks;
 do not add duplicate appearances. Manual changes do not fabricate an OFF.
 This feature is iOS only; Android still has no Heating page.
+
+Required Android parity includes the corrected unavailable-price semantics and weekly session boundary rules from [the audit](BUG-AUDIT-2026-10-26.md). Android heating remains unimplemented.

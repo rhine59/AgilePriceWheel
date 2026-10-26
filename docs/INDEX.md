@@ -88,3 +88,9 @@ This feature is iOS only; Android still has no Heating page.
 
 
 Android heating parity is a required next deliverable. See [requirements](ANDROID-HEATING-REQUIREMENTS.md). The existing Kotlin app does not yet implement the controller UI or session log; no heating APK is claimed delivered.
+
+
+26 October bug audit: unavailable prices now stay labelled unavailable. Sessions
+ending exactly at Monday midnight stay in the preceding week. An unconfirmed end
+is not assumed to continue indefinitely; later weeks require recorded activity.
+See [audit](BUG-AUDIT-2026-10-26.md) for checks and limits.

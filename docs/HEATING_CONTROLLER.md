@@ -82,3 +82,9 @@ consumption or a supplier bill. Missing intervals or an unconfirmed OFF leave th
 total unavailable. Sessions crossing weeks appear with the same ID in both weeks;
 do not add duplicate appearances. Manual changes do not fabricate an OFF.
 This feature is iOS only; Android still has no Heating page.
+
+
+26 October bug audit: unavailable prices now stay labelled unavailable. Sessions
+ending exactly at Monday midnight stay in the preceding week. An unconfirmed end
+is not assumed to continue indefinitely; later weeks require recorded activity.
+See [audit](BUG-AUDIT-2026-10-26.md) for checks and limits.
