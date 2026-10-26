@@ -120,4 +120,33 @@ struct HeatingControllerTests {
         #expect(!value.can_enable)
     }
 
+    @Test func historyRetainsNegativePricesAndTestLabels() throws {
+        let data = Data("""
+        {"week_start":"2026-10-19","week_end":"2026-10-26","current_week":"2026-10-19","oldest_week":"2026-10-19","timezone":"Europe/London","recording_started_at":"2026-10-25T18:00:00.000Z","retention_days":366,"truncated":false,"pending_events":0,"warning":null,"events":[{"id":"one","at":"2026-10-25T18:00:00.000Z","state":"on","reason":"supervised_start","price_p":-5,"on_price_p":-5,"off_price_p":-1,"source":"supervised_test"}]}
+        """.utf8)
+        let value = try JSONDecoder().decode(HeatingHistoryDocument.self, from: data)
+        #expect(value.events.count == 1)
+        #expect(value.events[0].isOn)
+        #expect(value.events[0].isTest)
+        #expect(value.events[0].price_p == -5)
+        #expect(!value.canGoBack)
+        #expect(!value.canGoForward)
+    }
+    @Test func historyWeeksUseLondonDSTAndExplicitRepeatedHourLabels() throws {
+        let start = try #require(HeatingHistoryDates.date("2026-10-19"))
+        let end = try #require(HeatingHistoryDates.date("2026-10-26"))
+        #expect(end.timeIntervalSince(start) == 169 * 3600)
+        #expect(HeatingHistoryDates.shifted("2026-10-19", by: 1) == "2026-10-26")
+        let first = HeatingHistoryDates.eventText("2026-10-25T00:30:00.000Z")
+        let second = HeatingHistoryDates.eventText("2026-10-25T01:30:00.000Z")
+        #expect(first.contains("BST"))
+        #expect(second.contains("GMT"))
+        #expect(first != second)
+    }
+
+    @Test func unknownHistoryStateIsNotDisplayedAsOff() {
+        let data = Data("{\"id\":\"bad\",\"at\":\"2026-10-25T18:00:00Z\",\"state\":\"unknown\",\"reason\":\"unknown\",\"source\":\"automation\"}".utf8)
+        #expect(throws: (any Error).self) { try JSONDecoder().decode(HeatingHistoryEvent.self, from: data) }
+    }
+
 }

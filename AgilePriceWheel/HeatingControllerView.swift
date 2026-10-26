@@ -151,8 +151,12 @@ struct ControllerAPI {
         }
         return url
     }
-    func request<T: Decodable>(_ path: String, body: PolicyDocument? = nil, automationEnabled: Bool? = nil) async throws -> T {
-        var request = URLRequest(url: base.appendingPathComponent("v1").appendingPathComponent(path))
+    func request<T: Decodable>(_ path: String, body: PolicyDocument? = nil, automationEnabled: Bool? = nil, queryItems: [URLQueryItem] = []) async throws -> T {
+        let endpoint = base.appendingPathComponent("v1").appendingPathComponent(path)
+        guard var parts = URLComponents(url: endpoint, resolvingAgainstBaseURL: false) else { throw ControllerFailure.message("Invalid controller address.") }
+        if !queryItems.isEmpty { parts.queryItems = queryItems }
+        guard let url = parts.url else { throw ControllerFailure.message("Invalid controller address.") }
+        var request = URLRequest(url: url)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         if let body {
             request.httpMethod = "PUT"
@@ -173,6 +177,7 @@ struct ControllerAPI {
         guard http.statusCode == 200 else {
             if http.statusCode == 401 { throw ControllerFailure.message("The controller key was not accepted.") }
             if http.statusCode == 409 { throw ControllerFailure.message(path == "automation" ? "Automatic heating has not been activated on this controller." : "The policy changed elsewhere. Reload before saving.") }
+            if path == "history" { throw ControllerFailure.message("Heating history is temporarily unavailable. Try reloading.") }
             if http.statusCode == 400 { throw ControllerFailure.message("The controller rejected the policy. Check signed prices and PV settings.") }
             throw ControllerFailure.message("The controller is unavailable (\(http.statusCode)).")
         }
@@ -191,6 +196,7 @@ struct HeatingControllerView: View {
     @State private var status: ControllerStatus?
     @State private var automation: AutomationState?
     @State private var confirmAutomationOn = false
+    @State private var showHistory = false
     @State private var connectedAddress: String?
     @State private var onPrice = "0"
     @State private var offPrice = "0"
@@ -282,6 +288,10 @@ struct HeatingControllerView: View {
             }
             Button("Test connection / reload controller policy") { Task { await load() } }
                 .buttonStyle(.borderedProminent).disabled(busy)
+            Button("Weekly heating log", systemImage: "clock.arrow.circlepath") { showHistory = true }
+                .buttonStyle(.bordered)
+                .accessibilityIdentifier("heating-weekly-log")
+                .disabled(busy || connectedAddress != address || token.count < 32)
             if let document {
                 GroupBox("Heating price policy") {
                     VStack(spacing: 12) {
@@ -346,6 +356,10 @@ struct HeatingControllerView: View {
         }
         .onChange(of: token) { _, _ in
             document = nil; status = nil; automation = nil; connectedAddress = nil; checkedAt = nil
+        }
+        .sheet(isPresented: $showHistory) {
+            NavigationStack { HeatingHistoryView(address: address, token: token) }
+                .preferredColorScheme(.dark)
         }
         .confirmationDialog("Enable automated heating?", isPresented: $confirmAutomationOn, titleVisibility: .visible) {
             Button("Enable automation") { Task { await setAutomation(true) } }
@@ -530,6 +544,187 @@ struct HeatingConnectionSettingsView: View {
             message = "Connection saved. Use Test connection / reload controller policy on Agile heating."
         } catch {
             isError = true; message = error.localizedDescription
+        }
+    }
+}
+
+
+enum HeatingHistoryState: String, Decodable, Equatable { case on, off }
+struct HeatingHistoryEvent: Decodable, Identifiable {
+    let id: String
+    let at: String
+    let state: HeatingHistoryState
+    let reason: String
+    let price_p: Double?
+    let on_price_p: Double?
+    let off_price_p: Double?
+    let source: String
+    var isOn: Bool { state == .on }
+    var isTest: Bool { source == "supervised_test" }
+    var reasonLabel: String {
+        switch reason {
+        case "price_policy_start": return "Price policy"
+        case "price_above_off": return "Price above off point"
+        case "policy_changed": return "Policy changed"
+        case "automation_off": return "Automation switched off"
+        case "recovery": return "Controller recovery"
+        case "data_unavailable": return "Price data unavailable"
+        case "setup_timeout": return "Heating setup timed out"
+        case "missed_boundary": return "Missed slot boundary"
+        case "supervised_start", "supervised_stop": return "Reviewed supervised test"
+        default: return "Controller action"
+        }
+    }
+}
+struct HeatingHistoryDocument: Decodable {
+    let week_start: String
+    let week_end: String
+    let current_week: String
+    let oldest_week: String
+    let timezone: String
+    let recording_started_at: String?
+    let retention_days: Int
+    let truncated: Bool
+    let events: [HeatingHistoryEvent]
+    let pending_events: Int
+    let warning: String?
+    var canGoBack: Bool { week_start > oldest_week }
+    var canGoForward: Bool { week_start < current_week }
+}
+enum HeatingHistoryDates {
+    static var calendar: Calendar {
+        var value = Calendar(identifier: .gregorian)
+        value.timeZone = TimeZone(identifier: "Europe/London")!
+        value.firstWeekday = 2
+        value.minimumDaysInFirstWeek = 4
+        return value
+    }
+    static func date(_ day: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar; formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone; formatter.dateFormat = "yyyy-MM-dd"; formatter.isLenient = false
+        return formatter.date(from: day)
+    }
+    static func day(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar; formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = calendar.timeZone; formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+    static func shifted(_ week: String, by weeks: Int) -> String? {
+        guard let start = date(week), let moved = calendar.date(byAdding: .day, value: 7 * weeks, to: start) else { return nil }
+        return day(moved)
+    }
+    static func eventDate(_ text: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: text) ?? ISO8601DateFormatter().date(from: text)
+    }
+    static func eventText(_ text: String) -> String {
+        guard let date = eventDate(text) else { return "Time unavailable" }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_GB"); formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone; formatter.dateFormat = "EEE d MMM, HH:mm:ss z"
+        return formatter.string(from: date)
+    }
+    static func range(_ start: String, _ end: String) -> String {
+        guard let a = date(start), let b = date(end), let last = calendar.date(byAdding: .day, value: -1, to: b) else { return start }
+        let formatter = DateIntervalFormatter()
+        formatter.locale = Locale(identifier: "en_GB"); formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone; formatter.dateStyle = .medium; formatter.timeStyle = .none
+        return formatter.string(from: a, to: last)
+    }
+}
+struct HeatingHistoryView: View {
+    let address: String
+    let token: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var document: HeatingHistoryDocument?
+    @State private var busy = false
+    @State private var error: String?
+    var body: some View {
+        List {
+            Section {
+                HStack {
+                    Button { Task { await move(-1) } } label: { Image(systemName: "chevron.left") }
+                        .accessibilityLabel("Previous week").disabled(busy || document?.canGoBack != true)
+                    Spacer()
+                    Text(document.map { HeatingHistoryDates.range($0.week_start, $0.week_end) } ?? "Current week")
+                        .font(.headline).multilineTextAlignment(.center)
+                    Spacer()
+                    Button { Task { await move(1) } } label: { Image(systemName: "chevron.right") }
+                        .accessibilityLabel("Next week").disabled(busy || document?.canGoForward != true)
+                }.buttonStyle(.borderless)
+                Text("Confirmed controller actions · UK time. Manual Homely changes are not included.")
+                    .font(.caption).foregroundStyle(.blue)
+                if busy { ProgressView("Loading heating log…") }
+                if let error { Text(error).foregroundStyle(.red) }
+                if let warning = document?.warning { Text(warning).font(.caption).foregroundStyle(.red) }
+                if (document?.pending_events ?? 0) > 0 {
+                    Text("Some confirmed changes are waiting to be saved.").font(.caption).foregroundStyle(.red)
+                }
+            }
+            if let document {
+                Section("Heating changes") {
+                    if document.events.isEmpty {
+                        Text("No recorded heating changes this week.").foregroundStyle(.blue)
+                    }
+                    ForEach(document.events) { event in
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack {
+                                Text(event.isOn ? "Heating ON" : "Heating OFF")
+                                    .font(.headline).foregroundStyle(event.isOn ? Color.red : Color.green)
+                                Spacer()
+                                if event.isTest { Text("Test").font(.caption).foregroundStyle(.blue) }
+                            }
+                            Text(HeatingHistoryDates.eventText(event.at)).font(.subheadline)
+                            Text(event.reasonLabel).font(.caption).foregroundStyle(.secondary)
+                            if let price = event.price_p {
+                                Text(String(format: "Effective price: %.2f p/kWh", price)).font(.caption)
+                            }
+                            if let on = event.on_price_p, let off = event.off_price_p {
+                                Text(String(format: "On ≤ %g p · Off > %g p", on, off)).font(.caption).foregroundStyle(.secondary)
+                            }
+                        }.padding(.vertical, 4)
+                    }
+                }
+                Section {
+                    if let began = document.recording_started_at {
+                        Text("Automatic logging began \(HeatingHistoryDates.eventText(began)). Test entries, if present, are labelled.")
+                    }
+                    Text("Times show controller confirmations, not electricity-use measurements. History is retained for about a year.")
+                    if document.truncated { Text("This week has too many entries to display completely.").foregroundStyle(.red) }
+                }.font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .navigationTitle("Weekly heating log")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } }
+            ToolbarItem(placement: .primaryAction) {
+                Button { Task { await load(document?.week_start) } } label: { Image(systemName: "arrow.clockwise") }
+                    .accessibilityLabel("Reload heating log").disabled(busy)
+            }
+        }
+        .task { await load(nil) }
+        .refreshable { await load(document?.week_start) }
+    }
+    @MainActor private func move(_ direction: Int) async {
+        guard let current = document?.week_start, let week = HeatingHistoryDates.shifted(current, by: direction) else { return }
+        await load(week)
+    }
+    @MainActor private func load(_ week: String?) async {
+        guard !busy else { return }
+        busy = true; error = nil
+        defer { busy = false }
+        do {
+            let api = ControllerAPI(base: try ControllerAPI.endpoint(address), token: token)
+            let query = week.map { [URLQueryItem(name: "week", value: $0)] } ?? []
+            let result: HeatingHistoryDocument = try await api.request("history", queryItems: query)
+            guard !Task.isCancelled else { return }
+            document = result
+        } catch {
+            if Task.isCancelled { return }
+            self.error = "Could not refresh the heating log. " + error.localizedDescription
         }
     }
 }

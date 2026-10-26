@@ -49,3 +49,23 @@ The Heating guide records the price-window boost strategy and removed temperatur
 The iOS heating controls now support signed −20…20p values, zero, and both controller modes. This heating-client update is iOS-only; Android parity is not claimed.
 
 The iOS Heating page also has a persistent Automation switch with OFF/shutdown-pending display. ON requires prior controller activation. This is not implemented on Android.
+
+## Weekly heating log — iOS
+
+On **Heating**, connect and tap **Weekly heating log**. It opens the current
+Monday–Sunday week; use the arrows for previous weeks and Reload or pull to
+refresh. ON is red and OFF green. Each entry shows the confirmed action time,
+effective price, saved on/off thresholds and reason. Times use Europe/London
+and include GMT/BST to distinguish the repeated autumn hour. Logging began on
+25 October 2026; earlier weeks contain no reconstructed events.
+
+The controller retains 366 days independently of the phone. A pending-storage
+warning means confirmed events are awaiting a database retry. Manual Homely
+changes and compressor cycles are outside this automation log. Existing
+pre-update entries may say “Price data unavailable” where a slow setup exceeded
+the former 15-second budget; new entries distinguish “Heating setup timed out.”
+Android does not yet provide Heating or this log.
+
+The owner has approved ongoing operation and enabled Automation. New installs
+still default OFF; use the app switch to pause/resume this installation without
+changing its saved price policy. Heating depends on each half-hour decision.
