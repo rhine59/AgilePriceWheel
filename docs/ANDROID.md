@@ -18,11 +18,13 @@ Any iOS change to calculations, page visibility, navigation, settings, location 
 
 ## Known implementation scope
 
-The Android project now contains the complete parity path for the current core feature set. Platform packaging, Play Store signing/release metadata and device-specific polish remain separate release tasks and must not be described as completed until tested.
+The Android project has the core pricing/solar screens. Heating/controller parity
+is outstanding and is required; see [Android heating requirements](ANDROID-HEATING-REQUIREMENTS.md). Platform packaging, Play Store signing/release metadata and device-specific polish remain separate release tasks and must not be described as completed until tested.
 
 ## Heating controller parity
 
-The Apple app now includes a Heating page for an authenticated, plan-only Synology controller. Android does not include this feature yet; existing Android pages are unchanged.
+The Apple app includes a Heating page for the authenticated Synology controller,
+including its approved automatic mode. Android does not include this feature yet; existing Android pages are unchanged.
 
 The latest iOS update adds supervisor recovery/freshness and optional reported
 Homely observations, plus reconnecting with its saved Keychain key. These remain

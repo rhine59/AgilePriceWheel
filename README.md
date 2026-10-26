@@ -189,3 +189,9 @@ consumption or a supplier bill. Missing intervals or an unconfirmed OFF leave th
 total unavailable. Sessions crossing weeks appear with the same ID in both weeks;
 do not add duplicate appearances. Manual changes do not fabricate an OFF.
 This feature is iOS only; Android still has no Heating page.
+
+
+Android heating parity is a required next deliverable. See [requirements](docs/ANDROID-HEATING-REQUIREMENTS.md). The existing Kotlin app does not yet implement the controller UI or session log; no heating APK is claimed delivered.
+
+
+[26 October heating checkpoint](docs/CHECKPOINT-2026-10-26.md) records the deployed baseline, verification and outstanding Android delivery.

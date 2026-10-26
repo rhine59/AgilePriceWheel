@@ -69,3 +69,6 @@ The Android implementation should be kept in parity whenever the iOS implementat
 ## Heating controller parity
 
 The Apple app now includes a Heating page for an authenticated, plan-only Synology controller. Android does not include this feature yet; existing Android pages are unchanged.
+
+
+Android heating parity is a required next deliverable. See [requirements](../docs/ANDROID-HEATING-REQUIREMENTS.md). The existing Kotlin app does not yet implement the controller UI or session log; no heating APK is claimed delivered.
