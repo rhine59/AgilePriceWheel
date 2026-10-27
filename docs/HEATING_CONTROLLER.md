@@ -96,3 +96,10 @@ heating disabled, restored and documented in Homely's
 restoration and external-edit refusal. Neither iOS nor Android should advertise
 an enabled 22°C boost/physical ceiling: its live lifecycle and temperature-control
 contract remain unverified. Existing price-only app controls are unchanged.
+
+
+Follow-up capture verified creating/removing a one-hour scheduled period while
+heating stayed disabled, with exact final restoration. Offline period planning
+is tested in the Homely repository. This does not establish a 22°C timed boost,
+a physical ceiling or a new app/controller mode. Keep Android/iOS parity claims
+limited to features actually implemented and verified.
