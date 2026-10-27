@@ -88,3 +88,11 @@ This feature is iOS only; Android still has no Heating page.
 ending exactly at Monday midnight stay in the preceding week. An unconfirmed end
 is not assumed to continue indefinitely; later weeks require recorded activity.
 See [audit](BUG-AUDIT-2026-10-26.md) for checks and limits.
+
+
+27 October investigation: a scheduled 16→22→16°C target edit was captured with
+heating disabled, restored and documented in Homely's
+`controller/SCHEDULE-TARGET-PREPARATION.md`. An offline planner now rehearses
+restoration and external-edit refusal. Neither iOS nor Android should advertise
+an enabled 22°C boost/physical ceiling: its live lifecycle and temperature-control
+contract remain unverified. Existing price-only app controls are unchanged.

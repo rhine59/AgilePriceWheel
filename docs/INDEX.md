@@ -94,3 +94,6 @@ Android heating parity is a required next deliverable. See [requirements](ANDROI
 ending exactly at Monday midnight stay in the preceding week. An unconfirmed end
 is not assumed to continue indefinitely; later weeks require recorded activity.
 See [audit](BUG-AUDIT-2026-10-26.md) for checks and limits.
+
+
+The 27 October schedule-target preparation in the Homely repository is offline-only; the existing app does not gain a 22°C control from that capture.

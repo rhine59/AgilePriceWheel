@@ -33,3 +33,11 @@ layouts. Install on an available Android device/emulator. Document build/signing
 and update root guide, Android README and parity guide. Play Store release is
 a separate task and must not be claimed complete without evidence. Live heating
 tests still require explicit approval; use offline/read-only checks by default.
+
+
+27 October investigation: a scheduled 16→22→16°C target edit was captured with
+heating disabled, restored and documented in Homely's
+`controller/SCHEDULE-TARGET-PREPARATION.md`. An offline planner now rehearses
+restoration and external-edit refusal. Neither iOS nor Android should advertise
+an enabled 22°C boost/physical ceiling: its live lifecycle and temperature-control
+contract remain unverified. Existing price-only app controls are unchanged.
