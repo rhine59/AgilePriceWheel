@@ -48,3 +48,6 @@ heating stayed disabled, with exact final restoration. Offline period planning
 is tested in the Homely repository. This does not establish a 22°C timed boost,
 a physical ceiling or a new app/controller mode. Keep Android/iOS parity claims
 limited to features actually implemented and verified.
+
+
+A supervised boost-target experiment is now prepared in Homely `controller/SUPERVISED-22C-TEST.md`, with explicit approval gates, stop-only fallback and original-state verification. It is not an enabled app feature or evidence of a physical 22°C ceiling.
