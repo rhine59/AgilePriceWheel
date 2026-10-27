@@ -46,10 +46,13 @@ class MainActivity : ComponentActivity() {
 enum class Page(val label: String, val icon: ImageVector, val pvOnly: Boolean = false) {
     Prices("Prices", Icons.Default.Bolt, false), Solar("Solar", Icons.Default.WbSunny, false),
     PV("PV", Icons.Default.ElectricBolt, true), Net("Net", Icons.Default.CurrencyPound, true),
-    Save("Save", Icons.Default.Savings, true), Settings("Settings", Icons.Default.Tune, false), Guide("Guide", Icons.Default.MenuBook, false)
+    Save("Save", Icons.Default.Savings, true), Heating("Heating", Icons.Default.Thermostat, false), Settings("Settings", Icons.Default.Tune, false), Guide("Guide", Icons.Default.MenuBook, false)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable fun AgilePriceWheelApp(vm: MainViewModel = viewModel()) {
+    val heating: HeatingViewModel = viewModel()
+    val heatingState by heating.state.collectAsStateWithLifecycle()
     val settings by vm.settings.collectAsStateWithLifecycle(); val rates by vm.rates.collectAsStateWithLifecycle(); val solar by vm.solar.collectAsStateWithLifecycle()
     val loading by vm.loading.collectAsStateWithLifecycle(); val error by vm.error.collectAsStateWithLifecycle()
     val derived = remember(rates, solar, settings) { derivePeriods(rates, solar, settings) }
@@ -60,23 +63,25 @@ enum class Page(val label: String, val icon: ImageVector, val pvOnly: Boolean = 
 
     Scaffold(
         containerColor = Color(0xFF07111F),
-        bottomBar = { NavigationBar(containerColor = Color(0xFF0B1626)) { visible.forEach { p -> NavigationBarItem(selected = p == page, onClick = { page = p }, icon = { Icon(p.icon, p.label) }, label = { Text(p.label, maxLines = 1) }) } } }
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        topBar = { PrimaryScrollableTabRow(selectedTabIndex = visible.indexOf(page), edgePadding = 0.dp, modifier = Modifier.statusBarsPadding()) { visible.forEach { p -> Tab(selected = p == page, onClick = { page = p }, text = { Text(p.label, maxLines = 1) }) } } }
     ) { padding ->
         BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
             val maxContent = if (maxWidth > 700.dp) 760.dp else maxWidth
             Column(Modifier.widthIn(max = maxContent).fillMaxHeight().align(Alignment.TopCenter).padding(horizontal = if (maxWidth < 380.dp) 8.dp else 16.dp)) {
-                Header(page, loading, onNow = {
+                if (page != Page.Heating) Header(page, loading, onNow = {
                     vm.updateSettings { it.copy(selectedDate = java.time.LocalDate.now()) }; vm.refresh()
                     val now = Instant.now(); selected = rates.indexOfFirst { !now.isBefore(it.validFrom) && now.isBefore(it.validTo) }.coerceAtLeast(0)
                 })
-                error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(8.dp)) }
+                if (page != Page.Heating) error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(8.dp)) }
                 when (page) {
                     Page.Prices -> MetricPage("Octopus Agile Prices", derived, selected, { selected = it }, { it.agilePence }, "p/kWh")
                     Page.Solar -> MetricPage("Solar Forecast", derived, selected, { selected = it }, { it.ghiWm2 }, "W/m²")
                     Page.PV -> MetricPage("PV Forecast", derived, selected, { selected = it }, { it.pvKwh }, "kWh")
                     Page.Net -> MetricPage("Net Electricity Price", derived, selected, { selected = it }, { it.netPencePerKwh }, "p/kWh", derived.getOrNull(selected)?.let { "PV saving %.2f p".format(it.savingPence) })
                     Page.Save -> MetricPage("Cost Savings", derived, selected, { selected = it }, { it.savingPence }, "p", derived.getOrNull(selected)?.let { "Avoided import %.3f kWh".format(it.avoidedImportKwh) })
-                    Page.Settings -> SettingsPage(settings, vm)
+                    Page.Heating -> HeatingScreen(heating, settings)
+                    Page.Settings -> SettingsPage(settings, vm, heatingState, heating::saveConnection)
                     Page.Guide -> GuidePage()
                 }
             }
@@ -87,7 +92,7 @@ enum class Page(val label: String, val icon: ImageVector, val pvOnly: Boolean = 
 @Composable private fun Header(page: Page, loading: Boolean, onNow: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(page.label, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-        if (page !in listOf(Page.Settings, Page.Guide)) TextButton(onClick = onNow) { Text("Now") }
+        if (page !in listOf(Page.Settings, Page.Guide, Page.Heating)) TextButton(onClick = onNow) { Text("Now") }
         if (loading) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
     }
 }
@@ -127,7 +132,7 @@ enum class Page(val label: String, val icon: ImageVector, val pvOnly: Boolean = 
     }
 }
 
-@Composable private fun SettingsPage(s: AppSettings, vm: MainViewModel) {
+@Composable private fun SettingsPage(s: AppSettings, vm: MainViewModel, heating: HeatingUiState, saveConnection: (String, String) -> Unit) {
     val context = LocalContext.current
     val fused = remember { LocationServices.getFusedLocationProviderClient(context) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
@@ -148,12 +153,13 @@ enum class Page(val label: String, val icon: ImageVector, val pvOnly: Boolean = 
         NumberSetting("Estimated system losses", s.systemLossPercent, "%") { vm.updateSettings { x -> x.copy(systemLossPercent=it) } }
         NumberSetting("Optimiser load", s.loadKw, "kW") { vm.updateSettings { x -> x.copy(loadKw=it) } }
         Button(onClick={vm.refresh()}, modifier=Modifier.padding(vertical=12.dp)) { Text("Refresh prices and solar forecast") }
+        HeatingConnectionSettings(heating, saveConnection)
         Text("When PV is off, PV Forecast, Net Electricity Price and Cost Savings are hidden. Saved PV settings are retained.", style=MaterialTheme.typography.bodySmall)
     }
 }
 
 @Composable private fun NumberSetting(label:String, value:Double, unit:String, update:(Double)->Unit) { var text by remember(value) { mutableStateOf(value.toString()) }; OutlinedTextField(text, { text=it; it.toDoubleOrNull()?.let(update) }, label={Text(label)}, suffix={Text(unit)}, modifier=Modifier.fillMaxWidth().padding(top=6.dp)) }
 
-@Composable private fun GuidePage() { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { Text("User Guide", style=MaterialTheme.typography.headlineSmall, fontWeight=FontWeight.Bold); Text("Prices • Solar • PV • Net • Save • Settings • Guide", modifier=Modifier.padding(vertical=8.dp)); Text("PV, Net and Save are hidden when Solar PV panels installed is off. Now returns metric pages to today's current half-hour. Cost Savings is avoided grid-import cost: min(PV energy, configured load energy) × Agile price. Net uses forecast PV to reduce expected grid import. Current Location is opt-in and the resolved site label remains editable.") } }
+@Composable private fun GuidePage() { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { Text("User Guide", style=MaterialTheme.typography.headlineSmall, fontWeight=FontWeight.Bold); Text("Prices • Solar • PV • Net • Save • Heating • Settings • Guide", modifier=Modifier.padding(vertical=8.dp)); Text("PV, Net and Save are hidden when Solar PV panels installed is off. Now returns metric pages to today's current half-hour. Cost Savings is avoided grid-import cost: min(PV energy, configured load energy) × Agile price. Net uses forecast PV to reduce expected grid import. Current Location is opt-in and the resolved site label remains editable. Heating connects to the NAS controller. Set its HTTPS address and key in Settings, then test/reload on Heating. Signed on/off prices use half-hour decisions; Homely manages temperature. The Automation switch changes the persistent controller policy switch. Weekly heating log shows confirmed actions and estimated session costs. The controller continues while the phone app is closed.") } }
 
 private fun formatPeriod(from: Instant, to: Instant): String { val f=DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.of("Europe/London")); return "${f.format(from)}–${f.format(to)}" }

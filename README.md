@@ -27,10 +27,11 @@ The logical page order on both platforms is:
 3. PV Forecast
 4. Net Electricity Price
 5. Cost Savings
-6. App Settings
-7. User Guide
+6. Agile heating
+7. App Settings
+8. User Guide
 
-With **Solar PV panels installed = ON**, all seven destinations are available. With it **OFF**, PV, Net and Save are hidden, leaving Prices, Solar, Settings and Guide. Re-enabling PV restores the three destinations. Saved PV configuration is intended to be retained.
+With **Solar PV panels installed = ON**, all eight destinations are available. With it **OFF**, PV, Net and Save are hidden, leaving Prices, Solar, Heating, Settings and Guide. Re-enabling PV restores the three destinations. Saved PV configuration is intended to be retained.
 
 The PV navigation control uses a simple lightning-bolt treatment on both platforms.
 
@@ -82,7 +83,7 @@ The Apple target is iPhone/iPad (`TARGETED_DEVICE_FAMILY = 1,2`) and currently t
 
 ## Android build
 
-Open the repository's `android/` directory in Android Studio and let Gradle sync. The Android client uses Kotlin, Jetpack Compose, Material 3, Lifecycle and Google Play Services Location. It currently declares `minSdk 26`, `compileSdk 36`, `targetSdk 36`, and Compose BOM `2026.08.00`.
+Open the repository's `android/` directory in Android Studio and let Gradle sync. The Android client uses Kotlin, Jetpack Compose, Material 3, Lifecycle and Google Play Services Location. It currently declares `minSdk 26`, `compileSdk 37`, `targetSdk 36`, and Compose BOM `2026.08.00`.
 
 Android's official guidance describes Compose as the modern native UI toolkit and recommends adaptive layouts for phones, tablets and other display sizes. The Compose BOM is used to align compatible Compose library versions.
 
@@ -92,9 +93,11 @@ The Apple dashboard uses SwiftUI adaptive layout, width-limited content and `Vie
 
 ## Current Android parity status
 
-The Android source now includes the recent iOS features that had been missing: Cost Savings, PV saving on Net, seven/four destination navigation, PV-dependent hiding/restoration, Now on metric pages, editable reverse-geocoded Current Location naming, a simple lightning-bolt PV control and responsive phone/tablet layout.
-
-This commit establishes source-level parity for that current core feature set. It has **not yet been verified by an Android Studio build or physical Android-device test in this conversation**, so Android release readiness should not be claimed until Gradle sync/build and the device matrix in `android/README.md` have passed.
+The Android app now includes Heating policy/state, signed price menus,
+Automation ON/OFF, secure connection settings and weekly sessions with estimated
+cost/payment. Native pricing and solar pages remain available. Tabs scroll on
+narrow screens. See [Android verification](docs/ANDROID-HEATING-VERIFICATION.md)
+for build/test/device evidence and remaining distribution limits.
 
 ## Release verification
 
@@ -104,7 +107,7 @@ For Apple, test compact/standard/Max iPhones and an iPad, PV on/off, Now, curren
 
 Agile Price Wheel is independent and is not an official Octopus Energy or Open-Meteo application. Solar irradiance, PV Forecast, Net Electricity Price and Cost Savings are forecast/derived planning estimates and can differ from actual generation, energy flows and bills.
 
-## Agile heating (iOS only)
+## Agile heating (iOS and Android)
 
 The **Heating** tab opens **Agile heating**. Connection details live in
 **App Settings → Agile heating connection**: save the HTTPS address and key,
@@ -154,7 +157,7 @@ exposed a short setup timeout; boundary attempts now have up to 60 seconds to
 finish setup while keeping the original half-hour end. See the backend service
 catalogue for recovery and outage limits.
 
-## Weekly heating log — iOS
+## Weekly heating log — iOS and Android
 
 On **Heating**, connect and tap **Weekly heating log**. It opens the current
 Monday–Sunday week; use the arrows for previous weeks and Reload or pull to
@@ -168,7 +171,7 @@ warning means confirmed events are awaiting a database retry. Manual Homely
 changes and compressor cycles are outside this automation log. Existing
 pre-update entries may say “Price data unavailable” where a slow setup exceeded
 the former 15-second budget; new entries distinguish “Heating setup timed out.”
-Android does not yet provide Heating or this log.
+Android now provides Heating and the weekly session/action log; see [Android parity](docs/ANDROID.md).
 
 The owner has approved ongoing operation and enabled Automation. New installs
 still default OFF; use the app switch to pause/resume this installation without
@@ -188,10 +191,10 @@ interval and use effective prices after forecast solar. They are not metered
 consumption or a supplier bill. Missing intervals or an unconfirmed OFF leave the
 total unavailable. Sessions crossing weeks appear with the same ID in both weeks;
 do not add duplicate appearances. Manual changes do not fabricate an OFF.
-This feature is iOS only; Android still has no Heating page.
+This feature is available on iOS and Android.
 
 
-Android heating parity is a required next deliverable. See [requirements](docs/ANDROID-HEATING-REQUIREMENTS.md). The existing Kotlin app does not yet implement the controller UI or session log; no heating APK is claimed delivered.
+Android heating controls are implemented. See [requirements and delivery status](docs/ANDROID-HEATING-REQUIREMENTS.md) and [verification](docs/ANDROID-HEATING-VERIFICATION.md).
 
 
 [26 October heating checkpoint](docs/CHECKPOINT-2026-10-26.md) records the deployed baseline, verification and outstanding Android delivery.

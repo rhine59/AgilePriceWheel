@@ -1,9 +1,8 @@
 # Required Android heating app
 
-Checkpoint: 26 October 2026. Android is a required deliverable, not optional.
-The repository already has a native Kotlin/Jetpack Compose app under `android/`;
-extend it to match the deployed iOS heating feature rather than start a separate
-controller. No Android heating APK has yet been built or installed.
+Updated: 27 October 2026. Android is a required deliverable, not optional.
+The native Kotlin/Jetpack Compose app under `android/` now implements the
+existing controller features; both apps use the same NAS service. The Android source and reproducible build/test scripts are in this repository.
 
 ## Required parity
 
@@ -24,30 +23,12 @@ controller. No Android heating APK has yet been built or installed.
   Homely credentials/control transport belongs on the phone. Controller keeps running
   independently of both apps. No temperature selectors for price-only automation.
 
-## Acceptance before calling Android delivered
+## Delivery status — 27 October 2026
 
-Build an installable APK, verify controller JSON compatibility and key storage,
-exercise signed policy/automation/history against fake services, test auth/network
-failures and DST/cross-week estimates, and check compact/large phone plus tablet
-layouts. Install on an available Android device/emulator. Document build/signing
-and update root guide, Android README and parity guide. Play Store release is
-a separate task and must not be claimed complete without evidence. Live heating
-tests still require explicit approval; use offline/read-only checks by default.
-
-
-27 October investigation: a scheduled 16→22→16°C target edit was captured with
-heating disabled, restored and documented in Homely's
-`controller/SCHEDULE-TARGET-PREPARATION.md`. An offline planner now rehearses
-restoration and external-edit refusal. Neither iOS nor Android should advertise
-an enabled 22°C boost/physical ceiling: its live lifecycle and temperature-control
-contract remain unverified. Existing price-only app controls are unchanged.
-
-
-Follow-up capture verified creating/removing a one-hour scheduled period while
-heating stayed disabled, with exact final restoration. Offline period planning
-is tested in the Homely repository. This does not establish a 22°C timed boost,
-a physical ceiling or a new app/controller mode. Keep Android/iOS parity claims
-limited to features actually implemented and verified.
-
-
-A supervised boost-target experiment is now prepared in Homely `controller/SUPERVISED-22C-TEST.md`, with explicit approval gates, stop-only fallback and original-state verification. It is not an enabled app feature or evidence of a physical 22°C ceiling.
+The Kotlin controller client, secure connection storage, Heating page, signed
+price controls, Automation switch and weekly session/action log are implemented.
+The exact tests, installable APK and emulator layout evidence are recorded in
+[verification](ANDROID-HEATING-VERIFICATION.md). No Play Store publication or
+physical-device installation is claimed. The prepared 22°C diagnostic was
+cancelled before heating writes; temperature-independent price control is the
+owner's requirement. Existing Homely targets remain in charge of temperature.

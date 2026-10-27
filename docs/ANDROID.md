@@ -1,84 +1,80 @@
 # Android implementation and parity
 
-The Android implementation lives under `android/` and is native Kotlin + Jetpack Compose.
+Updated 27 October 2026. The native Kotlin/Jetpack Compose client now includes
+Agile heating, using the same six controller HTTP services as iOS. The phone
+contains no Homely login or direct Homely control transport. The Synology NAS
+remains the always-running controller.
 
-## Parity contract
+## Heating operation
 
-User-facing calculation semantics should match iOS for Agile Prices, Solar Forecast, PV Forecast, Net Electricity Price and Cost Savings. Navigation should expose seven destinations with PV enabled and four with PV disabled. The same Now/current-period rule applies: `validFrom <= now < validTo`.
+1. In **Settings → Heating connection**, enter the controller HTTPS origin
+   (including its external port) and bearer key. Save connection.
+2. Open **Heating → Test connection / reload controller policy**.
+3. Select **Heating on** and **Heating off**, review and confirm Save policy.
+   Menus cover −20…+20 p/kWh, including zero. An existing price outside that range
+   is retained as an extra choice. Off must be greater than or equal to on.
+4. Enable **Automation** and confirm. This uses existing controller activation;
+   the phone cannot grant administrative activation. OFF needs no confirmation
+   and requests shutdown. **Stop automation** remains available after a read
+   failure so an explicit OFF can still be attempted.
+5. Open **Weekly heating log** for sessions, individual actions and UK weeks.
 
-Android uses platform-appropriate APIs rather than copying Apple APIs: Jetpack Compose for UI, Fused Location Provider for a requested current-location fix, and Android Geocoder for a readable editable site name.
+Heating policy is price permission; Heating state is Homely's last heating report.
+ON is red, OFF green and UNKNOWN blue. Old/failed controller checks cannot display
+a reassuring OFF. The app updates status every 30 seconds while Heating is in
+view and the app is started; indicators age out after 45 seconds, and policy
+permission also expires at its reported slot end. Old room samples are labelled.
+Recovery, manual holds and shutdown pending are shown separately.
 
-## Responsive layout
+The owner requires heating enabled for qualifying half-hour slots with existing
+Homely temperature settings. There are no temperature selectors. Homely can stop
+actual heat production at its own target. Explicit OFF, manual changes, policy
+edits or data/recovery failures can end permission early. The prepared 22°C
+experiment was cancelled before heating writes; no temperature mode is enabled.
 
-Compose content is constrained and centred on wide displays and uses available width on phones. Bottom navigation is state-derived and works on phones/tablets. Release testing must include compact and large phones plus a tablet/emulator.
+## Policy and connection integrity
 
-## Maintenance rule
+Saves retain the complete latest policy document and its revision, including
+legacy temperature fields. Only selected prices change unless the user explicitly
+copies this app's tariff/site/PV/load into the draft. Copying is not a save.
+HTTP 409 requires reload. An uncertain write is never retried automatically and
+blocks another policy save/enable until successful reload. Operations are
+serialized, and failed reads clear status/switch certainty rather than showing
+old data as current. History errors do not disable the policy screen.
 
-Any iOS change to calculations, page visibility, navigation, settings, location behaviour, Now behaviour, units, API semantics or user documentation must be assessed for Android parity in the same development cycle. Update `android/README.md`, this document and the root documentation when Android behaviour changes.
+Only HTTPS origins without credentials, paths, queries or fragments are accepted.
+All redirects are refused, normal certificate verification stays enabled, bearer
+keys never enter URLs or logs. Android Keystore encrypts the bearer key using
+AES-GCM with the canonical origin as associated data. The atomic connection file
+is in `noBackupFilesDir`; the key is not backed up. App updates using the same
+application ID/signature retain the connection. Reinstall, key loss or migration
+to another phone requires re-entry. A changed origin needs an explicitly entered
+key; leaving the field blank reuses a key only for the identical origin.
 
-## Known implementation scope
+## Weekly session costs
 
-The Android project has the core pricing/solar screens. Heating/controller parity
-is outstanding and is required; see [Android heating requirements](ANDROID-HEATING-REQUIREMENTS.md). Platform packaging, Play Store signing/release metadata and device-specific polish remain separate release tasks and must not be described as completed until tested.
+Monday–Sunday boundaries and GMT/BST labels use Europe/London. The app displays
+the server's paired sessions, durations, estimated energy, unit prices and costs.
+Negative totals say **Estimated payment**. Missing cost/load/rate data or an
+unconfirmed end remain unavailable. No estimate is recomputed from today's load,
+no missing value becomes zero, and no manual action invents an OFF. A session
+crossing weeks can appear under the same ID in each week; there is no summed
+cross-week total. Do not add duplicate appearances. Warnings, pending writes,
+retention and truncated history are visible.
 
-## Heating controller parity
+## Other pages and layout
 
-The Apple app includes a Heating page for the authenticated Synology controller,
-including its approved automatic mode. Android does not include this feature yet; existing Android pages are unchanged.
+Prices, Solar, PV, Net, Save, Heating, Settings and Guide use scrollable tabs so
+all destinations remain reachable on narrow screens. With PV off, only PV, Net
+and Save disappear; Heating stays available. Phone/tablet content is centred and
+width-limited. Now applies only to metric pages. See the root guide for the
+existing pricing/solar calculations and location behaviour.
 
-The latest iOS update adds supervisor recovery/freshness and optional reported
-Homely observations, plus reconnecting with its saved Keychain key. These remain
-iOS-only; no equivalent Android screen or controller client is implemented.
+## Build, tests and distribution
 
-The iOS Heating policy now uses whole-number dropdowns (1–20 p/kWh and
-10–25°C) while preserving existing out-of-range values. This remains iOS-only.
-
-Short policy labels and blue informational/red error messages apply only to the iOS Heating page.
-
-The Agile heating heading and separate red/green policy and reported-state lines are iOS-only.
-
-The controller address/key settings and test/reload action relocation are iOS-only.
-
-The iOS Heating page is now price-only; its removed temperature selectors do not affect Android.
-
-The iOS heating controls now support signed −20…20p values, zero, and both controller modes. This heating-client update is iOS-only; Android parity is not claimed.
-
-The iOS Heating page also has a persistent Automation switch with OFF/shutdown-pending display. ON requires prior controller activation. This is not implemented on Android.
-
-## Weekly heating log — iOS
-
-On **Heating**, connect and tap **Weekly heating log**. It opens the current
-Monday–Sunday week; use the arrows for previous weeks and Reload or pull to
-refresh. ON is red and OFF green. Each entry shows the confirmed action time,
-effective price, saved on/off thresholds and reason. Times use Europe/London
-and include GMT/BST to distinguish the repeated autumn hour. Logging began on
-25 October 2026; earlier weeks contain no reconstructed events.
-
-The controller retains 366 days independently of the phone. A pending-storage
-warning means confirmed events are awaiting a database retry. Manual Homely
-changes and compressor cycles are outside this automation log. Existing
-pre-update entries may say “Price data unavailable” where a slow setup exceeded
-the former 15-second budget; new entries distinguish “Heating setup timed out.”
-Android does not yet provide Heating or this log.
-
-The owner has approved ongoing operation and enabled Automation. New installs
-still default OFF; use the app switch to pause/resume this installation without
-changing its saved price policy. Heating depends on each half-hour decision.
-
-## Heating sessions and estimated cost
-
-**Heating → Weekly heating log** now groups each ON with its matching OFF in a
-Heating sessions section. It shows elapsed duration, effective rate at each action,
-raw Agile and effective unit rates for each half-hour, configured electrical load,
-estimated kWh and estimated cost. Negative totals are labelled **Estimated payment**.
-Individual actions remain below for investigation. Existing records pair by action
-order; cost stays unavailable where historical load/rates were not saved.
-
-Costs assume the configured electrical load throughout the confirmed enabled
-interval and use effective prices after forecast solar. They are not metered
-consumption or a supplier bill. Missing intervals or an unconfirmed OFF leave the
-total unavailable. Sessions crossing weeks appear with the same ID in both weeks;
-do not add duplicate appearances. Manual changes do not fabricate an OFF.
-This feature is iOS only; Android still has no Heating page.
-
-Required Android parity includes the corrected unavailable-price semantics and weekly session boundary rules from [the audit](BUG-AUDIT-2026-10-26.md). Android heating remains unimplemented.
+See [Android README](../android/README.md), the reproducible
+[verification script](../scripts/verify-android.sh), and
+[verification evidence](ANDROID-HEATING-VERIFICATION.md).
+The installable debug APK is for direct evaluation. Play Store signing, listing
+and physical-device acceptance remain separate distribution work. The existing
+iPhone app and live NAS image/policy are not replaced by this Android build.

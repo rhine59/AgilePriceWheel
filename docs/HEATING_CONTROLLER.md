@@ -1,11 +1,11 @@
 # Heating controller
 
-## Agile heating (iOS only)
+## Agile heating (iOS and Android)
 
 The **Heating** tab opens **Agile heating**. Connection details live in
-**App Settings → Agile heating connection**: save the HTTPS address and key,
+**Settings → Heating connection** (Android) or **App Settings → Agile heating connection** (iOS): save the HTTPS address and key,
 then use **Test connection / reload controller policy** on Heating. The key stays
-in Keychain. Updating the app preserves existing settings and connection.
+in iOS Keychain or Android Keystore-encrypted, backup-excluded storage. Updating the app preserves existing settings and connection.
 
 Two separate coloured lines show **Heating policy** (price permission) and
 **Heating state** (Homely's report): ON red, OFF green, unavailable when data is
@@ -47,7 +47,7 @@ the owner's approval. The app cannot grant initial administrative activation.
 Verification: 172 backend checks and 14 focused iOS checks cover policy, history,
 DST, failures and navigation. Real overnight automation entries are available.
 
-## Weekly heating log — iOS
+## Weekly heating log — iOS and Android
 
 On **Heating**, connect and tap **Weekly heating log**. It opens the current
 Monday–Sunday week; use the arrows for previous weeks and Reload or pull to
@@ -61,7 +61,7 @@ warning means confirmed events are awaiting a database retry. Manual Homely
 changes and compressor cycles are outside this automation log. Existing
 pre-update entries may say “Price data unavailable” where a slow setup exceeded
 the former 15-second budget; new entries distinguish “Heating setup timed out.”
-Android does not yet provide Heating or this log.
+Android now provides Heating and the weekly session/action log; see [Android parity](ANDROID.md).
 
 The owner has approved ongoing operation and enabled Automation. New installs
 still default OFF; use the app switch to pause/resume this installation without
@@ -81,7 +81,7 @@ interval and use effective prices after forecast solar. They are not metered
 consumption or a supplier bill. Missing intervals or an unconfirmed OFF leave the
 total unavailable. Sessions crossing weeks appear with the same ID in both weeks;
 do not add duplicate appearances. Manual changes do not fabricate an OFF.
-This feature is iOS only; Android still has no Heating page.
+This feature is available on iOS and Android.
 
 
 26 October bug audit: unavailable prices now stay labelled unavailable. Sessions
@@ -105,4 +105,4 @@ a physical ceiling or a new app/controller mode. Keep Android/iOS parity claims
 limited to features actually implemented and verified.
 
 
-A supervised boost-target experiment is now prepared in Homely `controller/SUPERVISED-22C-TEST.md`, with explicit approval gates, stop-only fallback and original-state verification. It is not an enabled app feature or evidence of a physical 22°C ceiling.
+The prepared boost-target diagnostic was cancelled before heating writes on 27 October after the owner confirmed temperature-independent slot heating. Homely’s `controller/SUPERVISED-22C-TEST.md` is an archive; neither app exposes a temperature mode.

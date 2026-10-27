@@ -31,11 +31,11 @@ PV cost saving = avoided grid import × Agile price
 
 Net Electricity Price must surface the same selected-period PV saving.
 
-## iOS Heating controller
+## iOS and Android heating controller
 
-See [Heating controller](HEATING_CONTROLLER.md) for the Synology service contract, recovery/freshness display, secure reconnection and iOS-only feature status.
+See [Heating controller](HEATING_CONTROLLER.md) for the Synology service contract, recovery/freshness display, secure reconnection and iOS and Android feature status.
 
-The iOS Heating guide also documents the price/temperature dropdown choices
+The iOS Heating guide also documents the signed price dropdown choices
 and preservation of existing saved values outside those choices.
 
 The Heating guide includes short selector labels and the information/error colour meanings.
@@ -46,11 +46,11 @@ Heating connection details are configured in App Settings; policy test/reload st
 
 The Heating guide records the price-window boost strategy and removed temperature controls.
 
-The iOS heating controls now support signed −20…20p values, zero, and both controller modes. This heating-client update is iOS-only; Android parity is not claimed.
+The iOS heating controls now support signed −20…20p values, zero, and both controller modes. The signed price controls are now also available on Android.
 
-The iOS Heating page also has a persistent Automation switch with OFF/shutdown-pending display. ON requires prior controller activation. This is not implemented on Android.
+The iOS Heating page also has a persistent Automation switch with OFF/shutdown-pending display. ON requires prior controller activation. Android now includes the same persistent Automation control.
 
-## Weekly heating log — iOS
+## Weekly heating log — iOS and Android
 
 On **Heating**, connect and tap **Weekly heating log**. It opens the current
 Monday–Sunday week; use the arrows for previous weeks and Reload or pull to
@@ -64,7 +64,7 @@ warning means confirmed events are awaiting a database retry. Manual Homely
 changes and compressor cycles are outside this automation log. Existing
 pre-update entries may say “Price data unavailable” where a slow setup exceeded
 the former 15-second budget; new entries distinguish “Heating setup timed out.”
-Android does not yet provide Heating or this log.
+Android now provides Heating and the weekly session/action log; see [Android parity](ANDROID.md).
 
 The owner has approved ongoing operation and enabled Automation. New installs
 still default OFF; use the app switch to pause/resume this installation without
@@ -84,10 +84,10 @@ interval and use effective prices after forecast solar. They are not metered
 consumption or a supplier bill. Missing intervals or an unconfirmed OFF leave the
 total unavailable. Sessions crossing weeks appear with the same ID in both weeks;
 do not add duplicate appearances. Manual changes do not fabricate an OFF.
-This feature is iOS only; Android still has no Heating page.
+This feature is available on iOS and Android.
 
 
-Android heating parity is a required next deliverable. See [requirements](ANDROID-HEATING-REQUIREMENTS.md). The existing Kotlin app does not yet implement the controller UI or session log; no heating APK is claimed delivered.
+Android heating controls are implemented. See [delivery status](ANDROID-HEATING-REQUIREMENTS.md) and [verification](ANDROID-HEATING-VERIFICATION.md).
 
 
 26 October bug audit: unavailable prices now stay labelled unavailable. Sessions
@@ -97,3 +97,5 @@ See [audit](BUG-AUDIT-2026-10-26.md) for checks and limits.
 
 
 The 27 October schedule-target preparation in the Homely repository is offline-only; the existing app does not gain a 22°C control from that capture.
+
+Android implementation, setup, rebuild scripts and emulator evidence: [Android guide](ANDROID.md), [requirements/status](ANDROID-HEATING-REQUIREMENTS.md), [verification](ANDROID-HEATING-VERIFICATION.md).

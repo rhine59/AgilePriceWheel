@@ -19,7 +19,7 @@ This guide covers the shared behaviour of the Apple and Android clients. Platfor
 
 ## 1. Main navigation
 
-The logical destinations are Prices, Solar, PV, Net, Save, Settings and Guide. With PV enabled all seven are available. With **Solar PV panels installed** off, PV, Net and Save disappear; Prices, Solar, Settings and Guide remain. Turning PV on restores the three PV-dependent destinations.
+The logical destinations are Prices, Solar, PV, Net, Save, Heating, Settings and Guide. With PV enabled all eight are available. With **Solar PV panels installed** off, PV, Net and Save disappear; Prices, Solar, Heating, Settings and Guide remain. Turning PV on restores the three PV-dependent destinations.
 
 ## 2. Now
 
@@ -111,7 +111,7 @@ If Now overlays content, bottom navigation becomes unusable, PV-dependent pages 
 
 Agile Price Wheel is independent and is not an official Octopus Energy or Open-Meteo application. Forecast and derived values are planning estimates, not billing measurements.
 
-## Agile heating (iOS only)
+## Agile heating (iOS and Android)
 
 The **Heating** tab opens **Agile heating**. Connection details live in
 **App Settings → Agile heating connection**: save the HTTPS address and key,
@@ -161,7 +161,7 @@ exposed a short setup timeout; boundary attempts now have up to 60 seconds to
 finish setup while keeping the original half-hour end. See the backend service
 catalogue for recovery and outage limits.
 
-## Weekly heating log — iOS
+## Weekly heating log — iOS and Android
 
 On **Heating**, connect and tap **Weekly heating log**. It opens the current
 Monday–Sunday week; use the arrows for previous weeks and Reload or pull to
@@ -175,7 +175,7 @@ warning means confirmed events are awaiting a database retry. Manual Homely
 changes and compressor cycles are outside this automation log. Existing
 pre-update entries may say “Price data unavailable” where a slow setup exceeded
 the former 15-second budget; new entries distinguish “Heating setup timed out.”
-Android does not yet provide Heating or this log.
+Android now provides Heating and the weekly session/action log; see [Android parity](docs/ANDROID.md).
 
 The owner has approved ongoing operation and enabled Automation. New installs
 still default OFF; use the app switch to pause/resume this installation without
@@ -195,10 +195,22 @@ interval and use effective prices after forecast solar. They are not metered
 consumption or a supplier bill. Missing intervals or an unconfirmed OFF leave the
 total unavailable. Sessions crossing weeks appear with the same ID in both weeks;
 do not add duplicate appearances. Manual changes do not fabricate an OFF.
-This feature is iOS only; Android still has no Heating page.
+This feature is available on iOS and Android.
 
 
 26 October bug audit: unavailable prices now stay labelled unavailable. Sessions
 ending exactly at Monday midnight stay in the preceding week. An unconfirmed end
 is not assumed to continue indefinitely; later weeks require recorded activity.
 See [audit](docs/BUG-AUDIT-2026-10-26.md) for checks and limits.
+
+## Android Agile heating
+
+In Settings, save the controller HTTPS address and key under **Heating connection**.
+Open **Heating** and tap **Test connection / reload controller policy**. Choose
+signed **Heating on** and **Heating off** prices and confirm Save policy. Enable
+Automation only when you want the NAS to control heating; OFF requests shutdown.
+The phone can then be closed. The controller checks qualifying half-hours while
+Homely manages temperature. Red ON and green OFF are shown separately for price
+permission and Homely's reported heating state; UNKNOWN means data cannot be
+confirmed. The weekly log shows paired sessions and estimated costs or payments.
+See [Android instructions](docs/ANDROID.md) for reconnection and logging details.
