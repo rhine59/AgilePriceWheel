@@ -1,0 +1,14 @@
+# Optional read-only observation. Use alongside compose.yml; no live writes.
+services:
+  heating-controller:
+    environment:
+      HEATING_HOMELY_ENV_FILE: /run/secrets/homely.env
+      HEATING_HOMELY_PROFILE: ${HEATING_HOMELY_PROFILE:?Specify the approved profile}
+      HEATING_HOUSE_ID: ${HEATING_HOUSE_ID:?Specify the verified household}
+      HEATING_SENSOR_ZONE_ID: ${HEATING_SENSOR_ZONE_ID:?Specify the verified sensor zone}
+      HEATING_BOOST_ZONE_ID: ${HEATING_BOOST_ZONE_ID:?Specify the observed boost zone string}
+    volumes:
+      - type: bind
+        source: ${HEATING_HOMELY_ENV_HOST_FILE:?Specify the private credentials file}
+        target: /run/secrets/homely.env
+        read_only: true

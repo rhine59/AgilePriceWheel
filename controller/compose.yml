@@ -1,0 +1,31 @@
+services:
+  heating-controller:
+    container_name: homely-heating
+    platform: linux/amd64
+    build:
+      context: ..
+      dockerfile: controller/Dockerfile
+    restart: unless-stopped
+    environment:
+      HEATING_API_TOKEN: ${HEATING_API_TOKEN:?Set a random API token of at least 32 characters}
+      HEATING_POLICY_FILE: /data/policy.json
+      HEATING_RECOVERY_FILE: /data/heating-recovery.json
+      HEATING_LIVE_ENABLED: "false"
+    ports:
+      - "127.0.0.1:8086:8080"
+    volumes:
+      - heating-policy:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request; r=urllib.request.Request('http://127.0.0.1:8080/v1/status',headers={'Authorization':'Bearer '+os.environ['HEATING_API_TOKEN']}); urllib.request.urlopen(r,timeout=5).close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  heating-policy:

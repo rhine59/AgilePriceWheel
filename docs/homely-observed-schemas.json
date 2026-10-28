@@ -1,0 +1,1285 @@
+{
+  "notice": "Observed field types only; not a complete or supported API contract. No captured values included.",
+  "capture_date": "2026-10-25",
+  "customer_methods": {
+    "userInfo": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "observed_properties": {
+          "userId": {
+            "type": "string"
+          }
+        }
+      },
+      "observed_http_status": 200
+    },
+    "getUser": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "observed_properties": {
+              "userId": {
+                "type": "string"
+              }
+            }
+          },
+          "userId": {
+            "type": "string"
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "observed_properties": {
+          "address": {
+            "type": "object",
+            "observed_properties": {
+              "county": {
+                "type": "string"
+              },
+              "country": {
+                "type": "string"
+              },
+              "postCode": {
+                "type": "string"
+              },
+              "line2": {
+                "type": "string"
+              },
+              "city": {
+                "type": "string"
+              },
+              "line1": {
+                "type": "string"
+              }
+            }
+          },
+          "houseIds": {
+            "type": "array",
+            "observed_item": {
+              "type": "string"
+            }
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "installerSharingEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "observed_http_status": 200
+    },
+    "updatePushTokens": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "houseId": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "observed_properties": {
+              "token": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            }
+          },
+          "userId": {
+            "type": "string"
+          }
+        }
+      },
+      "response": {
+        "type": "null"
+      },
+      "observed_http_status": 200
+    },
+    "getZones": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "houseId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        }
+      },
+      "response": {
+        "type": "array",
+        "observed_item": {
+          "type": "object",
+          "observed_properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "temperature": {
+              "type": "number"
+            },
+            "heatingOn": {
+              "type": "boolean"
+            },
+            "hotwaterOn": {
+              "type": "boolean"
+            },
+            "lastUpdated": {
+              "type": "integer"
+            },
+            "activeScheduleId": {
+              "type": "string"
+            },
+            "nodeLost": {
+              "type": "boolean"
+            },
+            "dhwTemp": {
+              "type": "number"
+            },
+            "outdoorTemp": {
+              "type": "number"
+            },
+            "chosenName": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "observed_http_status": 200
+    },
+    "getSettings": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "houseId": {
+            "type": "string"
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "observed_properties": {
+          "nightShift": {
+            "type": "boolean"
+          },
+          "p": {
+            "type": "integer"
+          },
+          "settings": {
+            "type": "object",
+            "observed_properties": {
+              "dhw_ready_for_setpoint": {
+                "type": "boolean"
+              },
+              "dhw_off_peak_reheat": {
+                "type": "boolean"
+              },
+              "dhw_reheat_during_schedule": {
+                "type": "boolean"
+              },
+              "fixed_rate": {
+                "type": "integer"
+              },
+              "flexibility": {
+                "type": "integer"
+              },
+              "hot_water_only_mode": {
+                "type": "boolean"
+              },
+              "hw_set": {
+                "type": "string"
+              },
+              "overnight_savings": {
+                "type": "boolean"
+              },
+              "relays": {
+                "type": "array",
+                "observed_item": {
+                  "type": "null"
+                }
+              },
+              "savings": {
+                "type": "integer"
+              },
+              "tariff": {
+                "type": "null"
+              },
+              "use_fallback_controls": {
+                "type": "boolean"
+              }
+            }
+          },
+          "nibe": {
+            "type": "boolean"
+          },
+          "heatingType": {
+            "type": "integer"
+          },
+          "zones": {
+            "type": "integer"
+          },
+          "summerMode": {
+            "type": "boolean"
+          },
+          "hotWaterOnlyMode": {
+            "type": "boolean"
+          },
+          "optimisationType": {
+            "type": "string"
+          },
+          "heatingTypeNew": {
+            "type": "integer"
+          },
+          "hasWater": {
+            "type": "boolean"
+          },
+          "hwSetPoint": {
+            "type": "string"
+          },
+          "flexibility": {
+            "type": "integer"
+          },
+          "overnightHeatSavings": {
+            "type": "boolean"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "hubData": {
+            "type": "object",
+            "observed_properties": {
+              "serial": {
+                "type": "string"
+              },
+              "firmwareVersion": {
+                "type": "string"
+              },
+              "provisioning": {
+                "type": "array",
+                "observed_item": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "dhwPreheating": {
+            "type": "boolean"
+          },
+          "dhwOffPeakReheating": {
+            "type": "boolean"
+          },
+          "dhwScheduleReheating": {
+            "type": "boolean"
+          },
+          "dhwSetpointRange": {
+            "type": "object",
+            "observed_properties": {
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "observed_http_status": 200
+    },
+    "getAllSchedules": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "houseId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "observed_properties": {
+          "schedules": {
+            "type": "object",
+            "observed_properties": {
+              "away": {
+                "type": "object",
+                "observed_properties": {
+                  "end": {
+                    "type": "integer"
+                  },
+                  "min": {
+                    "type": "integer"
+                  },
+                  "temperature": {
+                    "type": "integer"
+                  },
+                  "max": {
+                    "type": "integer"
+                  },
+                  "start": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "heating": {
+                "type": "array",
+                "observed_item": {
+                  "type": "object",
+                  "observed_properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "observed_item": {
+                        "type": "object",
+                        "observed_properties": {
+                          "temperature": {
+                            "type": "integer"
+                          },
+                          "start": {
+                            "type": "integer"
+                          },
+                          "end": {
+                            "type": "integer"
+                          },
+                          "weekdayId": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "hotwater": {
+                "type": "array",
+                "observed_item": {
+                  "type": "object",
+                  "observed_properties": {
+                    "data": {
+                      "type": "array",
+                      "observed_item": {
+                        "type": "object",
+                        "observed_properties": {
+                          "end": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "start": {
+                            "type": "integer"
+                          },
+                          "weekdayId": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "schedules": {
+                "type": "array",
+                "observed_item": {
+                  "type": "object",
+                  "observed_properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "min": {
+                      "type": "array",
+                      "observed_item": {
+                        "type": "integer"
+                      }
+                    },
+                    "morning_temperature": {
+                      "type": "integer"
+                    },
+                    "max": {
+                      "type": "array",
+                      "observed_item": {
+                        "type": "integer"
+                      }
+                    },
+                    "morning_start": {
+                      "type": "string"
+                    },
+                    "morning_end": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "schedules_active": {
+                "type": "array",
+                "observed_item": {
+                  "type": "integer"
+                }
+              },
+              "temporary": {
+                "type": "array",
+                "observed_item": {
+                  "type": "object",
+                  "observed_properties": {
+                    "start": {
+                      "type": "integer"
+                    },
+                    "temperature": {
+                      "type": "integer"
+                    },
+                    "end": {
+                      "type": "integer"
+                    },
+                    "min": {
+                      "type": "integer"
+                    },
+                    "max": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "water": {
+                "type": "array",
+                "observed_item": {
+                  "type": "object",
+                  "observed_properties": {
+                    "end_time": {
+                      "type": "string"
+                    },
+                    "start_time": {
+                      "type": "string"
+                    },
+                    "weekdays": {
+                      "type": "array",
+                      "observed_item": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "zones": {
+            "type": "integer"
+          }
+        }
+      },
+      "observed_http_status": 200
+    },
+    "getHotWaterBoost": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "houseId": {
+            "type": "string"
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "observed_properties": {
+          "end": {
+            "type": "integer"
+          }
+        }
+      },
+      "observed_http_status": 200
+    },
+    "getHeatingBoost": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "houseId": {
+            "type": "string"
+          }
+        }
+      },
+      "response": {
+        "type": "array",
+        "observed_item": {
+          "type": "object",
+          "observed_properties": {
+            "start": {
+              "type": "integer"
+            },
+            "temperature": {
+              "type": "integer"
+            },
+            "end": {
+              "type": "integer"
+            },
+            "min": {
+              "type": "integer"
+            },
+            "max": {
+              "type": "number"
+            },
+            "zoneId": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "observed_http_status": 200,
+      "additional_observed_responses": [
+        {
+          "context": "Explicit timed boost active; observed in approved 25 October pilot",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "observed_properties": {
+              "zoneId": {
+                "type": "number"
+              },
+              "end": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "getHub": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "houseId": {
+            "type": "string"
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "observed_properties": {
+          "hubId": {
+            "type": "string"
+          },
+          "hardwareVersion": {
+            "type": "string"
+          }
+        }
+      },
+      "observed_http_status": 200
+    },
+    "getInfoCards": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "houseId": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "observed_properties": {
+              "viewName": {
+                "type": "string"
+              },
+              "locale": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "observed_properties": {
+          "cards": {
+            "type": "array",
+            "observed_item": {
+              "type": "object",
+              "observed_properties": {
+                "title": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "call_to_action": {
+                  "type": "null"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "content_identifier": {
+                  "type": "string"
+                },
+                "locale": {
+                  "type": "string"
+                },
+                "dismissible": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "house_id": {
+            "type": "string"
+          }
+        }
+      },
+      "observed_http_status": 200
+    },
+    "getUsageStats": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "houseId": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "observed_properties": {
+              "date_range": {
+                "type": "string"
+              }
+            }
+          },
+          "userId": {
+            "type": "string"
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "observed_properties": {
+          "status": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "observed_properties": {
+              "heatingEnergyUsed": {
+                "type": "object",
+                "observed_properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "units": {
+                    "type": "string"
+                  }
+                }
+              },
+              "hotWaterEnergyUsed": {
+                "type": "object",
+                "observed_properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "units": {
+                    "type": "string"
+                  }
+                }
+              },
+              "totalEnergyUsed": {
+                "type": "object",
+                "observed_properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "units": {
+                    "type": "string"
+                  }
+                }
+              },
+              "estimatedCoP": {
+                "type": "object",
+                "observed_properties": {
+                  "value": {
+                    "type": "number"
+                  }
+                }
+              },
+              "carbonSavings": {
+                "type": "object",
+                "observed_properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "units": {
+                    "type": "string"
+                  }
+                }
+              },
+              "heatingEnergyCost": {
+                "type": "object",
+                "observed_properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "units": {
+                    "type": "string"
+                  }
+                }
+              },
+              "hotWaterEnergyCost": {
+                "type": "object",
+                "observed_properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "units": {
+                    "type": "string"
+                  }
+                }
+              },
+              "totalEnergyCost": {
+                "type": "object",
+                "observed_properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "units": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "observed_http_status": 200
+    },
+    "beacon": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "observed_properties": {
+              "type": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string"
+              },
+              "screen": {
+                "type": "string"
+              },
+              "focus_time": {
+                "type": "integer"
+              },
+              "user_id": {
+                "type": "string"
+              },
+              "house_id": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "type": "null"
+      },
+      "observed_http_status": 200
+    },
+    "setSettings": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "houseId": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "observed_properties": {
+              "hotWaterOnlyMode": {
+                "type": "boolean"
+              }
+            }
+          },
+          "userId": {
+            "type": "string"
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "observed_properties": {
+          "settings": {
+            "type": "object",
+            "observed_properties": {
+              "nightShift": {
+                "type": "boolean"
+              },
+              "p": {
+                "type": "integer"
+              },
+              "settings": {
+                "type": "object",
+                "observed_properties": {
+                  "dhw_ready_for_setpoint": {
+                    "type": "boolean"
+                  },
+                  "dhw_off_peak_reheat": {
+                    "type": "boolean"
+                  },
+                  "dhw_reheat_during_schedule": {
+                    "type": "boolean"
+                  },
+                  "fixed_rate": {
+                    "type": "integer"
+                  },
+                  "flexibility": {
+                    "type": "integer"
+                  },
+                  "hot_water_only_mode": {
+                    "type": "boolean"
+                  },
+                  "hw_set": {
+                    "type": "string"
+                  },
+                  "overnight_savings": {
+                    "type": "boolean"
+                  },
+                  "relays": {
+                    "type": "array",
+                    "observed_item": {
+                      "type": "null"
+                    }
+                  },
+                  "savings": {
+                    "type": "integer"
+                  },
+                  "tariff": {
+                    "type": "null"
+                  },
+                  "use_fallback_controls": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "nibe": {
+                "type": "boolean"
+              },
+              "heatingType": {
+                "type": "integer"
+              },
+              "zones": {
+                "type": "integer"
+              },
+              "summerMode": {
+                "type": "boolean"
+              },
+              "hotWaterOnlyMode": {
+                "type": "boolean"
+              },
+              "optimisationType": {
+                "type": "string"
+              },
+              "heatingTypeNew": {
+                "type": "integer"
+              },
+              "hasWater": {
+                "type": "boolean"
+              },
+              "hwSetPoint": {
+                "type": "string"
+              },
+              "flexibility": {
+                "type": "integer"
+              },
+              "overnightHeatSavings": {
+                "type": "boolean"
+              },
+              "timezone": {
+                "type": "string"
+              },
+              "hubData": {
+                "type": "object",
+                "observed_properties": {
+                  "serial": {
+                    "type": "string"
+                  },
+                  "firmwareVersion": {
+                    "type": "string"
+                  },
+                  "provisioning": {
+                    "type": "array",
+                    "observed_item": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "dhwPreheating": {
+                "type": "boolean"
+              },
+              "dhwOffPeakReheating": {
+                "type": "boolean"
+              },
+              "dhwScheduleReheating": {
+                "type": "boolean"
+              },
+              "dhwSetpointRange": {
+                "type": "object",
+                "observed_properties": {
+                  "min": {
+                    "type": "number"
+                  },
+                  "max": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          },
+          "schedules": {
+            "type": "object",
+            "observed_properties": {
+              "away": {
+                "type": "object",
+                "observed_properties": {
+                  "end": {
+                    "type": "integer"
+                  },
+                  "min": {
+                    "type": "number"
+                  },
+                  "temperature": {
+                    "type": "number"
+                  },
+                  "max": {
+                    "type": "number"
+                  },
+                  "start": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "heating": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "observed_properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "array",
+                      "observed_item": {
+                        "type": "object",
+                        "observed_properties": {
+                          "temperature": {
+                            "type": "number"
+                          },
+                          "start": {
+                            "type": "integer"
+                          },
+                          "end": {
+                            "type": "integer"
+                          },
+                          "weekdayId": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "hotwater": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "observed_properties": {
+                    "data": {
+                      "type": "array",
+                      "observed_item": {
+                        "type": "object",
+                        "observed_properties": {
+                          "end": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "start": {
+                            "type": "integer"
+                          },
+                          "weekdayId": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "schedules": {
+                "type": "array",
+                "observed_item": {
+                  "type": "object",
+                  "observed_properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "min": {
+                      "type": "array",
+                      "observed_item": {
+                        "type": "integer"
+                      }
+                    },
+                    "morning_temperature": {
+                      "type": "integer"
+                    },
+                    "max": {
+                      "type": "array",
+                      "observed_item": {
+                        "type": "integer"
+                      }
+                    },
+                    "morning_start": {
+                      "type": "string"
+                    },
+                    "morning_end": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "schedules_active": {
+                "type": "array",
+                "observed_item": {
+                  "type": "integer"
+                }
+              },
+              "temporary": {
+                "type": "array",
+                "observed_item": {
+                  "type": "object",
+                  "observed_properties": {
+                    "start": {
+                      "type": "integer"
+                    },
+                    "end": {
+                      "type": "integer"
+                    },
+                    "min": {
+                      "type": "number"
+                    },
+                    "max": {
+                      "type": "number"
+                    },
+                    "temperature": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "water": {
+                "type": "array",
+                "observed_item": {
+                  "type": "object",
+                  "observed_properties": {
+                    "end_time": {
+                      "type": "string"
+                    },
+                    "start_time": {
+                      "type": "string"
+                    },
+                    "weekdays": {
+                      "type": "array",
+                      "observed_item": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "observed_http_status": 200,
+      "observed_hotWaterOnlyMode_values": [
+        false,
+        true
+      ],
+      "note": "Mode writes reset temporary timestamps. Schedule-ID map keys are not reproduced."
+    },
+    "setHeatingBoost": {
+      "request": {
+        "type": "object",
+        "observed_properties": {
+          "method": {
+            "type": "string"
+          },
+          "houseId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "observed_properties": {
+              "status": {
+                "type": "boolean"
+              },
+              "zoneId": {
+                "type": "string"
+              },
+              "start": {
+                "type": "integer"
+              },
+              "end": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "response": {
+        "type": "object",
+        "observed_properties": {
+          "start": {
+            "type": "integer"
+          },
+          "end": {
+            "type": "integer"
+          },
+          "zoneId": {
+            "type": "string"
+          },
+          "min": {
+            "type": "integer"
+          },
+          "max": {
+            "type": "integer"
+          },
+          "temperature": {
+            "type": "integer"
+          },
+          "boostActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "observed_http_status": 200,
+      "verification_scope": "Explicit start and cancellation captured with HTTP 200 and boostActive true/false. Start/end are integer Unix milliseconds. In one start response the end was earlier at a whole-minute boundary; do not assume exact echoing or a universal rounding contract. Boost was manually cancelled after 14.917 seconds; automatic expiry, duration limits and general sensor-zone mapping remain unverified. Final settings, full schedules and override records matched the enabled baseline.",
+      "observed_payload_variants": [
+        {
+          "purpose": "start",
+          "observed_status": true,
+          "observed_fields": [
+            "status",
+            "start",
+            "end",
+            "zoneId"
+          ]
+        },
+        {
+          "purpose": "cancel",
+          "observed_status": false,
+          "observed_fields": [
+            "status",
+            "zoneId"
+          ]
+        }
+      ]
+    }
+  }
+}
