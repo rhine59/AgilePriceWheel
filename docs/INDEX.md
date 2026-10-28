@@ -99,3 +99,6 @@ See [audit](BUG-AUDIT-2026-10-26.md) for checks and limits.
 The 27 October schedule-target preparation in the Homely repository is offline-only; the existing app does not gain a 22°C control from that capture.
 
 Android implementation, setup, rebuild scripts and emulator evidence: [Android guide](ANDROID.md), [requirements/status](ANDROID-HEATING-REQUIREMENTS.md), [verification](ANDROID-HEATING-VERIFICATION.md).
+
+- [Homely consolidation](HOMELY-CONSOLIDATION.md) — unified source layout, controller commands and existing-installation migration.
+- [Homely service catalogue](../services/homely/controller/SERVICES.md) — API and independent runtime responsibilities.
