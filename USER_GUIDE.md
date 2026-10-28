@@ -214,3 +214,8 @@ Homely manages temperature. Red ON and green OFF are shown separately for price
 permission and Homely's reported heating state; UNKNOWN means data cannot be
 confirmed. The weekly log shows paired sessions and estimated costs or payments.
 See [Android instructions](docs/ANDROID.md) for reconnection and logging details.
+
+
+## Unified Homely heating
+
+Homely heating policy, automation and weekly sessions are part of Agile Price Wheel on both iOS and Android. Your configured home controller runs independently so automation continues when the phone app is closed. Consolidating the source repository requires no changes to your app connection, policy or schedule. Developer setup and deployment details are in [the consolidation guide](docs/HOMELY-CONSOLIDATION.md).

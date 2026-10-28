@@ -1,5 +1,29 @@
 # Agile Price Wheel
 
+One project for energy planning and Homely heating automation. The iPhone/iPad app already manages the heating policy, automation switch and weekly sessions; the supporting Homely service now lives in this repository.
+
+## Project components
+
+| Component | Location | Runs on |
+|---|---|---|
+| iPhone/iPad app | `AgilePriceWheel/` and `AgilePriceWheel.xcodeproj` | iOS/iPadOS |
+| Android app | `android/` | Android |
+| Homely heating and hot-water services | `services/homely/` | NAS/home server |
+
+The service keeps automation running when the phone app is closed. Consolidation does not change your saved controller URL, access key, policy, schedules or deployed container. See [the consolidation and migration guide](docs/HOMELY-CONSOLIDATION.md) and [controller services](services/homely/controller/SERVICES.md).
+
+### Controller development from this repository
+
+```bash
+python3 -m venv .venv-homely
+.venv-homely/bin/python -m pip install -r services/homely/requirements.txt
+PYTHON="$PWD/.venv-homely/bin/python" ./scripts/test-homely.sh
+./scripts/rebuild-homely.sh          # build + isolated container verification
+./scripts/package-homely.sh /tmp/homely-source.tar.gz
+```
+
+These commands do not restart the deployed service. Keep runtime secrets and persistent data outside Git. Existing detailed Homely commands remain valid after `cd services/homely`.
+
 Agile Price Wheel now contains two native clients for the same energy-planning model:
 
 - **iPhone/iPad:** Swift + SwiftUI in `AgilePriceWheel/` and `AgilePriceWheel.xcodeproj`.

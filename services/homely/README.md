@@ -1,3 +1,5 @@
+> This service is now maintained as part of AgilePriceWheel under `services/homely/`. Run the commands below from this directory, or use the repository-root `scripts/*-homely.sh` entry points. See [consolidation and migration](../../docs/HOMELY-CONSOLIDATION.md).
+
 # Homely
 
 Homely is an automated domestic-hot-water scheduler that combines **Homely heat-pump control**, **Octopus Agile half-hour electricity prices** and **forecast solar generation**.

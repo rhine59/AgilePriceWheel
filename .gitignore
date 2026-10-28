@@ -6,3 +6,5 @@ android/**/build/
 android/*.jks
 android/*.keystore
 android/screenshots/
+
+.venv-homely/
